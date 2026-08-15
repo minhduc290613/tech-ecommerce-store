@@ -1,26 +1,259 @@
 <!doctype html>
-<html lang="en">
-
+<!-- Circuit Atelier: semantic, dark, technical retail shell for NEXORA Tech Store. -->
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>NEXORA Tech Store</title>    
-    <!-- THIS IS THE START OF A COMMENT BLOCK, BLOCK TO BE DELETED: Google Fonts here, example:
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="NEXORA — cửa hàng công nghệ tuyển chọn với ưu đãi flash sale, thanh toán tiện lợi và trải nghiệm mua sắm hiện đại." />
+    <meta name="theme-color" content="#0f172a" />
+    <meta property="og:title" content="NEXORA Tech Store | Thiết bị đúng chuẩn" />
+    <meta property="og:description" content="Khám phá điện thoại, laptop và phụ kiện với mức giá đúng thời điểm." />
+    <title>NEXORA Tech Store | Thiết bị đúng chuẩn</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    THIS IS THE END OF A COMMENT BLOCK, BLOCK TO BE DELETED -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" referrerpolicy="no-referrer" />
+    <link rel="icon" type="image/png" href="/manus-storage/nexora-logo_3c03446b.png" />
+    <link rel="stylesheet" href="/style.css" />
   </head>
-
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
-  </body>
+    <a class="skip-link" href="#products">Đi tới danh sách sản phẩm</a>
+    <div class="page-noise" aria-hidden="true"></div>
 
+    <div class="announcement-bar">
+      <div class="site-frame announcement-content">
+        <span><i class="fa-solid fa-bolt" aria-hidden="true"></i> Freeship toàn quốc cho đơn từ 1.500.000đ</span>
+        <span class="announcement-status"><span class="pulse-dot"></span> Storefront online</span>
+      </div>
+    </div>
+
+    <header class="site-header" id="top">
+      <div class="site-frame header-inner">
+        <a class="brand" href="#top" aria-label="NEXORA Tech Store — Trang chủ">
+          <img src="/manus-storage/nexora-logo_3c03446b.png" alt="Biểu tượng NEXORA" />
+          <span>NEX<span>O</span>RA</span>
+        </a>
+
+        <nav class="desktop-nav" aria-label="Điều hướng chính">
+          <a href="#products">Khám phá</a>
+          <a href="#flash-sale">Flash Sale</a>
+          <a href="#categories">Danh mục</a>
+        </nav>
+
+        <form class="header-search" id="headerSearch" role="search">
+          <label class="sr-only" for="searchInput">Tìm kiếm thiết bị</label>
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input id="searchInput" type="search" placeholder="Tìm thiết bị, phụ kiện..." autocomplete="off" />
+          <kbd>⌘ K</kbd>
+        </form>
+
+        <div class="header-actions">
+          <button class="icon-button mobile-search-trigger" id="mobileSearchButton" type="button" aria-label="Mở tìm kiếm">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          </button>
+          <button class="profile-button" id="authButton" type="button" aria-haspopup="dialog">
+            <i class="fa-regular fa-user" aria-hidden="true"></i>
+            <span>Đăng nhập</span>
+          </button>
+          <button class="icon-button cart-button" id="cartButton" type="button" aria-label="Mở giỏ hàng" aria-haspopup="dialog">
+            <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>
+            <span class="cart-badge" id="cartBadge">0</span>
+          </button>
+          <button class="icon-button mobile-menu-button" id="mobileMenuButton" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="Mở menu">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+      <nav class="mobile-nav" id="mobileNav" aria-label="Điều hướng di động">
+        <a href="#products">Khám phá sản phẩm</a>
+        <a href="#flash-sale">Flash Sale</a>
+        <a href="#categories">Danh mục</a>
+      </nav>
+      <form class="mobile-search" id="mobileSearchForm" role="search">
+        <label class="sr-only" for="mobileSearchInput">Tìm kiếm thiết bị</label>
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input id="mobileSearchInput" type="search" placeholder="Tìm kiếm trong NEXORA" autocomplete="off" />
+      </form>
+    </header>
+
+    <main>
+      <section class="hero-section" aria-labelledby="heroTitle">
+        <div class="site-frame hero-layout">
+          <div class="hero-copy">
+            <div class="eyebrow"><span></span> CURATED TECH / 2026</div>
+            <h1 id="heroTitle">Thiết bị đúng chuẩn.<br /><em>Mức giá đúng thời điểm.</em></h1>
+            <p>Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#products">Khám phá ưu đãi <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+              <a class="button button-quiet" href="#flash-sale">Xem Flash Sale <i class="fa-solid fa-bolt" aria-hidden="true"></i></a>
+            </div>
+            <dl class="hero-metrics" aria-label="Cam kết dịch vụ NEXORA">
+              <div><dt>06</dt><dd>Thiết bị tuyển chọn</dd></div>
+              <div><dt>24H</dt><dd>Phản hồi đơn hàng</dd></div>
+              <div><dt>01:1</dt><dd>Hỗ trợ sản phẩm</dd></div>
+            </dl>
+          </div>
+          <div class="hero-visual">
+            <img src="/manus-storage/nexora-hero-tech_47c6b78f.jpg" alt="Laptop, điện thoại và tai nghe trên nền studio công nghệ tối" />
+            <div class="hero-panel hero-panel-top"><span class="panel-label">SIGNAL STATUS</span><strong>SYNCED</strong><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i></div>
+            <div class="hero-panel hero-panel-bottom"><span class="panel-label">NEXT DROP</span><strong>00:00:00</strong><span class="tiny-dot"></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="flash-sale-section" id="flash-sale" aria-labelledby="flashTitle">
+        <div class="site-frame">
+          <div class="flash-sale-card">
+            <div class="flash-sale-backdrop" aria-hidden="true"></div>
+            <div class="flash-content">
+              <div class="eyebrow eyebrow-violet"><span></span> LIVE PRICE SIGNAL</div>
+              <h2 id="flashTitle">Flash Sale<br /><em>đang truyền tín hiệu.</em></h2>
+              <p>Giá ưu đãi chỉ mở trong khung giờ này. Hãy thêm sản phẩm trước khi đồng hồ quay về 00.</p>
+            </div>
+            <div class="countdown-module" aria-live="polite" aria-label="Thời gian flash sale còn lại">
+              <span class="panel-label">TIME REMAINING</span>
+              <div class="countdown" id="countdown"><div><strong id="countdownHours">00</strong><span>GIỜ</span></div><i>:</i><div><strong id="countdownMinutes">00</strong><span>PHÚT</span></div><i>:</i><div><strong id="countdownSeconds">00</strong><span>GIÂY</span></div></div>
+              <a class="text-link" href="#products">Săn giá ngay <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="categories-section" id="categories" aria-labelledby="categoryTitle">
+        <div class="site-frame">
+          <div class="section-heading compact-heading">
+            <div><span class="section-index">01 / DISCOVER</span><h2 id="categoryTitle">Bắt đúng dải<br />công nghệ của bạn.</h2></div>
+            <p>Lựa chọn theo nhu cầu, không theo sự ồn ào.</p>
+          </div>
+          <div class="category-rail">
+            <button class="category-card category-phone" data-category-jump="Điện thoại" type="button">
+              <img src="/manus-storage/nexora-phone-category_b50b5ab7.jpg" alt="Điện thoại cao cấp trên bệ trưng bày tối" />
+              <span class="category-meta">01 / MOBILE</span><strong>Điện thoại</strong><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+            </button>
+            <button class="category-card category-laptop" data-category-jump="Laptop" type="button">
+              <img src="/manus-storage/nexora-laptop-category_9690fafd.jpg" alt="Laptop graphite trên nền studio tối" />
+              <span class="category-meta">02 / COMPUTE</span><strong>Laptop</strong><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+            </button>
+            <button class="category-card category-accessory" data-category-jump="Phụ kiện" type="button">
+              <div class="accessory-orbit" aria-hidden="true"><i class="fa-solid fa-headphones"></i><span></span><b></b></div>
+              <span class="category-meta">03 / ESSENTIALS</span><strong>Phụ kiện</strong><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="catalog-section" id="products" aria-labelledby="productTitle">
+        <div class="site-frame">
+          <div class="section-heading catalog-heading">
+            <div><span class="section-index">02 / CATALOG</span><h2 id="productTitle">Thiết bị<br /><em>đang bắt sóng.</em></h2></div>
+            <div class="catalog-status"><span class="pulse-dot"></span><span id="productCount">Đang tải catalog...</span></div>
+          </div>
+
+          <div class="catalog-layout">
+            <aside class="filter-panel" aria-label="Bộ lọc sản phẩm">
+              <div class="filter-panel-head"><span class="panel-label">FILTER MODULE</span><button id="clearFilters" type="button">Xóa lọc</button></div>
+              <fieldset class="filter-group">
+                <legend>Danh mục</legend>
+                <label><input type="radio" name="category" value="all" checked /><span>Tất cả thiết bị</span><b>∞</b></label>
+                <label><input type="radio" name="category" value="Điện thoại" /><span>Điện thoại</span><b>01</b></label>
+                <label><input type="radio" name="category" value="Laptop" /><span>Laptop</span><b>02</b></label>
+                <label><input type="radio" name="category" value="Phụ kiện" /><span>Phụ kiện</span><b>03</b></label>
+              </fieldset>
+              <fieldset class="filter-group price-filter">
+                <legend>Khoảng giá</legend>
+                <div class="range-labels"><span>0đ</span><strong id="priceOutput">35.000.000đ</strong></div>
+                <input id="priceRange" type="range" min="1000000" max="35000000" step="500000" value="35000000" aria-label="Giá tối đa" />
+              </fieldset>
+              <label class="sale-toggle"><input id="saleOnly" type="checkbox" /><span class="toggle-track"><i></i></span><span>Chỉ xem đang SALE</span></label>
+              <div class="filter-note"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><p>Giá đã hiển thị là giá hiện tại. Các ưu đãi Flash Sale có thể kết thúc sớm.</p></div>
+            </aside>
+
+            <div class="products-area">
+              <div class="active-filter-row" id="activeFilters" aria-live="polite"></div>
+              <div class="products-grid" id="productsGrid" aria-live="polite" aria-busy="true"></div>
+              <div class="empty-state hidden" id="emptyState">
+                <i class="fa-solid fa-satellite-dish" aria-hidden="true"></i>
+                <h3>Không tìm thấy tín hiệu phù hợp.</h3>
+                <p>Điều chỉnh bộ lọc hoặc thử một từ khóa khác.</p>
+                <button class="button button-primary" id="emptyReset" type="button">Thiết lập lại bộ lọc</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="service-strip" aria-label="Dịch vụ NEXORA">
+        <div class="site-frame service-grid">
+          <div><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span><strong>Minh bạch thông tin</strong><small>Mô tả, giá và ưu đãi hiển thị rõ ràng.</small></span></div>
+          <div><i class="fa-solid fa-box-open" aria-hidden="true"></i><span><strong>Đóng gói cẩn thận</strong><small>Kiểm tra thiết bị trước khi bàn giao.</small></span></div>
+          <div><i class="fa-solid fa-headset" aria-hidden="true"></i><span><strong>Hỗ trợ sau đơn</strong><small>Đội ngũ NEXORA sẵn sàng phản hồi.</small></span></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-frame footer-main">
+        <div class="footer-brand"><a class="brand" href="#top"><img src="/manus-storage/nexora-logo_3c03446b.png" alt="" /><span>NEX<span>O</span>RA</span></a><p>Thiết bị đúng chuẩn.<br />Mức giá đúng thời điểm.</p></div>
+        <div class="footer-column"><span class="panel-label">EXPLORE</span><a href="#products">Catalog</a><a href="#flash-sale">Flash Sale</a><a href="#categories">Danh mục</a></div>
+        <div class="footer-column"><span class="panel-label">SUPPORT</span><a href="mailto:support@nexora.vn">support@nexora.vn</a><span>Thứ 2 — Thứ 7 / 09:00–18:00</span><span>Việt Nam</span></div>
+      </div>
+      <div class="site-frame footer-bottom"><span>© 2026 NEXORA Tech Store</span><span class="footer-signal"><i></i> ALL SYSTEMS ONLINE</span></div>
+    </footer>
+
+    <div class="overlay" id="overlay" hidden></div>
+
+    <aside class="cart-drawer" id="cartDrawer" aria-labelledby="cartTitle" aria-hidden="true">
+      <div class="drawer-header"><div><span class="panel-label">YOUR SIGNAL CART</span><h2 id="cartTitle">Giỏ hàng <span id="cartItemLabel">(0)</span></h2></div><button class="close-button" data-close="cart" type="button" aria-label="Đóng giỏ hàng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
+      <div class="cart-items" id="cartItems"></div>
+      <div class="drawer-footer">
+        <div class="cart-total"><span>Tạm tính</span><strong id="cartTotal">0đ</strong></div>
+        <p><i class="fa-solid fa-lock" aria-hidden="true"></i> Thanh toán an toàn qua VietQR hoặc MoMo.</p>
+        <button class="button button-primary checkout-button" id="checkoutButton" type="button">Tiếp tục thanh toán <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+      </div>
+    </aside>
+
+    <section class="modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden>
+      <div class="modal-card auth-card">
+        <button class="close-button" data-close="auth" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        <img class="modal-logo" src="/manus-storage/nexora-logo_3c03446b.png" alt="" />
+        <span class="eyebrow"><span></span> MEMBER ACCESS</span>
+        <h2 id="authTitle">Đăng nhập để<br /><em>đồng bộ đơn hàng.</em></h2>
+        <p class="modal-intro">Tạo tài khoản hoặc đăng nhập bằng email để tiếp tục với thanh toán và quản lý đơn hàng.</p>
+        <div class="auth-tabs" role="tablist"><button class="active" data-auth-mode="login" type="button" role="tab" aria-selected="true">Đăng nhập</button><button data-auth-mode="signup" type="button" role="tab" aria-selected="false">Đăng ký</button></div>
+        <form id="authForm" novalidate>
+          <label>Email<input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
+          <label>Mật khẩu<input id="authPassword" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="current-password" minlength="6" required /></label>
+          <button class="button button-primary auth-submit" id="authSubmit" type="submit">Đăng nhập <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+        </form>
+        <p class="auth-helper" id="authHelper">Chưa có tài khoản? Chuyển sang tab <button data-auth-mode="signup" type="button">Đăng ký</button>.</p>
+      </div>
+    </section>
+
+    <section class="modal" id="quickViewModal" role="dialog" aria-modal="true" aria-labelledby="quickViewTitle" hidden>
+      <div class="modal-card quick-view-card">
+        <button class="close-button" data-close="quick-view" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        <div class="quick-view-image" id="quickViewImage"></div>
+        <div class="quick-view-content"><span class="panel-label" id="quickViewCategory">PRODUCT</span><h2 id="quickViewTitle">Sản phẩm</h2><p id="quickViewDescription"></p><div class="quick-view-price" id="quickViewPrice"></div><div class="product-tags"><span><i class="fa-solid fa-box" aria-hidden="true"></i> Còn hàng</span><span><i class="fa-solid fa-truck-fast" aria-hidden="true"></i> Giao hàng toàn quốc</span></div><button class="button button-primary" id="quickViewAdd" type="button">Thêm vào giỏ <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i></button></div>
+      </div>
+    </section>
+
+    <section class="modal" id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrTitle" hidden>
+      <div class="modal-card qr-card">
+        <button class="close-button" data-close="qr" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        <div class="payment-confirm"><i class="fa-solid fa-check" aria-hidden="true"></i><span>ĐƠN HÀNG ĐÃ ĐƯỢC TẠO</span></div>
+        <h2 id="qrTitle">Quét mã để<br /><em>hoàn tất thanh toán.</em></h2>
+        <p>Đơn <strong id="qrOrderNumber">NXR-000000</strong> đang chờ xác nhận thanh toán.</p>
+        <div class="payment-tabs"><button class="active" data-payment-method="vietqr" type="button">VietQR</button><button data-payment-method="momo" type="button">MoMo</button></div>
+        <div class="qr-image-wrap"><img id="qrImage" src="" alt="Mã QR thanh toán" /><span class="qr-corner top-left"></span><span class="qr-corner top-right"></span><span class="qr-corner bottom-left"></span><span class="qr-corner bottom-right"></span></div>
+        <div class="payment-info"><div><span>Số tiền</span><strong id="qrTotal">0đ</strong></div><div><span>Nội dung</span><strong id="qrContent">NXR-000000</strong></div></div>
+        <p class="payment-instruction" id="paymentInstruction">Mở ứng dụng ngân hàng, quét VietQR và kiểm tra đúng số tiền trước khi xác nhận.</p>
+        <button class="button button-quiet close-qr-action" data-close="qr" type="button">Tôi sẽ thanh toán sau</button>
+      </div>
+    </section>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="/app.js"></script>
+  </body>
 </html>
