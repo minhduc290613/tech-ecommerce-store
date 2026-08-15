@@ -16,6 +16,7 @@ const PAYMENT_CONFIG = {
   accountName: "NEXORA TECH STORE",
   momoPhone: "0900000000",
 };
+const PLACEHOLDER_PAYMENT_VALUES = new Set(["", "0123456789", "0900000000", "NEXORA TECH STORE"]);
 
 const LOCAL_DEMO_PRODUCTS = [
   { id: "demo-1", name: "NEXORA Photon X Pro 256GB", category: "Điện thoại", description: "Màn hình OLED 6.7 inch 120Hz, camera 50MP, vi xử lý flagship và sạc nhanh 80W.", image_url: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=85", price: 20990000, original_price: 24990000, stock: 18, is_sale: true, featured: true },
@@ -49,13 +50,14 @@ const els = {
   cartButton: $("#cartButton"), cartDrawer: $("#cartDrawer"), cartBadge: $("#cartBadge"), cartItemLabel: $("#cartItemLabel"), cartItems: $("#cartItems"), cartTotal: $("#cartTotal"), checkoutButton: $("#checkoutButton"),
   overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authPassword: $("#authPassword"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authHelper: $("#authHelper"),
   quickViewModal: $("#quickViewModal"), quickViewImage: $("#quickViewImage"), quickViewCategory: $("#quickViewCategory"), quickViewTitle: $("#quickViewTitle"), quickViewDescription: $("#quickViewDescription"), quickViewPrice: $("#quickViewPrice"), quickViewAdd: $("#quickViewAdd"),
-  qrModal: $("#qrModal"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), paymentInstruction: $("#paymentInstruction"), toastRegion: $("#toastRegion"),
+  qrModal: $("#qrModal"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), toastRegion: $("#toastRegion"),
 };
 
 document.addEventListener("DOMContentLoaded", initializeApp);
 
 async function initializeApp() {
   bindEvents();
+  resetQRPreview();
   renderLoadingCards();
   updateCartUI();
   startCountdown();
@@ -117,10 +119,11 @@ function bindEvents() {
   $$("[data-auth-mode]").forEach((button) => button.addEventListener("click", () => setAuthMode(button.dataset.authMode)));
   els.authForm.addEventListener("submit", handleAuthSubmit);
   els.quickViewAdd.addEventListener("click", () => { if (state.activeProduct) addToCart(state.activeProduct); });
-  $$("[data-payment-method]").forEach((button) => button.addEventListener("click", () => {
-    state.activePaymentMethod = button.dataset.paymentMethod;
-    updatePaymentQR();
-  }));
+  $$("[data-payment-method]").forEach((button) => button.addEventListener("click", () => setPaymentMethod(button.dataset.paymentMethod)));
+  els.qrImage.addEventListener("error", () => {
+    if (state.lastOrder) showQRState("Không tải được QR. Hãy kiểm tra Internet và thông tin nhận tiền trong app.js.");
+  });
+  els.qrImage.addEventListener("load", hideQRState);
 
   document.addEventListener("keydown", (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); els.searchInput.focus(); }
@@ -324,33 +327,54 @@ async function checkout() {
   if (state.cart.some((item) => String(item.id).startsWith("demo-"))) { showToast("Catalog mẫu chỉ để xem giao diện. Hãy chạy supabase-schema.sql và kết nối Supabase để thanh toán.", "error"); return; }
   setButtonLoading(els.checkoutButton, true, "Đang tạo đơn hàng");
   const total = cartTotal(); const orderNumber = createOrderNumber();
-  const { data: order, error: orderError } = await db.from("orders").insert({ user_id: state.user.id, order_number: orderNumber, total_amount: total, status: "pending_payment", payment_method: "vietqr", payment_note: "Đơn được tạo từ NEXORA Tech Store" }).select().single();
-  if (orderError) { setButtonLoading(els.checkoutButton, false); showToast(`Không thể tạo đơn hàng: ${orderError.message}`, "error"); return; }
-  const items = state.cart.map((item) => ({ order_id: order.id, product_id: item.id, product_name: item.name, unit_price: Number(item.price), quantity: Number(item.quantity), subtotal: Number(item.price) * Number(item.quantity) }));
-  const { error: itemsError } = await db.from("order_items").insert(items);
+  const items = state.cart.map((item) => ({ product_id: item.id, quantity: Number(item.quantity) }));
+  const { data: order, error: orderError } = await db.rpc("create_order_with_items", {
+    p_order_number: orderNumber,
+    p_payment_method: "vietqr",
+    p_payment_note: "Đơn được tạo từ NEXORA Tech Store",
+    p_items: items,
+  });
   setButtonLoading(els.checkoutButton, false);
-  if (itemsError) { showToast(`Đơn #${orderNumber} đã tạo nhưng chưa lưu được chi tiết: ${itemsError.message}`, "error"); return; }
-  state.lastOrder = { id: order.id, number: orderNumber, total };
+  if (orderError) { showToast(`Không thể tạo đơn hàng: ${orderError.message}`, "error"); return; }
+  state.lastOrder = { id: order.id, number: order.order_number, total: Number(order.total_amount) };
   state.cart = []; persistCart(); updateCartUI(); closeCart(); openPaymentModal(); showToast("Đã tạo đơn hàng. Vui lòng quét QR để thanh toán.", "success");
 }
 
 function openPaymentModal() { state.activePaymentMethod = "vietqr"; updatePaymentQR(); openModal("qr"); }
+async function setPaymentMethod(method) {
+  state.activePaymentMethod = method;
+  updatePaymentQR();
+  if (!db || !state.user || !state.lastOrder) return;
+  const { error } = await db.from("orders").update({ payment_method: method }).eq("id", state.lastOrder.id).eq("user_id", state.user.id);
+  if (error) showToast("Không thể đồng bộ phương thức thanh toán đã chọn.", "error");
+}
 function updatePaymentQR() {
   if (!state.lastOrder) return;
   $$("[data-payment-method]").forEach((button) => button.classList.toggle("active", button.dataset.paymentMethod === state.activePaymentMethod));
   const { number, total } = state.lastOrder; const content = encodeURIComponent(number); const transferNote = `${number} thanh toan NEXORA`;
   els.qrOrderNumber.textContent = number; els.qrTotal.textContent = formatCurrency(total); els.qrContent.textContent = number;
   if (state.activePaymentMethod === "vietqr") {
+    if (!isPaymentConfigured("vietqr")) { showQRState("Cần điền mã ngân hàng, số tài khoản và tên người nhận thật trong PAYMENT_CONFIG."); return; }
+    els.qrImage.hidden = false;
     els.qrImage.src = `https://img.vietqr.io/image/${PAYMENT_CONFIG.bankId}-${PAYMENT_CONFIG.accountNumber}-compact2.png?amount=${total}&addInfo=${content}&accountName=${encodeURIComponent(PAYMENT_CONFIG.accountName)}`;
     els.qrImage.alt = `VietQR thanh toán đơn ${number}`;
     els.paymentInstruction.textContent = `Mở ứng dụng ngân hàng, quét VietQR và kiểm tra nội dung “${transferNote}” trước khi xác nhận.`;
   } else {
+    if (!isPaymentConfigured("momo")) { showQRState("Cần điền số điện thoại MoMo thật trong PAYMENT_CONFIG."); return; }
+    els.qrImage.hidden = false;
     const momoPayload = `MoMo|${PAYMENT_CONFIG.momoPhone}|${total}|${number}`;
     els.qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(momoPayload)}`;
     els.qrImage.alt = `QR MoMo thanh toán đơn ${number}`;
     els.paymentInstruction.textContent = `Mở MoMo, quét mã và kiểm tra đúng số tiền. Nội dung thanh toán: ${number}.`;
   }
 }
+function isPaymentConfigured(method) {
+  const values = method === "vietqr" ? [PAYMENT_CONFIG.bankId, PAYMENT_CONFIG.accountNumber, PAYMENT_CONFIG.accountName] : [PAYMENT_CONFIG.momoPhone];
+  return values.every((value) => !PLACEHOLDER_PAYMENT_VALUES.has(String(value).trim()));
+}
+function resetQRPreview() { showQRState("Cần cấu hình phương thức nhận tiền trong app.js."); }
+function showQRState(message) { els.qrImage.removeAttribute("src"); els.qrImage.hidden = true; els.qrImage.closest(".qr-image-wrap").classList.add("has-state"); els.qrStateMessage.textContent = message; els.qrState.hidden = false; }
+function hideQRState() { els.qrImage.hidden = false; els.qrImage.closest(".qr-image-wrap").classList.remove("has-state"); els.qrState.hidden = true; }
 
 function openModal(name) { const modal = getModal(name); if (!modal) return; modal.hidden = false; document.body.classList.add("no-scroll"); requestAnimationFrame(() => $("button, input", modal)?.focus()); }
 function closeModal(name) { const modal = getModal(name); if (!modal) return; modal.hidden = true; if (!els.cartDrawer.classList.contains("open")) document.body.classList.remove("no-scroll"); }

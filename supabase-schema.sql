@@ -102,6 +102,77 @@ with check (
   )
 );
 
+drop policy if exists "Users can update own pending orders" on public.orders;
+create policy "Users can update own pending orders"
+on public.orders for update
+to authenticated
+using (auth.uid() = user_id and status = 'pending_payment')
+with check (auth.uid() = user_id and status = 'pending_payment');
+
+-- Hàm RPC tạo đơn và item trong CÙNG một transaction.
+-- Giá/ tổng tiền luôn lấy từ bảng products, không tin dữ liệu giá từ trình duyệt.
+create or replace function public.create_order_with_items(
+  p_order_number text,
+  p_payment_method text,
+  p_payment_note text,
+  p_items jsonb
+)
+returns public.orders
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_order public.orders;
+  v_product public.products;
+  v_item jsonb;
+  v_quantity integer;
+  v_total numeric(12, 0) := 0;
+begin
+  if auth.uid() is null then
+    raise exception 'Bạn cần đăng nhập để tạo đơn hàng.';
+  end if;
+
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception 'Giỏ hàng không có sản phẩm hợp lệ.';
+  end if;
+
+  for v_item in select * from jsonb_array_elements(p_items)
+  loop
+    v_quantity := (v_item ->> 'quantity')::integer;
+    select * into v_product from public.products where id = (v_item ->> 'product_id')::uuid;
+
+    if not found then
+      raise exception 'Không tìm thấy sản phẩm trong đơn hàng.';
+    end if;
+    if v_quantity is null or v_quantity <= 0 then
+      raise exception 'Số lượng sản phẩm không hợp lệ.';
+    end if;
+    if v_product.stock < v_quantity then
+      raise exception 'Sản phẩm % không còn đủ tồn kho.', v_product.name;
+    end if;
+
+    v_total := v_total + (v_product.price * v_quantity);
+  end loop;
+
+  insert into public.orders (user_id, order_number, total_amount, status, payment_method, payment_note)
+  values (auth.uid(), p_order_number, v_total, 'pending_payment', p_payment_method, p_payment_note)
+  returning * into v_order;
+
+  for v_item in select * from jsonb_array_elements(p_items)
+  loop
+    v_quantity := (v_item ->> 'quantity')::integer;
+    select * into v_product from public.products where id = (v_item ->> 'product_id')::uuid;
+    insert into public.order_items (order_id, product_id, product_name, unit_price, quantity, subtotal)
+    values (v_order.id, v_product.id, v_product.name, v_product.price, v_quantity, v_product.price * v_quantity);
+  end loop;
+
+  return v_order;
+end;
+$$;
+
+grant execute on function public.create_order_with_items(text, text, text, jsonb) to authenticated;
+
 -- Sáu sản phẩm mẫu. Bạn có thể thay image_url bằng link Supabase Storage của mình.
 insert into public.products
   (name, slug, category, description, image_url, price, original_price, stock, is_sale, featured)
