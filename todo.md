@@ -43,3 +43,9 @@
 - [x] Rà soát biểu mẫu hiện tại và bổ sung các trường thông tin sản phẩm cần thiết.
 - [x] Hoàn thiện tạo mới, chỉnh sửa, xóa và hiển thị preview ảnh sản phẩm.
 - [x] Kiểm thử build và luồng quản lý catalog trong Command Deck.
+
+## Trạng thái bán hàng
+
+- [x] Xác định quy tắc bán, ngừng bán và hết hàng cho storefront.
+- [x] Thêm điều khiển trạng thái nhanh trong Command Deck và biểu mẫu sản phẩm.
+- [x] Kiểm thử phản ánh trạng thái trên catalog và giỏ hàng.

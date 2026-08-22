@@ -40,7 +40,11 @@ function bindEvents() {
   $$('[data-view-jump]').forEach((button) => button.addEventListener("click", () => activateView(button.dataset.viewJump)));
   els.newProduct.addEventListener("click", () => openProductModal());
   els.productSearch.addEventListener("input", renderProducts);
-  els.productsBody.addEventListener("click", (event) => { const button = event.target.closest("[data-edit-product]"); if (button) openProductModal(getProduct(button.dataset.editProduct)); });
+  els.productsBody.addEventListener("click", (event) => {
+    const salesButton = event.target.closest("[data-sales-action]");
+    if (salesButton) { updateSalesState(salesButton.dataset.productId, salesButton.dataset.salesAction); return; }
+    const button = event.target.closest("[data-edit-product]"); if (button) openProductModal(getProduct(button.dataset.editProduct));
+  });
   $("#productForm").addEventListener("submit", saveProduct);
   $("#deleteProductButton").addEventListener("click", deleteProduct);
   $("#productName").addEventListener("input", suggestSku);
@@ -126,7 +130,7 @@ function renderProducts() {
   const query = normalize(els.productSearch.value);
   const products = state.products.filter((product) => normalize(`${product.name} ${product.category} ${product.sku || ""} ${product.brand || ""}`).includes(query));
   els.productCount.textContent = `${products.length} sản phẩm`;
-  els.productsBody.innerHTML = products.map((product) => `<tr><td><div class="product-cell"><img src="${escapeHtml(product.image_url)}" alt="" /><span><b>${escapeHtml(product.name)}</b><small>${escapeHtml(product.sku || product.slug)} · ${escapeHtml(product.brand || "NEXORA")}</small></span></div></td><td>${escapeHtml(product.category)}</td><td><b>${currency(product.price)}</b><br /><small>${product.warranty_months ?? 12} tháng BH</small></td><td>${product.stock}</td><td><span class="sale-pill ${product.is_sale ? "yes" : "no"}">${product.is_sale ? "SALE" : "STANDARD"}</span></td><td><span class="sale-pill ${product.is_active !== false ? "yes" : "no"}">${product.is_active !== false ? "LIVE" : "HIDDEN"}</span></td><td><button class="row-action" data-edit-product="${escapeHtml(product.id)}" aria-label="Chỉnh sửa ${escapeHtml(product.name)}"><i class="fa-solid fa-pen"></i></button></td></tr>`).join("") || emptyRow("Không tìm thấy sản phẩm.", 7);
+  els.productsBody.innerHTML = products.map((product) => `<tr><td><div class="product-cell"><img src="${escapeHtml(product.image_url)}" alt="" /><span><b>${escapeHtml(product.name)}</b><small>${escapeHtml(product.sku || product.slug)} · ${escapeHtml(product.brand || "NEXORA")}</small></span></div></td><td>${escapeHtml(product.category)}</td><td><b>${currency(product.price)}</b><br /><small>${product.warranty_months ?? 12} tháng BH</small></td><td>${product.stock}</td><td><span class="sale-pill ${product.is_sale ? "yes" : "no"}">${product.is_sale ? "SALE" : "STANDARD"}</span></td><td>${salesStateBadge(product)}</td><td><div class="sales-actions"><button class="sales-action ${product.is_active !== false && Number(product.stock) > 0 ? "is-active" : ""}" data-sales-action="selling" data-product-id="${escapeHtml(product.id)}" type="button" title="Mở bán" ${product.is_active !== false && Number(product.stock) > 0 ? "disabled" : ""}><i class="fa-solid fa-play"></i></button><button class="sales-action ${product.is_active === false ? "is-paused" : ""}" data-sales-action="paused" data-product-id="${escapeHtml(product.id)}" type="button" title="Ngừng bán" ${product.is_active === false ? "disabled" : ""}><i class="fa-solid fa-pause"></i></button><button class="sales-action ${product.is_active !== false && Number(product.stock) === 0 ? "is-out" : ""}" data-sales-action="out" data-product-id="${escapeHtml(product.id)}" type="button" title="Đánh dấu hết hàng" ${product.is_active !== false && Number(product.stock) === 0 ? "disabled" : ""}><i class="fa-solid fa-box-open"></i></button></div></td><td><button class="row-action" data-edit-product="${escapeHtml(product.id)}" aria-label="Chỉnh sửa ${escapeHtml(product.name)}"><i class="fa-solid fa-pen"></i></button></td></tr>`).join("") || emptyRow("Không tìm thấy sản phẩm.", 8);
 }
 
 function renderSettings() {
@@ -177,6 +181,21 @@ async function saveProduct(event) {
   closeModal("product"); toast(state.editingProductId ? "Đã cập nhật sản phẩm." : "Đã tạo sản phẩm mới.", "success"); await loadData();
 }
 async function deleteProduct() { if (!state.editingProductId || !window.confirm("Xóa sản phẩm này?")) return; const { error } = await db.from("products").delete().eq("id", state.editingProductId); if (error) return toast(error.message, "error"); closeModal("product"); toast("Đã xóa sản phẩm.", "success"); loadData(); }
+async function updateSalesState(productId, action) {
+  const product = getProduct(productId); if (!product) return;
+  let payload; let confirmation;
+  if (action === "selling") {
+    if (Number(product.stock) <= 0) return toast("Hãy cập nhật tồn kho lớn hơn 0 trước khi mở bán.", "error");
+    payload = { is_active: true, updated_at: new Date().toISOString() }; confirmation = "Đã mở bán sản phẩm.";
+  } else if (action === "paused") {
+    payload = { is_active: false, updated_at: new Date().toISOString() }; confirmation = "Đã ngừng bán và ẩn sản phẩm khỏi storefront.";
+  } else {
+    payload = { is_active: true, stock: 0, updated_at: new Date().toISOString() }; confirmation = "Đã đánh dấu sản phẩm hết hàng.";
+  }
+  const { error } = await db.from("products").update(payload).eq("id", productId);
+  if (error) return toast(error.message, "error");
+  Object.assign(product, payload); renderProducts(); renderMetrics(); toast(confirmation, "success");
+}
 async function updateOrderStatus(event) { const select = event.target.closest("[data-order-id]"); if (!select) return; const { error } = await db.from("orders").update({ status: select.value }).eq("id", select.dataset.orderId); if (error) return toast(error.message, "error"); const order = state.orders.find((item) => item.id === select.dataset.orderId); if (order) order.status = select.value; renderMetrics(); renderOrders(); renderRecentOrders(); toast("Đã cập nhật trạng thái đơn.", "success"); }
 
 async function saveSettings(event) { event.preventDefault(); const fields = { site_name: "#settingSiteName", site_tagline: "#settingTagline", logo_url: "#settingLogoUrl", announcement_text: "#settingAnnouncement", support_email: "#settingEmail", support_hours: "#settingHours", address_text: "#settingAddress", hero_kicker: "#settingHeroKicker", hero_title: "#settingHeroTitle", hero_emphasis: "#settingHeroEmphasis", hero_description: "#settingHeroDescription", hero_image_url: "#settingHeroImage" }; const payload = { singleton: true, updated_at: new Date().toISOString() }; Object.entries(fields).forEach(([key, selector]) => { payload[key] = $(selector).value.trim(); }); const { error } = await db.from("site_settings").upsert(payload, { onConflict: "singleton" }); if (error) return toast(error.message, "error"); state.settings = payload; toast("Đã lưu nhận diện storefront.", "success"); }
@@ -188,6 +207,7 @@ async function deleteShop() { if (!state.editingShopId || !window.confirm("Xóa 
 
 function activateView(view) { $$(".admin-nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === view)); $$("[data-admin-view]").forEach((section) => section.classList.toggle("active", section.dataset.adminView === view)); els.viewTitle.textContent = ({ overview: "Tổng quan vận hành", products: "Quản lý sản phẩm", orders: "Quản lý đơn hàng", brand: "Thương hiệu & banner", content: "Nội dung & FAQ", shops: "Gian hàng & đối tác" })[view] || "Command Deck"; }
 function getProduct(id) { return state.products.find((product) => product.id === id); }
+function salesStateBadge(product) { if (product.is_active === false) return '<span class="sale-pill no">PAUSED</span>'; if (Number(product.stock) <= 0) return '<span class="sale-pill no">OUT OF STOCK</span>'; return '<span class="sale-pill yes">SELLING</span>'; }
 function suggestSku() { if (state.editingProductId || $("#productSku").value.trim()) return; const base = normalize($("#productName").value).replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 28).toUpperCase(); if (base) $("#productSku").value = `NXR-${base}`; }
 function updateProductPreview() { const url = $("#productImageUrl").value.trim(); const image = $("#productImagePreview"); const frame = $("#productPreviewFrame"); if (!url) return hideProductPreview(); image.hidden = false; frame.classList.add("has-image"); image.src = url; }
 function hideProductPreview(message = "IMAGE PREVIEW") { const image = $("#productImagePreview"); image.hidden = true; image.removeAttribute("src"); $("#productPreviewFrame").classList.remove("has-image"); $("#productPreviewFrame .preview-empty").innerHTML = `<i class="fa-solid fa-image"></i><br />${escapeHtml(message)}`; }

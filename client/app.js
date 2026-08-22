@@ -177,7 +177,7 @@ function getFilteredProducts() {
 function renderProducts() {
   const products = getFilteredProducts();
   els.productsGrid.setAttribute("aria-busy", "false");
-  els.productCount.textContent = `${products.length.toString().padStart(2, "0")} thiết bị đang khả dụng`;
+  els.productCount.textContent = `${products.length.toString().padStart(2, "0")} thiết bị đang hiển thị`;
   els.productsGrid.innerHTML = products.map(createProductCard).join("");
   els.emptyState.classList.toggle("hidden", products.length > 0);
   renderActiveFilters();
@@ -187,11 +187,14 @@ function createProductCard(product) {
   const discount = calculateDiscount(product);
   const saleBadge = product.is_sale && discount > 0 ? `<span class="sale-badge">-${discount}% SALE</span>` : "";
   const oldPrice = Number(product.original_price) > Number(product.price) ? `<span class="original-price">${formatCurrency(product.original_price)}</span>` : "";
+  const purchasable = canPurchaseProduct(product);
+  const stockState = Number(product.stock) <= 0 ? '<span class="sales-state out"><i class="fa-solid fa-box-open"></i> HẾT HÀNG</span>' : "";
   return `
-    <article class="product-card">
+    <article class="product-card ${purchasable ? "" : "out-of-stock"}">
       <div class="product-image-wrap">
         <img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name)}" loading="eager" fetchpriority="high" />
         ${saleBadge}
+        ${stockState}
         <button class="quick-button" data-action="quick-view" data-product-id="${escapeHtml(product.id)}" type="button" aria-label="Xem nhanh ${escapeHtml(product.name)}"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
       </div>
       <div class="product-content">
@@ -199,7 +202,7 @@ function createProductCard(product) {
         <h3>${escapeHtml(product.name)}</h3>
         <div class="price-row"><strong class="sale-price">${formatCurrency(product.price)}</strong>${oldPrice}</div>
         <div class="product-actions">
-          <button class="button button-primary add-button" data-action="add" data-product-id="${escapeHtml(product.id)}" type="button">Thêm giỏ <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i></button>
+          <button class="button button-primary add-button" data-action="add" data-product-id="${escapeHtml(product.id)}" type="button" ${purchasable ? "" : "disabled"}>${purchasable ? 'Thêm giỏ <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>' : "Hết hàng"}</button>
           <button class="view-button" data-action="quick-view" data-product-id="${escapeHtml(product.id)}" type="button" aria-label="Xem nhanh"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
         </div>
       </div>
@@ -239,6 +242,9 @@ function openQuickView(product) {
   els.quickViewTitle.textContent = product.name;
   els.quickViewDescription.textContent = product.description;
   els.quickViewPrice.innerHTML = `<strong>${formatCurrency(product.price)}</strong>${Number(product.original_price) > Number(product.price) ? `<del>${formatCurrency(product.original_price)}</del>` : ""}`;
+  const purchasable = canPurchaseProduct(product);
+  els.quickViewAdd.disabled = !purchasable;
+  els.quickViewAdd.innerHTML = purchasable ? 'Thêm vào giỏ <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>' : "Hết hàng";
   openModal("quick-view");
 }
 
@@ -251,7 +257,9 @@ function persistCart() { localStorage.setItem("nexora-cart", JSON.stringify(stat
 function getProductById(id) { return state.products.find((product) => String(product.id) === String(id)) || state.cart.find((item) => String(item.id) === String(id)); }
 
 function addToCart(product) {
+  if (!canPurchaseProduct(product)) { showToast("Sản phẩm này hiện đã hết hàng hoặc đang ngừng bán.", "error"); return; }
   const existing = state.cart.find((item) => String(item.id) === String(product.id));
+  if (existing && existing.quantity >= Number(product.stock)) { showToast("Số lượng trong giỏ đã bằng tồn kho hiện có.", "error"); return; }
   if (existing) existing.quantity += 1;
   else state.cart.push({ ...product, quantity: 1 });
   persistCart(); updateCartUI(); showToast(`${product.name} đã được thêm vào giỏ.`, "success");
@@ -260,7 +268,7 @@ function addToCart(product) {
 function handleCartActions(event) {
   const button = event.target.closest("[data-cart-action]"); if (!button) return;
   const productId = button.dataset.productId; const item = state.cart.find((cartItem) => String(cartItem.id) === String(productId)); if (!item) return;
-  if (button.dataset.cartAction === "increase") item.quantity += 1;
+  if (button.dataset.cartAction === "increase") { const current = state.products.find((product) => String(product.id) === String(productId)) || item; if (!canPurchaseProduct(current) || item.quantity >= Number(current.stock)) { showToast("Không thể tăng thêm vì sản phẩm đã hết hàng.", "error"); return; } item.quantity += 1; }
   if (button.dataset.cartAction === "decrease") { item.quantity -= 1; if (item.quantity <= 0) state.cart = state.cart.filter((cartItem) => String(cartItem.id) !== String(productId)); }
   if (button.dataset.cartAction === "remove") state.cart = state.cart.filter((cartItem) => String(cartItem.id) !== String(productId));
   persistCart(); updateCartUI();
@@ -281,6 +289,7 @@ function updateCartUI() {
 }
 
 function cartTotal() { return state.cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0); }
+function canPurchaseProduct(product) { return Boolean(product) && product.is_active !== false && Number(product.stock) > 0; }
 function openCart() { els.overlay.hidden = false; els.cartDrawer.classList.add("open"); els.cartDrawer.setAttribute("aria-hidden", "false"); document.body.classList.add("no-scroll"); }
 function closeCart() { els.overlay.hidden = true; els.cartDrawer.classList.remove("open"); els.cartDrawer.setAttribute("aria-hidden", "true"); if (![els.authModal, els.quickViewModal, els.qrModal].some((modal) => !modal.hidden)) document.body.classList.remove("no-scroll"); }
 
