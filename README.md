@@ -59,6 +59,12 @@ pnpm build
 pnpm start
 ```
 
+### Triển khai trên static hosting
+
+Sau khi chạy `pnpm build`, hãy đặt **publish directory** của host thành `dist/public`. Thư mục này chứa `index.html` và `admin.html` đã được Vite đóng gói sẵn, nên đây là lựa chọn khuyến nghị cho Netlify, Cloudflare Pages, GitHub Pages hoặc các host tĩnh tương tự.
+
+Project cũng có thêm `index.html` ở **root repository**. File này chuyển tiếp về `client/` để các host đơn giản chỉ tìm `index.html` ở root vẫn nhận diện được storefront source. Khi host có bước build, vẫn nên ưu tiên publish `dist/public` để nhận asset đã tối ưu và entrypoint quản trị đầy đủ.
+
 | Lệnh | Mục đích |
 | --- | --- |
 | `pnpm dev` | Chạy Vite development server có hot reload. |

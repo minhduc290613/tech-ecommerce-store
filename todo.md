@@ -23,3 +23,9 @@
 - [x] Tổng hợp cấu trúc source, các SQL script và các cấu hình cần thiết.
 - [x] Viết README hướng dẫn cài đặt, cấu hình, vận hành và khắc phục lỗi cơ bản.
 - [x] Lưu README vào phiên bản production.
+
+## Tương thích static hosting
+
+- [x] Kiểm tra entrypoint index.html hiện có và output build.
+- [x] Thêm index.html ở root repository để host tĩnh tự nhận diện storefront.
+- [x] Xác nhận build vẫn tạo đúng storefront và trang quản trị.
