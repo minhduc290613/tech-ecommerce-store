@@ -37,3 +37,9 @@
 - [x] Xây dựng trang nội dung, FAQ, bảo mật, điều khoản và danh mục gian hàng.
 - [x] Mở rộng Command Deck để quản trị nhận diện, banner, FAQ và nội dung sàn.
 - [x] Kiểm thử các trang và hướng dẫn vận hành phần quản trị nội dung.
+
+## Quản lý catalog
+
+- [x] Rà soát biểu mẫu hiện tại và bổ sung các trường thông tin sản phẩm cần thiết.
+- [x] Hoàn thiện tạo mới, chỉnh sửa, xóa và hiển thị preview ảnh sản phẩm.
+- [x] Kiểm thử build và luồng quản lý catalog trong Command Deck.
