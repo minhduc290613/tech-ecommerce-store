@@ -57,7 +57,7 @@ function bindEvents() {
     renderOrders();
   });
   els.paymentFilter.addEventListener("change", () => { state.paymentFilter = els.paymentFilter.value; renderOrders(); });
-  els.ordersBody.addEventListener("click", (event) => { const button = event.target.closest("[data-edit-order]"); if (button) openOrderModal(getOrder(button.dataset.editOrder)); });
+  els.ordersBody.addEventListener("click", (event) => { const paymentButton = event.target.closest("[data-payment-action]"); if (paymentButton) { updatePaymentStatus(paymentButton.dataset.orderId, paymentButton.dataset.paymentAction); return; } const button = event.target.closest("[data-edit-order]"); if (button) openOrderModal(getOrder(button.dataset.editOrder)); });
   els.refreshOrders.addEventListener("click", loadData);
   $("#orderForm").addEventListener("submit", saveOrder);
   els.settingsForm.addEventListener("submit", saveSettings);
@@ -103,7 +103,7 @@ async function loadData() {
   setTableLoading();
   const [productsResult, ordersResult, settingsResult, pagesResult, faqsResult, shopsResult] = await Promise.all([
     db.from("products").select("*").order("created_at", { ascending: false }),
-    db.from("orders").select("id,order_number,user_id,total_amount,status,payment_method,payment_note,customer_name,customer_phone,shipping_address,shipping_note,fulfillment_status,carrier,tracking_code,admin_note,fulfillment_updated_at,delivered_at,created_at,updated_at,order_items(product_name,unit_price,quantity,subtotal)").order("created_at", { ascending: false }),
+    db.from("orders").select("id,order_number,user_id,total_amount,status,payment_method,payment_note,payment_confirmed_at,payment_confirmation_note,zalo_confirmation_requested_at,customer_name,customer_phone,shipping_address,shipping_note,fulfillment_status,carrier,tracking_code,admin_note,fulfillment_updated_at,delivered_at,created_at,updated_at,order_items(product_name,unit_price,quantity,subtotal)").order("created_at", { ascending: false }),
     db.from("site_settings").select("*").eq("singleton", true).maybeSingle(),
     db.from("site_pages").select("*").order("slug"),
     db.from("faqs").select("*").order("sort_order"),
@@ -144,7 +144,7 @@ function renderOrders() {
 }
 function orderRow(order) {
   const customerName = order.customer_name || shortId(order.user_id); const itemCount = order.order_items?.reduce((sum, item) => sum + Number(item.quantity), 0) || 0;
-  return `<tr><td><b>${escapeHtml(order.order_number)}</b><br /><small class="customer-email">${escapeHtml(order.tracking_code || "Chưa có mã vận đơn")}</small></td><td><span class="order-customer"><b>${escapeHtml(customerName)}</b><small>${escapeHtml(order.customer_phone || "Chưa có số liên hệ")}</small></span></td><td>${formatDate(order.created_at)}</td><td><span class="status-pill status-${escapeHtml(order.status)}">${statusLabel(order.status)}</span></td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td><td><b>${currency(order.total_amount)}</b></td><td>${itemCount} SP</td><td><button class="row-action" data-edit-order="${escapeHtml(order.id)}" aria-label="Chỉnh sửa đơn ${escapeHtml(order.order_number)}"><i class="fa-solid fa-pen"></i></button></td></tr>`;
+  return `<tr><td><b>${escapeHtml(order.order_number)}</b><br /><small class="customer-email">${escapeHtml(order.tracking_code || "Chưa có mã vận đơn")}</small></td><td><span class="order-customer"><b>${escapeHtml(customerName)}</b><small>${escapeHtml(order.customer_phone || "Chưa có số liên hệ")}</small></span></td><td>${formatDate(order.created_at)}</td><td><span class="status-pill status-${escapeHtml(order.status)}">${statusLabel(order.status)}</span></td><td><div class="payment-actions"><button class="payment-action pending ${order.status === "pending_payment" ? "active" : ""}" data-payment-action="pending_payment" data-order-id="${escapeHtml(order.id)}" type="button">Chưa TT</button><button class="payment-action paid ${order.status === "paid" ? "active" : ""}" data-payment-action="paid" data-order-id="${escapeHtml(order.id)}" type="button">Đã TT</button></div></td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td><td><b>${currency(order.total_amount)}</b></td><td>${itemCount} SP</td><td><button class="row-action" data-edit-order="${escapeHtml(order.id)}" aria-label="Chỉnh sửa đơn ${escapeHtml(order.order_number)}"><i class="fa-solid fa-pen"></i></button></td></tr>`;
 }
 
 function renderProducts() {
@@ -156,7 +156,7 @@ function renderProducts() {
 
 function renderSettings() {
   if (!state.settings) return;
-  const map = { "#settingSiteName": "site_name", "#settingTagline": "site_tagline", "#settingLogoUrl": "logo_url", "#settingAnnouncement": "announcement_text", "#settingEmail": "support_email", "#settingHours": "support_hours", "#settingAddress": "address_text", "#settingHeroKicker": "hero_kicker", "#settingHeroTitle": "hero_title", "#settingHeroEmphasis": "hero_emphasis", "#settingHeroDescription": "hero_description", "#settingHeroImage": "hero_image_url" };
+  const map = { "#settingSiteName": "site_name", "#settingTagline": "site_tagline", "#settingLogoUrl": "logo_url", "#settingAnnouncement": "announcement_text", "#settingEmail": "support_email", "#settingHours": "support_hours", "#settingAddress": "address_text", "#settingZaloPhone": "zalo_phone", "#settingZaloMessage": "zalo_confirmation_message", "#settingHeroKicker": "hero_kicker", "#settingHeroTitle": "hero_title", "#settingHeroEmphasis": "hero_emphasis", "#settingHeroDescription": "hero_description", "#settingHeroImage": "hero_image_url" };
   Object.entries(map).forEach(([selector, key]) => { $(selector).value = state.settings[key] || ""; });
 }
 function fillPageForm() { const page = state.pages.find((item) => item.slug === els.pageSelect.value); $("#pageTitle").value = page?.title || ""; $("#pageSubtitle").value = page?.subtitle || ""; $("#pageContent").value = page?.content || ""; }
@@ -185,7 +185,7 @@ function openOrderModal(order) {
   if (!order) return; state.activeOrderId = order.id; $("#orderModalTitle").textContent = `Đơn ${order.order_number}`;
   $("#orderId").value = order.id; $("#orderNumber").value = order.order_number; $("#orderPaymentStatus").value = order.status;
   $("#orderCustomerName").value = order.customer_name || ""; $("#orderCustomerPhone").value = order.customer_phone || ""; $("#orderShippingAddress").value = order.shipping_address || ""; $("#orderShippingNote").value = order.shipping_note || "";
-  $("#orderFulfillmentStatus").value = order.fulfillment_status || "unfulfilled"; $("#orderCarrier").value = order.carrier || ""; $("#orderTrackingCode").value = order.tracking_code || ""; $("#orderAdminNote").value = order.admin_note || "";
+  $("#orderPaymentConfirmationNote").value = order.payment_confirmation_note || ""; $("#orderFulfillmentStatus").value = order.fulfillment_status || "unfulfilled"; $("#orderCarrier").value = order.carrier || ""; $("#orderTrackingCode").value = order.tracking_code || ""; $("#orderAdminNote").value = order.admin_note || "";
   $("#orderItemsPreview").innerHTML = order.order_items?.length ? order.order_items.map((item) => `<div class="order-item-line"><span>${escapeHtml(item.product_name)} × ${item.quantity}</span><strong>${currency(item.subtotal)}</strong></div>`).join("") : '<div class="order-item-line"><span>Chưa có chi tiết sản phẩm</span></div>';
   openModal("order");
 }
@@ -226,8 +226,15 @@ async function updateSalesState(productId, action) {
   Object.assign(product, payload); renderProducts(); renderMetrics(); toast(confirmation, "success");
 }
 async function updateOrderStatus(event) { const select = event.target.closest("[data-order-id]"); if (!select) return; const { error } = await db.from("orders").update({ status: select.value }).eq("id", select.dataset.orderId); if (error) return toast(error.message, "error"); const order = state.orders.find((item) => item.id === select.dataset.orderId); if (order) order.status = select.value; renderMetrics(); renderOrders(); renderRecentOrders(); toast("Đã cập nhật trạng thái đơn.", "success"); }
+async function updatePaymentStatus(orderId, status) {
+  const order = getOrder(orderId); if (!order || order.status === status) return;
+  const payload = { status, payment_confirmed_at: status === "paid" ? new Date().toISOString() : null, updated_at: new Date().toISOString() };
+  const { error } = await db.from("orders").update(payload).eq("id", orderId);
+  if (error) return toast(error.message, "error");
+  Object.assign(order, payload); renderMetrics(); renderOperationsMetrics(); renderRevenueChart(); renderOrders(); renderRecentOrders(); toast(status === "paid" ? "Đã xác nhận thanh toán." : "Đã chuyển đơn về trạng thái chưa thanh toán.", "success");
+}
 
-async function saveSettings(event) { event.preventDefault(); const fields = { site_name: "#settingSiteName", site_tagline: "#settingTagline", logo_url: "#settingLogoUrl", announcement_text: "#settingAnnouncement", support_email: "#settingEmail", support_hours: "#settingHours", address_text: "#settingAddress", hero_kicker: "#settingHeroKicker", hero_title: "#settingHeroTitle", hero_emphasis: "#settingHeroEmphasis", hero_description: "#settingHeroDescription", hero_image_url: "#settingHeroImage" }; const payload = { singleton: true, updated_at: new Date().toISOString() }; Object.entries(fields).forEach(([key, selector]) => { payload[key] = $(selector).value.trim(); }); const { error } = await db.from("site_settings").upsert(payload, { onConflict: "singleton" }); if (error) return toast(error.message, "error"); state.settings = payload; toast("Đã lưu nhận diện storefront.", "success"); }
+async function saveSettings(event) { event.preventDefault(); const fields = { site_name: "#settingSiteName", site_tagline: "#settingTagline", logo_url: "#settingLogoUrl", announcement_text: "#settingAnnouncement", support_email: "#settingEmail", support_hours: "#settingHours", address_text: "#settingAddress", zalo_phone: "#settingZaloPhone", zalo_confirmation_message: "#settingZaloMessage", hero_kicker: "#settingHeroKicker", hero_title: "#settingHeroTitle", hero_emphasis: "#settingHeroEmphasis", hero_description: "#settingHeroDescription", hero_image_url: "#settingHeroImage" }; const payload = { singleton: true, updated_at: new Date().toISOString() }; Object.entries(fields).forEach(([key, selector]) => { payload[key] = $(selector).value.trim(); }); const { error } = await db.from("site_settings").upsert(payload, { onConflict: "singleton" }); if (error) return toast(error.message, "error"); state.settings = payload; toast("Đã lưu nhận diện storefront.", "success"); }
 async function savePage(event) { event.preventDefault(); const payload = { slug: els.pageSelect.value, title: $("#pageTitle").value.trim(), subtitle: $("#pageSubtitle").value.trim(), content: $("#pageContent").value.trim(), updated_at: new Date().toISOString() }; const { error } = await db.from("site_pages").upsert(payload, { onConflict: "slug" }); if (error) return toast(error.message, "error"); const index = state.pages.findIndex((item) => item.slug === payload.slug); if (index >= 0) state.pages[index] = payload; else state.pages.push(payload); toast("Đã lưu trang thông tin.", "success"); }
 async function saveFaq(event) { event.preventDefault(); const payload = { question: $("#faqQuestion").value.trim(), answer: $("#faqAnswer").value.trim(), sort_order: Number($("#faqSortOrder").value), is_published: $("#faqPublished").checked, updated_at: new Date().toISOString() }; const result = state.editingFaqId ? await db.from("faqs").update(payload).eq("id", state.editingFaqId) : await db.from("faqs").insert(payload); if (result.error) return toast(result.error.message, "error"); closeModal("faq"); toast("Đã lưu FAQ.", "success"); loadData(); }
 async function deleteFaq() { if (!state.editingFaqId || !window.confirm("Xóa FAQ này?")) return; const { error } = await db.from("faqs").delete().eq("id", state.editingFaqId); if (error) return toast(error.message, "error"); closeModal("faq"); toast("Đã xóa FAQ.", "success"); loadData(); }
@@ -236,7 +243,10 @@ async function deleteShop() { if (!state.editingShopId || !window.confirm("Xóa 
 async function saveOrder(event) {
   event.preventDefault(); const order = getOrder(state.activeOrderId); if (!order) return;
   const fulfillment = $("#orderFulfillmentStatus").value;
-  const payload = { status: $("#orderPaymentStatus").value, customer_name: $("#orderCustomerName").value.trim() || null, customer_phone: $("#orderCustomerPhone").value.trim() || null, shipping_address: $("#orderShippingAddress").value.trim() || null, shipping_note: $("#orderShippingNote").value.trim() || null, fulfillment_status: fulfillment, carrier: $("#orderCarrier").value.trim() || null, tracking_code: $("#orderTrackingCode").value.trim() || null, admin_note: $("#orderAdminNote").value.trim() || null, updated_at: new Date().toISOString() };
+  const paymentStatus = $("#orderPaymentStatus").value;
+  const payload = { status: paymentStatus, payment_confirmation_note: $("#orderPaymentConfirmationNote").value.trim() || null, customer_name: $("#orderCustomerName").value.trim() || null, customer_phone: $("#orderCustomerPhone").value.trim() || null, shipping_address: $("#orderShippingAddress").value.trim() || null, shipping_note: $("#orderShippingNote").value.trim() || null, fulfillment_status: fulfillment, carrier: $("#orderCarrier").value.trim() || null, tracking_code: $("#orderTrackingCode").value.trim() || null, admin_note: $("#orderAdminNote").value.trim() || null, updated_at: new Date().toISOString() };
+  if (paymentStatus === "paid" && !order.payment_confirmed_at) payload.payment_confirmed_at = new Date().toISOString();
+  if (paymentStatus === "pending_payment") payload.payment_confirmed_at = null;
   if (fulfillment !== (order.fulfillment_status || "unfulfilled")) payload.fulfillment_updated_at = new Date().toISOString();
   if (fulfillment === "delivered" && !order.delivered_at) payload.delivered_at = new Date().toISOString();
   if (fulfillment !== "delivered") payload.delivered_at = null;
@@ -251,7 +261,7 @@ function salesStateBadge(product) { if (product.is_active === false) return '<sp
 function suggestSku() { if (state.editingProductId || $("#productSku").value.trim()) return; const base = normalize($("#productName").value).replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 28).toUpperCase(); if (base) $("#productSku").value = `NXR-${base}`; }
 function updateProductPreview() { const url = $("#productImageUrl").value.trim(); const image = $("#productImagePreview"); const frame = $("#productPreviewFrame"); if (!url) return hideProductPreview(); image.hidden = false; frame.classList.add("has-image"); image.src = url; }
 function hideProductPreview(message = "IMAGE PREVIEW") { const image = $("#productImagePreview"); image.hidden = true; image.removeAttribute("src"); $("#productPreviewFrame").classList.remove("has-image"); $("#productPreviewFrame .preview-empty").innerHTML = `<i class="fa-solid fa-image"></i><br />${escapeHtml(message)}`; }
-function setTableLoading() { const row = '<tr class="loading-row"><td colspan="8"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang đồng bộ dữ liệu...</td></tr>'; els.productsBody.innerHTML = row; els.ordersBody.innerHTML = row; els.recentOrders.innerHTML = row; }
+function setTableLoading() { const row = '<tr class="loading-row"><td colspan="9"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang đồng bộ dữ liệu...</td></tr>'; els.productsBody.innerHTML = row; els.ordersBody.innerHTML = row; els.recentOrders.innerHTML = row; }
 function emptyRow(message, colspan) { return `<tr class="empty-row"><td colspan="${colspan}">${message}</td></tr>`; }
 function currency(value) { return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(value || 0)); }
 function formatDate(value) { return new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value)); }

@@ -56,3 +56,10 @@
 - [x] Mở rộng schema đơn hàng bằng thông tin khách/giao nhận và trạng thái fulfillment.
 - [x] Xây dựng dashboard biểu đồ, bộ lọc đơn và trình chỉnh sửa đơn hàng.
 - [x] Kiểm thử build và luồng quản trị đơn hàng.
+
+## Xác nhận chuyển khoản Zalo
+
+- [x] Thiết kế thông điệp xác nhận, thông tin Zalo shop và trạng thái thanh toán.
+- [x] Thêm trường cấu hình Zalo và migration trạng thái xác nhận thanh toán.
+- [x] Bổ sung nút nhắn Zalo sau checkout và điều khiển đã/chưa thanh toán cho admin.
+- [x] Kiểm thử build cùng luồng thanh toán cập nhật.

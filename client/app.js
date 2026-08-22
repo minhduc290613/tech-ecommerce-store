@@ -24,7 +24,7 @@ const LOCAL_DEMO_PRODUCTS = [
   { id: "demo-5", name: "Apex Station 16", category: "Laptop", description: "Laptop hiệu năng sáng tạo với màn hình 16 inch, RAM 32GB, SSD 1TB và card đồ họa rời.", image_url: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=85", price: 32990000, original_price: 32990000, stock: 8, is_sale: false, featured: false },
   { id: "demo-6", name: "NEXORA Flux 65 Mechanical", category: "Phụ kiện", description: "Bàn phím cơ 65% kết nối ba chế độ, switch tuyến tính và đèn nền RGB tùy biến.", image_url: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=900&q=85", price: 1690000, original_price: 2490000, stock: 32, is_sale: true, featured: false },
 ];
-const DEFAULT_SETTINGS = { site_name: "NEXORA", site_tagline: "Thiết bị đúng chuẩn.\nMức giá đúng thời điểm.", announcement_text: "Freeship toàn quốc cho đơn từ 1.500.000đ", support_email: "support@nexora.vn", support_hours: "Thứ 2 — Thứ 7 / 09:00–18:00", address_text: "Việt Nam", logo_url: "/manus-storage/nexora-logo_3c03446b.png", hero_kicker: "CURATED TECH / 2026", hero_title: "Thiết bị đúng chuẩn.", hero_emphasis: "Mức giá đúng thời điểm.", hero_description: "Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.", hero_image_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg" };
+const DEFAULT_SETTINGS = { site_name: "NEXORA", site_tagline: "Thiết bị đúng chuẩn.\nMức giá đúng thời điểm.", announcement_text: "Freeship toàn quốc cho đơn từ 1.500.000đ", support_email: "support@nexora.vn", support_hours: "Thứ 2 — Thứ 7 / 09:00–18:00", address_text: "Việt Nam", zalo_phone: "", zalo_confirmation_message: "Tôi đã chuyển khoản đơn {order_number} với số tiền {total}. Nhờ shop xác nhận giúp tôi.", logo_url: "/manus-storage/nexora-logo_3c03446b.png", hero_kicker: "CURATED TECH / 2026", hero_title: "Thiết bị đúng chuẩn.", hero_emphasis: "Mức giá đúng thời điểm.", hero_description: "Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.", hero_image_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg" };
 const DEFAULT_FAQS = [{ question: "Tôi có cần tạo tài khoản để đặt hàng không?", answer: "Bạn có thể xem catalog mà không cần đăng nhập. Để tạo đơn hàng và đồng bộ thanh toán, bạn cần đăng nhập bằng email." }, { question: "Giá sản phẩm có thể thay đổi không?", answer: "Giá và ưu đãi có thể thay đổi khi chương trình kết thúc hoặc tồn kho được cập nhật." }, { question: "Làm thế nào để thanh toán đơn hàng?", answer: "Sau khi tạo đơn, hãy quét VietQR hoặc MoMo và kiểm tra đúng mã đơn, số tiền trước khi xác nhận." }, { question: "Tôi muốn đổi trả hoặc bảo hành thì làm gì?", answer: "Gửi mã đơn, mô tả và hình ảnh liên quan đến kênh hỗ trợ để được hướng dẫn theo chính sách công bố." }];
 const DEFAULT_SHOPS = [{ name: "NEXORA Select", category: "Công nghệ tuyển chọn", description: "Thiết bị chính hãng, phụ kiện thiết yếu và các ưu đãi theo mùa.", banner_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg", is_verified: true }, { name: "Nova Mobile", category: "Điện thoại", description: "Thiết bị di động, phụ kiện bảo vệ và tư vấn lựa chọn theo nhu cầu.", banner_url: "/manus-storage/nexora-phone-category_b50b5ab7.jpg", is_verified: true }, { name: "Orion Compute", category: "Laptop", description: "Laptop và giải pháp làm việc di động cho học tập, sáng tạo và doanh nghiệp nhỏ.", banner_url: "/manus-storage/nexora-laptop-category_9690fafd.jpg", is_verified: true }];
 
@@ -51,7 +51,7 @@ const els = {
   cartButton: $("#cartButton"), cartDrawer: $("#cartDrawer"), cartBadge: $("#cartBadge"), cartItemLabel: $("#cartItemLabel"), cartItems: $("#cartItems"), cartTotal: $("#cartTotal"), checkoutButton: $("#checkoutButton"),
   overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authPassword: $("#authPassword"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authHelper: $("#authHelper"),
   quickViewModal: $("#quickViewModal"), quickViewImage: $("#quickViewImage"), quickViewCategory: $("#quickViewCategory"), quickViewTitle: $("#quickViewTitle"), quickViewDescription: $("#quickViewDescription"), quickViewPrice: $("#quickViewPrice"), quickViewAdd: $("#quickViewAdd"),
-  qrModal: $("#qrModal"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), faqList: $("#faqList"),
+  qrModal: $("#qrModal"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), faqList: $("#faqList"),
 };
 
 document.addEventListener("DOMContentLoaded", initializeApp);
@@ -125,6 +125,8 @@ function bindEvents() {
     if (state.lastOrder) showQRState("Không tải được QR. Hãy kiểm tra Internet và thông tin nhận tiền trong app.js.");
   });
   els.qrImage.addEventListener("load", hideQRState);
+  els.zaloConfirmLink.addEventListener("click", markZaloConfirmationRequested);
+  els.copyZaloMessage.addEventListener("click", copyZaloMessage);
 
   document.addEventListener("keydown", (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); els.searchInput.focus(); }
@@ -156,7 +158,7 @@ async function loadMarketplaceCMS() {
   }
   applySettings(); renderFAQs(); renderShops();
 }
-function applySettings() { const s = state.settings; document.title = `${s.site_name} Tech Store | ${s.hero_title}`; $("#announcementText").textContent = s.announcement_text; $("#heroKicker").textContent = s.hero_kicker; $("#heroTitlePlain").textContent = s.hero_title; $("#heroTitleEmphasis").textContent = s.hero_emphasis; $("#heroDescription").textContent = s.hero_description; $("#footerTagline").innerHTML = escapeHtml(s.site_tagline).replace(/\n/g, "<br />"); $("#footerSupportEmail").textContent = s.support_email; $("#footerSupportEmail").href = `mailto:${s.support_email}`; $("#footerSupportHours").textContent = s.support_hours; $("#footerAddress").textContent = s.address_text; if (s.hero_image_url) $("#heroImage").src = s.hero_image_url; $$("[data-site-logo]").forEach((img) => { if (s.logo_url) img.src = s.logo_url; }); $$("[data-site-name]").forEach((item) => item.textContent = s.site_name); }
+function applySettings() { const s = state.settings; document.title = `${s.site_name} Tech Store | ${s.hero_title}`; $("#announcementText").textContent = s.announcement_text; $("#heroKicker").textContent = s.hero_kicker; $("#heroTitlePlain").textContent = s.hero_title; $("#heroTitleEmphasis").textContent = s.hero_emphasis; $("#heroDescription").textContent = s.hero_description; $("#footerTagline").innerHTML = escapeHtml(s.site_tagline).replace(/\n/g, "<br />"); $("#footerSupportEmail").textContent = s.support_email; $("#footerSupportEmail").href = `mailto:${s.support_email}`; $("#footerSupportHours").textContent = s.support_hours; $("#footerAddress").textContent = s.address_text; if (s.hero_image_url) $("#heroImage").src = s.hero_image_url; $$("[data-site-logo]").forEach((img) => { if (s.logo_url) img.src = s.logo_url; }); $$("[data-site-name]").forEach((item) => item.textContent = s.site_name); renderZaloConfirmation(); }
 function renderFAQs() { els.faqList.innerHTML = state.faqs.map((faq, index) => `<details class="faq-item" ${index === 0 ? "open" : ""}><summary><span>${escapeHtml(faq.question)}</span><i class="fa-solid fa-plus" aria-hidden="true"></i></summary><p>${escapeHtml(faq.answer)}</p></details>`).join(""); }
 function renderShops() { els.shopsGrid.innerHTML = state.shops.map((shop) => `<article class="shop-card"><div class="shop-card-image">${shop.banner_url ? `<img src="${escapeHtml(shop.banner_url)}" alt="" loading="lazy" />` : ""}<span>${escapeHtml(shop.category)}</span></div><div class="shop-card-body"><div class="shop-card-title"><h3>${escapeHtml(shop.name)}</h3>${shop.is_verified ? '<i class="fa-solid fa-circle-check" aria-label="Gian hàng đã xác minh"></i>' : ""}</div><p>${escapeHtml(shop.description)}</p><a href="/info.html?page=seller-guide">Khám phá gian hàng <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div></article>`).join(""); }
 function renderLoadingCards() {
@@ -372,7 +374,7 @@ function updatePaymentQR() {
   if (!state.lastOrder) return;
   $$("[data-payment-method]").forEach((button) => button.classList.toggle("active", button.dataset.paymentMethod === state.activePaymentMethod));
   const { number, total } = state.lastOrder; const content = encodeURIComponent(number); const transferNote = `${number} thanh toan NEXORA`;
-  els.qrOrderNumber.textContent = number; els.qrTotal.textContent = formatCurrency(total); els.qrContent.textContent = number;
+  els.qrOrderNumber.textContent = number; els.qrTotal.textContent = formatCurrency(total); els.qrContent.textContent = number; renderZaloConfirmation();
   if (state.activePaymentMethod === "vietqr") {
     if (!isPaymentConfigured("vietqr")) { showQRState("Cần điền mã ngân hàng, số tài khoản và tên người nhận thật trong PAYMENT_CONFIG."); return; }
     els.qrImage.hidden = false;
@@ -391,6 +393,25 @@ function updatePaymentQR() {
 function isPaymentConfigured(method) {
   const values = method === "vietqr" ? [PAYMENT_CONFIG.bankId, PAYMENT_CONFIG.accountNumber, PAYMENT_CONFIG.accountName] : [PAYMENT_CONFIG.momoPhone];
   return values.every((value) => !PLACEHOLDER_PAYMENT_VALUES.has(String(value).trim()));
+}
+function renderZaloConfirmation() {
+  if (!state.lastOrder) return;
+  const phone = normalizeZaloPhone(state.settings.zalo_phone); const configured = Boolean(phone);
+  const message = String(state.settings.zalo_confirmation_message || DEFAULT_SETTINGS.zalo_confirmation_message).replaceAll("{order_number}", state.lastOrder.number).replaceAll("{total}", formatCurrency(state.lastOrder.total));
+  els.zaloConfirmation.dataset.configured = String(configured);
+  els.zaloConfirmationText.textContent = configured ? `Đã chuyển khoản? Nhắn Zalo cho shop kèm nội dung: “${message}”` : "Shop chưa cấu hình số Zalo. Vui lòng lưu mã đơn và liên hệ qua email hỗ trợ để xác nhận.";
+  els.zaloConfirmLink.href = configured ? `https://zalo.me/${phone}` : "#"; els.zaloConfirmLink.setAttribute("aria-disabled", String(!configured)); els.copyZaloMessage.dataset.message = message;
+}
+function normalizeZaloPhone(value) { const digits = String(value || "").replace(/\D/g, ""); if (!digits) return ""; return digits.startsWith("0") ? `84${digits.slice(1)}` : digits; }
+async function markZaloConfirmationRequested(event) {
+  if (!normalizeZaloPhone(state.settings.zalo_phone)) { event.preventDefault(); showToast("Shop chưa cấu hình số Zalo để xác nhận.", "error"); return; }
+  if (!db || !state.user || !state.lastOrder) return;
+  await db.from("orders").update({ zalo_confirmation_requested_at: new Date().toISOString() }).eq("id", state.lastOrder.id).eq("user_id", state.user.id);
+}
+async function copyZaloMessage() {
+  const message = els.copyZaloMessage.dataset.message || ""; if (!message) return;
+  try { await navigator.clipboard.writeText(message); showToast("Đã sao chép nội dung. Hãy dán vào Zalo để nhắn shop.", "success"); }
+  catch { showToast("Không thể sao chép tự động. Hãy dùng mã đơn hiển thị trong phần thanh toán.", "error"); }
 }
 function resetQRPreview() { showQRState("Cần cấu hình phương thức nhận tiền trong app.js."); }
 function showQRState(message) { els.qrImage.removeAttribute("src"); els.qrImage.hidden = true; els.qrImage.closest(".qr-image-wrap").classList.add("has-state"); els.qrStateMessage.textContent = message; els.qrState.hidden = false; }

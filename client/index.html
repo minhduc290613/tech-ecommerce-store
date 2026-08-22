@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="/marketplace-refinement.css" />
     <link rel="stylesheet" href="/hero-stability.css" />
     <link rel="stylesheet" href="/sales-state.css" />
+    <link rel="stylesheet" href="/payment-confirmation.css" />
   </head>
   <body>
     <a class="skip-link" href="#products">Đi tới danh sách sản phẩm</a>
@@ -257,6 +258,7 @@
         <div class="qr-image-wrap"><img id="qrImage" src="" alt="Mã QR thanh toán" /><div class="qr-state" id="qrState" role="status" hidden><i class="fa-solid fa-qrcode" aria-hidden="true"></i><strong>Chưa thể tạo QR</strong><span id="qrStateMessage">Cần cấu hình phương thức nhận tiền trong app.js.</span></div><span class="qr-corner top-left"></span><span class="qr-corner top-right"></span><span class="qr-corner bottom-left"></span><span class="qr-corner bottom-right"></span></div>
         <div class="payment-info"><div><span>Số tiền</span><strong id="qrTotal">0đ</strong></div><div><span>Nội dung</span><strong id="qrContent">NXR-000000</strong></div></div>
         <p class="payment-instruction" id="paymentInstruction">Mở ứng dụng ngân hàng, quét VietQR và kiểm tra đúng số tiền trước khi xác nhận.</p>
+        <div class="zalo-confirmation" id="zaloConfirmation" data-configured="false"><div class="zalo-confirmation-head"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i><span>Đã chuyển khoản? Xác nhận cùng shop</span></div><p id="zaloConfirmationText">Sau khi chuyển khoản, hãy nhắn Zalo cho shop kèm mã đơn để được kiểm tra nhanh.</p><div class="zalo-confirmation-actions"><a id="zaloConfirmLink" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-comment" aria-hidden="true"></i> Nhắn Zalo cho shop</a><button id="copyZaloMessage" type="button"><i class="fa-regular fa-copy" aria-hidden="true"></i> Sao chép</button></div></div>
         <button class="button button-quiet close-qr-action" data-close="qr" type="button">Tôi sẽ thanh toán sau</button>
       </div>
     </section>
