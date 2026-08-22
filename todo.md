@@ -17,3 +17,9 @@
 - [x] Mở rộng SQL schema bằng bảng admin, chính sách quyền và script cấp admin.
 - [x] Xây dựng trang quản trị sản phẩm và đơn hàng có kiểm soát truy cập.
 - [x] Kiểm thử giao diện quản trị và soạn hướng dẫn tạo admin an toàn.
+
+## Tài liệu dự án
+
+- [x] Tổng hợp cấu trúc source, các SQL script và các cấu hình cần thiết.
+- [x] Viết README hướng dẫn cài đặt, cấu hình, vận hành và khắc phục lỗi cơ bản.
+- [x] Lưu README vào phiên bản production.
