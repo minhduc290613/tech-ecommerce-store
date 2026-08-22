@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" referrerpolicy="no-referrer" />
     <link rel="icon" type="image/png" href="/manus-storage/nexora-logo_3c03446b.png" />
     <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/marketplace-refinement.css" />
   </head>
   <body>
     <a class="skip-link" href="#products">Đi tới danh sách sản phẩm</a>
@@ -22,7 +23,7 @@
 
     <div class="announcement-bar">
       <div class="site-frame announcement-content">
-        <span><i class="fa-solid fa-bolt" aria-hidden="true"></i> Freeship toàn quốc cho đơn từ 1.500.000đ</span>
+          <span><i class="fa-solid fa-bolt" aria-hidden="true"></i> <span id="announcementText">Freeship toàn quốc cho đơn từ 1.500.000đ</span></span>
         <span class="announcement-status"><span class="pulse-dot"></span> Storefront online</span>
       </div>
     </div>
@@ -30,14 +31,14 @@
     <header class="site-header" id="top">
       <div class="site-frame header-inner">
         <a class="brand" href="#top" aria-label="NEXORA Tech Store — Trang chủ">
-          <img src="/manus-storage/nexora-logo_3c03446b.png" alt="Biểu tượng NEXORA" />
-          <span>NEX<span>O</span>RA</span>
+          <img data-site-logo src="/manus-storage/nexora-logo_3c03446b.png" alt="Biểu tượng NEXORA" />
+          <span data-site-name>NEXORA</span>
         </a>
 
         <nav class="desktop-nav" aria-label="Điều hướng chính">
           <a href="#products">Khám phá</a>
           <a href="#flash-sale">Flash Sale</a>
-          <a href="#categories">Danh mục</a>
+          <a href="#categories">Danh mục</a><a href="#shops">Gian hàng</a><a href="#help">Trợ giúp</a>
         </nav>
 
         <form class="header-search" id="headerSearch" role="search">
@@ -67,7 +68,7 @@
       <nav class="mobile-nav" id="mobileNav" aria-label="Điều hướng di động">
         <a href="#products">Khám phá sản phẩm</a>
         <a href="#flash-sale">Flash Sale</a>
-        <a href="#categories">Danh mục</a>
+        <a href="#categories">Danh mục</a><a href="#shops">Gian hàng</a><a href="#help">Trợ giúp</a>
       </nav>
       <form class="mobile-search" id="mobileSearchForm" role="search">
         <label class="sr-only" for="mobileSearchInput">Tìm kiếm thiết bị</label>
@@ -80,9 +81,9 @@
       <section class="hero-section" aria-labelledby="heroTitle">
         <div class="site-frame hero-layout">
           <div class="hero-copy">
-            <div class="eyebrow"><span></span> CURATED TECH / 2026</div>
-            <h1 id="heroTitle">Thiết bị đúng chuẩn.<br /><em>Mức giá đúng thời điểm.</em></h1>
-            <p>Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.</p>
+            <div class="eyebrow"><span></span> <span id="heroKicker">CURATED TECH / 2026</span></div>
+            <h1 id="heroTitle"><span id="heroTitlePlain">Thiết bị đúng chuẩn.</span><br /><em id="heroTitleEmphasis">Mức giá đúng thời điểm.</em></h1>
+            <p id="heroDescription">Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.</p>
             <div class="hero-actions">
               <a class="button button-primary" href="#products">Khám phá ưu đãi <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
               <a class="button button-quiet" href="#flash-sale">Xem Flash Sale <i class="fa-solid fa-bolt" aria-hidden="true"></i></a>
@@ -94,7 +95,7 @@
             </dl>
           </div>
           <div class="hero-visual">
-            <img src="/manus-storage/nexora-hero-tech_47c6b78f.jpg" alt="Laptop, điện thoại và tai nghe trên nền studio công nghệ tối" />
+            <img id="heroImage" src="/manus-storage/nexora-hero-tech_47c6b78f.jpg" alt="Laptop, điện thoại và tai nghe trên nền studio công nghệ tối" />
             <div class="hero-panel hero-panel-top"><span class="panel-label">SIGNAL STATUS</span><strong>SYNCED</strong><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i></div>
             <div class="hero-panel hero-panel-bottom"><span class="panel-label">NEXT DROP</span><strong>00:00:00</strong><span class="tiny-dot"></span></div>
           </div>
@@ -182,6 +183,12 @@
         </div>
       </section>
 
+      <section class="marketplace-section" id="shops" aria-labelledby="shopsTitle"><div class="site-frame"><div class="section-heading marketplace-heading"><div><span class="section-index">03 / STOREFRONTS</span><h2 id="shopsTitle">Gian hàng<br /><em>đang được xác minh.</em></h2></div><p>Khám phá các không gian công nghệ theo nhu cầu, có mô tả hoạt động và đầu mối hỗ trợ rõ ràng.</p></div><div class="shops-grid" id="shopsGrid" aria-live="polite"><div class="loading-card"></div><div class="loading-card"></div><div class="loading-card"></div></div><a class="text-link marketplace-link" href="/info.html?page=seller-guide">Tìm hiểu về tiêu chuẩn gian hàng <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div></section>
+
+      <section class="help-section" id="help" aria-labelledby="helpTitle"><div class="site-frame help-layout"><div class="help-copy"><span class="section-index">04 / HELP DESK</span><h2 id="helpTitle">Câu hỏi có<br /><em>tín hiệu rõ ràng.</em></h2><p>Thông tin về tài khoản, thanh toán và hỗ trợ sau đơn được tập hợp ở một nơi.</p><a class="button button-quiet" href="/info.html?page=contact">Đến trung tâm hỗ trợ <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div><div class="faq-list" id="faqList" aria-live="polite"></div></div></section>
+
+      <section class="information-section" aria-labelledby="infoSectionTitle"><div class="site-frame"><div class="section-heading compact-heading"><div><span class="section-index">05 / TRUST CENTER</span><h2 id="infoSectionTitle">Mua sắm với<br />thông tin rõ ràng.</h2></div><p>Các chính sách và hướng dẫn được công bố tập trung để bạn xem trước khi giao dịch.</p></div><div class="info-card-grid"><a href="/info.html?page=shipping-returns" class="info-card"><i class="fa-solid fa-truck-fast" aria-hidden="true"></i><span>Giao hàng & đổi trả</span><small>Quy trình và thông tin cần chuẩn bị</small></a><a href="/info.html?page=privacy" class="info-card"><i class="fa-solid fa-user-shield" aria-hidden="true"></i><span>Bảo mật dữ liệu</span><small>Nguyên tắc xử lý tài khoản và đơn hàng</small></a><a href="/info.html?page=terms" class="info-card"><i class="fa-solid fa-file-contract" aria-hidden="true"></i><span>Điều khoản sử dụng</span><small>Các nguyên tắc vận hành nền tảng</small></a><a href="/info.html?page=about" class="info-card"><i class="fa-solid fa-circle-nodes" aria-hidden="true"></i><span>Về NEXORA</span><small>Cam kết về trải nghiệm và minh bạch</small></a></div></div></section>
+
       <section class="service-strip" aria-label="Dịch vụ NEXORA">
         <div class="site-frame service-grid">
           <div><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span><strong>Minh bạch thông tin</strong><small>Mô tả, giá và ưu đãi hiển thị rõ ràng.</small></span></div>
@@ -193,9 +200,10 @@
 
     <footer class="site-footer">
       <div class="site-frame footer-main">
-        <div class="footer-brand"><a class="brand" href="#top"><img src="/manus-storage/nexora-logo_3c03446b.png" alt="" /><span>NEX<span>O</span>RA</span></a><p>Thiết bị đúng chuẩn.<br />Mức giá đúng thời điểm.</p></div>
-        <div class="footer-column"><span class="panel-label">EXPLORE</span><a href="#products">Catalog</a><a href="#flash-sale">Flash Sale</a><a href="#categories">Danh mục</a></div>
-        <div class="footer-column"><span class="panel-label">SUPPORT</span><a href="mailto:support@nexora.vn">support@nexora.vn</a><a href="/admin.html">Quản trị cửa hàng</a><span>Thứ 2 — Thứ 7 / 09:00–18:00</span><span>Việt Nam</span></div>
+        <div class="footer-brand"><a class="brand" href="#top"><img data-site-logo src="/manus-storage/nexora-logo_3c03446b.png" alt="" /><span data-site-name>NEXORA</span></a><p id="footerTagline">Thiết bị đúng chuẩn.<br />Mức giá đúng thời điểm.</p></div>
+        <div class="footer-column"><span class="panel-label">EXPLORE</span><a href="#products">Catalog</a><a href="#shops">Gian hàng</a><a href="#flash-sale">Flash Sale</a><a href="#categories">Danh mục</a></div>
+        <div class="footer-column"><span class="panel-label">TRUST</span><a href="/info.html?page=shipping-returns">Giao hàng & đổi trả</a><a href="/info.html?page=privacy">Bảo mật dữ liệu</a><a href="/info.html?page=terms">Điều khoản</a><a href="/info.html?page=contact">Trung tâm hỗ trợ</a></div>
+        <div class="footer-column"><span class="panel-label">SUPPORT</span><a id="footerSupportEmail" href="mailto:support@nexora.vn">support@nexora.vn</a><a href="/admin.html">Quản trị cửa hàng</a><span id="footerSupportHours">Thứ 2 — Thứ 7 / 09:00–18:00</span><span id="footerAddress">Việt Nam</span></div>
       </div>
       <div class="site-frame footer-bottom"><span>© 2026 NEXORA Tech Store</span><span class="footer-signal"><i></i> ALL SYSTEMS ONLINE</span></div>
     </footer>

@@ -29,3 +29,11 @@
 - [x] Kiểm tra entrypoint index.html hiện có và output build.
 - [x] Thêm index.html ở root repository để host tĩnh tự nhận diện storefront.
 - [x] Xác nhận build vẫn tạo đúng storefront và trang quản trị.
+
+## Mở rộng nội dung sàn và CMS
+
+- [x] Xác định các trang nội dung, quy trình bán hàng và mô hình CMS phù hợp.
+- [x] Thêm schema Supabase cho cài đặt site, FAQ, nội dung pháp lý và gian hàng.
+- [x] Xây dựng trang nội dung, FAQ, bảo mật, điều khoản và danh mục gian hàng.
+- [x] Mở rộng Command Deck để quản trị nhận diện, banner, FAQ và nội dung sàn.
+- [x] Kiểm thử các trang và hướng dẫn vận hành phần quản trị nội dung.

@@ -65,3 +65,10 @@ Wordmark `NEXORA` có ký tự **X** tạo từ hai đường tín hiệu cắt 
 
 ### Signature Brand Color
 **NEXORA Signal Cyan — #38BDF8**.
+
+## Style Decisions
+
+1. Mọi product card phải lấy hình thiết bị làm chủ thể chính; graphite chỉ đóng vai trò khung showroom và ánh sáng viền cyan làm tín hiệu định vị.
+2. Signal rail, node dot, capsule kỹ thuật và measurement frame được lặp lại xuyên suốt catalog, FAQ, trust center và trang thông tin, không chỉ giới hạn ở hero.
+3. Cyan `#38BDF8` dành cho hành động, trạng thái live và tín hiệu; violet `#8B5CF6` chỉ dành cho Flash Sale hoặc năng lượng giảm giá.
+4. Nội dung công khai giữ giọng NEXORA ngắn gọn, rõ lợi ích và hướng giao dịch; nội dung triển khai nội bộ chỉ xuất hiện trong khu vực Command Deck hoặc tài liệu dự án.

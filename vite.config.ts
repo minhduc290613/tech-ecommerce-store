@@ -223,6 +223,7 @@ export default defineConfig({
       input: {
         storefront: path.resolve(import.meta.dirname, "client", "index.html"),
         admin: path.resolve(import.meta.dirname, "client", "admin.html"),
+        information: path.resolve(import.meta.dirname, "client", "info.html"),
       },
     },
   },
