@@ -63,3 +63,10 @@
 - [x] Thêm trường cấu hình Zalo và migration trạng thái xác nhận thanh toán.
 - [x] Bổ sung nút nhắn Zalo sau checkout và điều khiển đã/chưa thanh toán cho admin.
 - [x] Kiểm thử build cùng luồng thanh toán cập nhật.
+
+## Thông số kỹ thuật & liên hệ
+
+- [x] Xác định cấu trúc thông số CPU/chip/RAM/ổ cứng và dữ liệu liên hệ cần hiển thị.
+- [x] Thêm migration thông số kỹ thuật và trường liên hệ vào CMS/admin.
+- [x] Hiển thị thông số kỹ thuật trong catalog/quick view cùng liên hệ Zalo chân trang.
+- [x] Kiểm thử build và luồng chỉnh sửa dữ liệu mở rộng.

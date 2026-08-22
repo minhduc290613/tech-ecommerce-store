@@ -101,9 +101,10 @@ Trong **Supabase SQL Editor**, chạy lần lượt theo đúng thứ tự:
 4. supabase-catalog-admin.sql
 5. supabase-order-operations.sql
 6. supabase-payment-confirmation.sql
+7. supabase-product-specifications.sql
 ```
 
-Tệp đầu tạo ba bảng dữ liệu chính cùng policy và function checkout. Tệp sau tạo bảng `admin_users`, function `is_admin()` và các policy riêng cho Command Deck. Tệp thứ ba tạo CMS cho nhận diện website, banner, FAQ, nội dung điều khoản/bảo mật và danh mục gian hàng. Tệp thứ tư bổ sung SKU, thương hiệu, bảo hành, trạng thái hiển thị và policy catalog cho trình quản lý sản phẩm đầy đủ. Tệp thứ năm bổ sung thông tin khách/giao nhận, pipeline fulfillment và các chỉ mục dashboard đơn hàng/doanh thu. Tệp thứ sáu thêm số Zalo shop và dữ liệu xác nhận chuyển khoản.
+Tệp đầu tạo ba bảng dữ liệu chính cùng policy và function checkout. Tệp sau tạo bảng `admin_users`, function `is_admin()` và các policy riêng cho Command Deck. Tệp thứ ba tạo CMS cho nhận diện website, banner, FAQ, nội dung điều khoản/bảo mật và danh mục gian hàng. Tệp thứ tư bổ sung SKU, thương hiệu, bảo hành, trạng thái hiển thị và policy catalog cho trình quản lý sản phẩm đầy đủ. Tệp thứ năm bổ sung thông tin khách/giao nhận, pipeline fulfillment và các chỉ mục dashboard đơn hàng/doanh thu. Tệp thứ sáu thêm số Zalo shop và dữ liệu xác nhận chuyển khoản. Tệp thứ bảy thêm thông số kỹ thuật sản phẩm và hotline/Zalo chân trang.
 
 | Bảng | Nội dung |
 | --- | --- |
