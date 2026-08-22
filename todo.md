@@ -49,3 +49,10 @@
 - [x] Xác định quy tắc bán, ngừng bán và hết hàng cho storefront.
 - [x] Thêm điều khiển trạng thái nhanh trong Command Deck và biểu mẫu sản phẩm.
 - [x] Kiểm thử phản ánh trạng thái trên catalog và giỏ hàng.
+
+## Vận hành đơn hàng và doanh thu
+
+- [x] Xác định chỉ số doanh thu, phân loại trạng thái giao hàng và thông tin đơn cần chỉnh sửa.
+- [x] Mở rộng schema đơn hàng bằng thông tin khách/giao nhận và trạng thái fulfillment.
+- [x] Xây dựng dashboard biểu đồ, bộ lọc đơn và trình chỉnh sửa đơn hàng.
+- [x] Kiểm thử build và luồng quản trị đơn hàng.

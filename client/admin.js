@@ -8,7 +8,7 @@ const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector
 
 const state = {
   user: null, products: [], orders: [], settings: null, pages: [], faqs: [], shops: [],
-  orderFilter: "all", editingProductId: null, editingFaqId: null, editingShopId: null,
+  fulfillmentFilter: "all", paymentFilter: "all", activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null,
 };
 
 const els = {
@@ -16,7 +16,7 @@ const els = {
   operatorName: $("#operatorName"), operatorInitial: $("#operatorInitial"), signOut: $("#adminSignOut"), viewTitle: $("#viewTitle"),
   metricRevenue: $("#metricRevenue"), metricOrders: $("#metricOrders"), metricProducts: $("#metricProducts"), metricPending: $("#metricPending"), metricSale: $("#metricSale"), recentOrders: $("#recentOrdersBody"),
   productCount: $("#adminProductCount"), productSearch: $("#adminProductSearch"), productsBody: $("#productsTableBody"), newProduct: $("#newProductButton"),
-  refreshOrders: $("#refreshOrdersButton"), ordersBody: $("#ordersTableBody"), orderFilters: $("#orderFilters"),
+  refreshOrders: $("#refreshOrdersButton"), ordersBody: $("#ordersTableBody"), fulfillmentFilters: $("#orderFulfillmentFilters"), paymentFilter: $("#orderPaymentFilter"),
   settingsForm: $("#settingsForm"), pageForm: $("#pageForm"), pageSelect: $("#pageSelect"), faqBody: $("#faqTableBody"), faqCount: $("#faqCount"), newFaq: $("#newFaqButton"), shopsBody: $("#shopsTableBody"), newShop: $("#newShopButton"), toastRegion: $("#adminToastRegion"),
 };
 
@@ -50,14 +50,16 @@ function bindEvents() {
   $("#productName").addEventListener("input", suggestSku);
   $("#productImageUrl").addEventListener("input", updateProductPreview);
   $("#productImagePreview").addEventListener("error", () => hideProductPreview("Không tải được ảnh"));
-  els.orderFilters.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-order-filter]"); if (!button) return;
-    state.orderFilter = button.dataset.orderFilter;
-    $$("button", els.orderFilters).forEach((item) => item.classList.toggle("active", item === button));
+  els.fulfillmentFilters.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-fulfillment-filter]"); if (!button) return;
+    state.fulfillmentFilter = button.dataset.fulfillmentFilter;
+    $$("button", els.fulfillmentFilters).forEach((item) => item.classList.toggle("active", item === button));
     renderOrders();
   });
-  els.ordersBody.addEventListener("change", updateOrderStatus);
+  els.paymentFilter.addEventListener("change", () => { state.paymentFilter = els.paymentFilter.value; renderOrders(); });
+  els.ordersBody.addEventListener("click", (event) => { const button = event.target.closest("[data-edit-order]"); if (button) openOrderModal(getOrder(button.dataset.editOrder)); });
   els.refreshOrders.addEventListener("click", loadData);
+  $("#orderForm").addEventListener("submit", saveOrder);
   els.settingsForm.addEventListener("submit", saveSettings);
   els.pageSelect.addEventListener("change", fillPageForm);
   els.pageForm.addEventListener("submit", savePage);
@@ -101,7 +103,7 @@ async function loadData() {
   setTableLoading();
   const [productsResult, ordersResult, settingsResult, pagesResult, faqsResult, shopsResult] = await Promise.all([
     db.from("products").select("*").order("created_at", { ascending: false }),
-    db.from("orders").select("id,order_number,user_id,total_amount,status,payment_method,created_at").order("created_at", { ascending: false }),
+    db.from("orders").select("id,order_number,user_id,total_amount,status,payment_method,payment_note,customer_name,customer_phone,shipping_address,shipping_note,fulfillment_status,carrier,tracking_code,admin_note,fulfillment_updated_at,delivered_at,created_at,updated_at,order_items(product_name,unit_price,quantity,subtotal)").order("created_at", { ascending: false }),
     db.from("site_settings").select("*").eq("singleton", true).maybeSingle(),
     db.from("site_pages").select("*").order("slug"),
     db.from("faqs").select("*").order("sort_order"),
@@ -111,7 +113,7 @@ async function loadData() {
   state.products = productsResult.data || []; state.orders = ordersResult.data || [];
   if (settingsResult.error || pagesResult.error || faqsResult.error || shopsResult.error) toast("CMS chưa sẵn sàng. Hãy chạy supabase-marketplace-cms.sql.", "error");
   state.settings = settingsResult.data || null; state.pages = pagesResult.data || []; state.faqs = faqsResult.data || []; state.shops = shopsResult.data || [];
-  renderMetrics(); renderProducts(); renderOrders(); renderRecentOrders(); renderSettings(); renderFaqs(); renderShops(); fillPageForm();
+  renderMetrics(); renderOperationsMetrics(); renderRevenueChart(); renderProducts(); renderOrders(); renderRecentOrders(); renderSettings(); renderFaqs(); renderShops(); fillPageForm();
 }
 
 function renderMetrics() {
@@ -120,11 +122,30 @@ function renderMetrics() {
   const sale = state.products.filter((product) => product.is_sale).length;
   els.metricRevenue.textContent = currency(revenue); els.metricOrders.textContent = String(state.orders.length).padStart(2, "0"); els.metricProducts.textContent = String(state.products.length).padStart(2, "0"); els.metricPending.textContent = `${pending} đơn chờ thanh toán`; els.metricSale.textContent = `${sale} sản phẩm có ưu đãi`;
 }
-
-function renderRecentOrders() { els.recentOrders.innerHTML = state.orders.slice(0, 5).map(orderRow).join("") || emptyRow("Chưa có đơn hàng nào.", 5); }
-function renderOrders() { const rows = state.orderFilter === "all" ? state.orders : state.orders.filter((order) => order.status === state.orderFilter); els.ordersBody.innerHTML = rows.map(orderRow).join("") || emptyRow("Không có đơn hàng thuộc trạng thái này.", 7); }
-function orderRow(order) { return `<tr><td><b>${escapeHtml(order.order_number)}</b></td><td><span class="customer-email">${escapeHtml(shortId(order.user_id))}</span></td><td>${formatDate(order.created_at)}</td><td>${order.payment_method === "momo" ? "MoMo" : "VietQR"}</td><td><b>${currency(order.total_amount)}</b></td><td><span class="status-pill status-${escapeHtml(order.status)}">${statusLabel(order.status)}</span></td><td><select data-order-id="${escapeHtml(order.id)}">${statusOptions(order.status)}</select></td></tr>`; }
-function statusOptions(current) { return ["pending_payment", "paid", "processing", "completed", "cancelled"].map((status) => `<option value="${status}" ${status === current ? "selected" : ""}>${statusLabel(status)}</option>`).join(""); }
+function renderOperationsMetrics() {
+  const paid = state.orders.filter((order) => ["paid", "processing", "completed"].includes(order.status));
+  const revenue7d = paid.filter((order) => Date.now() - new Date(order.created_at).getTime() <= 7 * 86400000).reduce((sum, order) => sum + Number(order.total_amount), 0);
+  const ready = state.orders.filter((order) => ["preparing", "ready_to_ship"].includes(order.fulfillment_status || "unfulfilled")).length;
+  const delivered = state.orders.filter((order) => (order.fulfillment_status || "unfulfilled") === "delivered").length;
+  $("#opsRevenue7d").textContent = currency(revenue7d); $("#opsPaidOrders").textContent = String(paid.length).padStart(2, "0"); $("#opsReadyToShip").textContent = String(ready).padStart(2, "0"); $("#opsDelivered").textContent = String(delivered).padStart(2, "0");
+}
+function renderRevenueChart() {
+  const days = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - (6 - index)); return { key: date.toISOString().slice(0, 10), label: new Intl.DateTimeFormat("vi-VN", { weekday: "short" }).format(date), value: 0 }; });
+  state.orders.filter((order) => ["paid", "processing", "completed"].includes(order.status)).forEach((order) => { const bucket = days.find((day) => day.key === new Date(order.created_at).toISOString().slice(0, 10)); if (bucket) bucket.value += Number(order.total_amount); });
+  const max = Math.max(1, ...days.map((day) => day.value)); const total = days.reduce((sum, day) => sum + day.value, 0);
+  $("#revenueChart").innerHTML = days.map((day) => `<div class="chart-bar-wrap"><div class="chart-bar ${day.value ? "" : "zero"}" style="height:${Math.max(2, Math.round((day.value / max) * 100))}%" title="${escapeHtml(day.label)}: ${currency(day.value)}"></div><span class="chart-bar-label">${escapeHtml(day.label)}</span></div>`).join("");
+  $("#revenueWindowTotal").textContent = currency(total); $("#revenueWindowCaption").textContent = total ? `Ghi nhận từ ${state.orders.filter((order) => ["paid", "processing", "completed"].includes(order.status)).length} đơn đã xác nhận trong cửa sổ 7 ngày.` : "Chưa có đơn thanh toán trong 7 ngày gần nhất.";
+}
+function renderRecentOrders() { els.recentOrders.innerHTML = state.orders.slice(0, 5).map(compactOrderRow).join("") || emptyRow("Chưa có đơn hàng nào.", 5); }
+function compactOrderRow(order) { return `<tr><td><b>${escapeHtml(order.order_number)}</b></td><td>${formatDate(order.created_at)}</td><td>${order.payment_method === "momo" ? "MoMo" : "VietQR"}</td><td><b>${currency(order.total_amount)}</b></td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td></tr>`; }
+function renderOrders() {
+  const rows = state.orders.filter((order) => (state.fulfillmentFilter === "all" || (order.fulfillment_status || "unfulfilled") === state.fulfillmentFilter) && (state.paymentFilter === "all" || order.status === state.paymentFilter));
+  els.ordersBody.innerHTML = rows.map(orderRow).join("") || emptyRow("Không có đơn hàng thuộc bộ lọc này.", 8);
+}
+function orderRow(order) {
+  const customerName = order.customer_name || shortId(order.user_id); const itemCount = order.order_items?.reduce((sum, item) => sum + Number(item.quantity), 0) || 0;
+  return `<tr><td><b>${escapeHtml(order.order_number)}</b><br /><small class="customer-email">${escapeHtml(order.tracking_code || "Chưa có mã vận đơn")}</small></td><td><span class="order-customer"><b>${escapeHtml(customerName)}</b><small>${escapeHtml(order.customer_phone || "Chưa có số liên hệ")}</small></span></td><td>${formatDate(order.created_at)}</td><td><span class="status-pill status-${escapeHtml(order.status)}">${statusLabel(order.status)}</span></td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td><td><b>${currency(order.total_amount)}</b></td><td>${itemCount} SP</td><td><button class="row-action" data-edit-order="${escapeHtml(order.id)}" aria-label="Chỉnh sửa đơn ${escapeHtml(order.order_number)}"><i class="fa-solid fa-pen"></i></button></td></tr>`;
+}
 
 function renderProducts() {
   const query = normalize(els.productSearch.value);
@@ -160,6 +181,14 @@ function openProductModal(product = null) {
 }
 function openFaqModal(faq = null) { state.editingFaqId = faq?.id || null; $("#faqForm").reset(); $("#deleteFaqButton").classList.toggle("hidden", !faq); $("#faqModalTitle").textContent = faq ? "Chỉnh sửa FAQ" : "Thêm FAQ"; if (faq) { $("#faqId").value = faq.id; $("#faqQuestion").value = faq.question; $("#faqAnswer").value = faq.answer; $("#faqSortOrder").value = faq.sort_order; $("#faqPublished").checked = faq.is_published; } openModal("faq"); }
 function openShopModal(shop = null) { state.editingShopId = shop?.id || null; $("#shopForm").reset(); $("#deleteShopButton").classList.toggle("hidden", !shop); $("#shopModalTitle").textContent = shop ? "Chỉnh sửa gian hàng" : "Thêm gian hàng"; if (shop) { $("#shopId").value = shop.id; $("#shopName").value = shop.name; $("#shopCategory").value = shop.category; $("#shopEmail").value = shop.contact_email || ""; $("#shopDescription").value = shop.description; $("#shopBannerUrl").value = shop.banner_url || ""; $("#shopVerified").checked = shop.is_verified; $("#shopActive").checked = shop.is_active; } openModal("shop"); }
+function openOrderModal(order) {
+  if (!order) return; state.activeOrderId = order.id; $("#orderModalTitle").textContent = `Đơn ${order.order_number}`;
+  $("#orderId").value = order.id; $("#orderNumber").value = order.order_number; $("#orderPaymentStatus").value = order.status;
+  $("#orderCustomerName").value = order.customer_name || ""; $("#orderCustomerPhone").value = order.customer_phone || ""; $("#orderShippingAddress").value = order.shipping_address || ""; $("#orderShippingNote").value = order.shipping_note || "";
+  $("#orderFulfillmentStatus").value = order.fulfillment_status || "unfulfilled"; $("#orderCarrier").value = order.carrier || ""; $("#orderTrackingCode").value = order.tracking_code || ""; $("#orderAdminNote").value = order.admin_note || "";
+  $("#orderItemsPreview").innerHTML = order.order_items?.length ? order.order_items.map((item) => `<div class="order-item-line"><span>${escapeHtml(item.product_name)} × ${item.quantity}</span><strong>${currency(item.subtotal)}</strong></div>`).join("") : '<div class="order-item-line"><span>Chưa có chi tiết sản phẩm</span></div>';
+  openModal("order");
+}
 function openModal(name) { $("#" + name + "Modal").hidden = false; document.body.style.overflow = "hidden"; }
 function closeModal(name) { $("#" + name + "Modal").hidden = true; document.body.style.overflow = ""; }
 
@@ -204,18 +233,30 @@ async function saveFaq(event) { event.preventDefault(); const payload = { questi
 async function deleteFaq() { if (!state.editingFaqId || !window.confirm("Xóa FAQ này?")) return; const { error } = await db.from("faqs").delete().eq("id", state.editingFaqId); if (error) return toast(error.message, "error"); closeModal("faq"); toast("Đã xóa FAQ.", "success"); loadData(); }
 async function saveShop(event) { event.preventDefault(); const name = $("#shopName").value.trim(); const payload = { name, slug: slugify(name), category: $("#shopCategory").value.trim(), contact_email: $("#shopEmail").value.trim() || null, description: $("#shopDescription").value.trim(), banner_url: $("#shopBannerUrl").value.trim() || null, is_verified: $("#shopVerified").checked, is_active: $("#shopActive").checked, updated_at: new Date().toISOString() }; const result = state.editingShopId ? await db.from("shops").update(payload).eq("id", state.editingShopId) : await db.from("shops").insert(payload); if (result.error) return toast(result.error.message, "error"); closeModal("shop"); toast("Đã lưu gian hàng.", "success"); loadData(); }
 async function deleteShop() { if (!state.editingShopId || !window.confirm("Xóa gian hàng này?")) return; const { error } = await db.from("shops").delete().eq("id", state.editingShopId); if (error) return toast(error.message, "error"); closeModal("shop"); toast("Đã xóa gian hàng.", "success"); loadData(); }
+async function saveOrder(event) {
+  event.preventDefault(); const order = getOrder(state.activeOrderId); if (!order) return;
+  const fulfillment = $("#orderFulfillmentStatus").value;
+  const payload = { status: $("#orderPaymentStatus").value, customer_name: $("#orderCustomerName").value.trim() || null, customer_phone: $("#orderCustomerPhone").value.trim() || null, shipping_address: $("#orderShippingAddress").value.trim() || null, shipping_note: $("#orderShippingNote").value.trim() || null, fulfillment_status: fulfillment, carrier: $("#orderCarrier").value.trim() || null, tracking_code: $("#orderTrackingCode").value.trim() || null, admin_note: $("#orderAdminNote").value.trim() || null, updated_at: new Date().toISOString() };
+  if (fulfillment !== (order.fulfillment_status || "unfulfilled")) payload.fulfillment_updated_at = new Date().toISOString();
+  if (fulfillment === "delivered" && !order.delivered_at) payload.delivered_at = new Date().toISOString();
+  if (fulfillment !== "delivered") payload.delivered_at = null;
+  setLoading($("#saveOrderButton"), true, "Đang lưu"); const { error } = await db.from("orders").update(payload).eq("id", order.id); setLoading($("#saveOrderButton"), false);
+  if (error) return toast(error.message, "error"); closeModal("order"); toast("Đã cập nhật đơn hàng.", "success"); await loadData();
+}
 
 function activateView(view) { $$(".admin-nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === view)); $$("[data-admin-view]").forEach((section) => section.classList.toggle("active", section.dataset.adminView === view)); els.viewTitle.textContent = ({ overview: "Tổng quan vận hành", products: "Quản lý sản phẩm", orders: "Quản lý đơn hàng", brand: "Thương hiệu & banner", content: "Nội dung & FAQ", shops: "Gian hàng & đối tác" })[view] || "Command Deck"; }
 function getProduct(id) { return state.products.find((product) => product.id === id); }
+function getOrder(id) { return state.orders.find((order) => order.id === id); }
 function salesStateBadge(product) { if (product.is_active === false) return '<span class="sale-pill no">PAUSED</span>'; if (Number(product.stock) <= 0) return '<span class="sale-pill no">OUT OF STOCK</span>'; return '<span class="sale-pill yes">SELLING</span>'; }
 function suggestSku() { if (state.editingProductId || $("#productSku").value.trim()) return; const base = normalize($("#productName").value).replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 28).toUpperCase(); if (base) $("#productSku").value = `NXR-${base}`; }
 function updateProductPreview() { const url = $("#productImageUrl").value.trim(); const image = $("#productImagePreview"); const frame = $("#productPreviewFrame"); if (!url) return hideProductPreview(); image.hidden = false; frame.classList.add("has-image"); image.src = url; }
 function hideProductPreview(message = "IMAGE PREVIEW") { const image = $("#productImagePreview"); image.hidden = true; image.removeAttribute("src"); $("#productPreviewFrame").classList.remove("has-image"); $("#productPreviewFrame .preview-empty").innerHTML = `<i class="fa-solid fa-image"></i><br />${escapeHtml(message)}`; }
-function setTableLoading() { const row = '<tr class="loading-row"><td colspan="7"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang đồng bộ dữ liệu...</td></tr>'; els.productsBody.innerHTML = row; els.ordersBody.innerHTML = row; els.recentOrders.innerHTML = row; }
+function setTableLoading() { const row = '<tr class="loading-row"><td colspan="8"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang đồng bộ dữ liệu...</td></tr>'; els.productsBody.innerHTML = row; els.ordersBody.innerHTML = row; els.recentOrders.innerHTML = row; }
 function emptyRow(message, colspan) { return `<tr class="empty-row"><td colspan="${colspan}">${message}</td></tr>`; }
 function currency(value) { return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(Number(value || 0)); }
 function formatDate(value) { return new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value)); }
 function statusLabel(status) { return ({ pending_payment: "Chờ thanh toán", paid: "Đã thanh toán", processing: "Đang xử lý", completed: "Hoàn thành", cancelled: "Đã hủy" })[status] || status; }
+function fulfillmentLabel(status) { return ({ unfulfilled: "Chưa giao", preparing: "Đang chuẩn bị", ready_to_ship: "Sắp giao", shipped: "Đang giao", delivered: "Đã giao", returned: "Hoàn hàng" })[status || "unfulfilled"] || status; }
 function shortId(value) { return value ? `${String(value).slice(0, 7)}…` : "—"; }
 function normalize(value) { return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
 function slugify(value) { return normalize(value).replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `item-${Date.now()}`; }
