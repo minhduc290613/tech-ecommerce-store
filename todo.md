@@ -9,4 +9,11 @@
 
 - [x] Kiểm tra HTTP, console và asset của trang chủ production.
 - [x] Xác định thay đổi gây lỗi và áp dụng cách khôi phục an toàn.
-- [ ] Xác minh trang chủ trên production sau khi khắc phục.
+- [x] Xác minh trang chủ trên production sau khi khắc phục.
+
+## Trang quản trị
+
+- [x] Thiết kế quyền admin và chính sách RLS phù hợp với Supabase.
+- [x] Mở rộng SQL schema bằng bảng admin, chính sách quyền và script cấp admin.
+- [x] Xây dựng trang quản trị sản phẩm và đơn hàng có kiểm soát truy cập.
+- [x] Kiểm thử giao diện quản trị và soạn hướng dẫn tạo admin an toàn.

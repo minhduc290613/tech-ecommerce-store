@@ -1,13 +1,11 @@
 /* Circuit Atelier — Vanilla JS storefront logic: Supabase, catalogue, cart and payment signal. */
-"use strict";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 
 // ============================================================================
 // 1) SUPABASE CONFIGURATION
-// Thay hai giá trị dưới đây bằng Project URL và anon public key của bạn.
+// Điền Project URL và anon public key tại supabase-config.js.
 // LƯU Ý: Không bao giờ đặt service_role key vào frontend.
 // ============================================================================
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 
 // Điền thông tin nhận tiền trước khi sử dụng ở môi trường thật.
 const PAYMENT_CONFIG = {
