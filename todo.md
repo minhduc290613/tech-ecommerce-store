@@ -70,3 +70,9 @@
 - [x] Thêm migration thông số kỹ thuật và trường liên hệ vào CMS/admin.
 - [x] Hiển thị thông số kỹ thuật trong catalog/quick view cùng liên hệ Zalo chân trang.
 - [x] Kiểm thử build và luồng chỉnh sửa dữ liệu mở rộng.
+
+## Liên hệ người bán
+
+- [x] Xác định CTA liên hệ người bán và dữ liệu Zalo có thể cấu hình.
+- [x] Thêm liên kết Zalo người bán trên storefront và trường chỉnh sửa trong Command Deck.
+- [x] Kiểm thử liên kết người bán trên website gốc.
