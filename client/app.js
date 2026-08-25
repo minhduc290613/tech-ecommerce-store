@@ -31,6 +31,7 @@ const DEFAULT_SALE_CAMPAIGNS = [{ id: "demo-hunt-cyan", code: "HUNTCYAN10", titl
 
 const validSupabaseConfig = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const db = validSupabaseConfig && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+window.nexoraDb = db;
 
 const state = {
   products: [],
@@ -118,7 +119,7 @@ function bindEvents() {
   els.overlay.addEventListener("click", closeCart);
   $$("[data-close]").forEach((button) => button.addEventListener("click", () => closeSurface(button.dataset.close)));
 
-  els.authButton.addEventListener("click", () => state.user ? signOut() : openModal("auth"));
+  els.authButton.addEventListener("click", () => state.user ? window.dispatchEvent(new CustomEvent("nexora:account-open")) : openModal("auth"));
   $$("[data-auth-mode]").forEach((button) => button.addEventListener("click", () => setAuthMode(button.dataset.authMode)));
   els.authForm.addEventListener("submit", handleAuthSubmit);
   els.quickViewAdd.addEventListener("click", () => { if (state.activeProduct) addToCart(state.activeProduct); });
@@ -385,6 +386,14 @@ async function checkout() {
 
 function openPaymentModal() { state.activePaymentMethod = "vietqr"; updatePaymentQR(); openModal("qr"); }
 async function setPaymentMethod(method) {
+  if (method === "wallet") {
+    if (!db || !state.user || !state.lastOrder) return;
+    const previousMethod = state.activePaymentMethod;
+    state.activePaymentMethod = "wallet"; updatePaymentQR();
+    const { data, error } = await db.rpc("pay_order_with_wallet", { p_order_id: state.lastOrder.id });
+    if (error) { state.activePaymentMethod = previousMethod; updatePaymentQR(); showToast(error.message, "error"); return; }
+    state.lastOrder.total = Number(data.total_amount); updatePaymentQR(); showToast("Đã thanh toán đơn bằng số dư NEXORA.", "success"); return;
+  }
   state.activePaymentMethod = method;
   updatePaymentQR();
   if (!db || !state.user || !state.lastOrder) return;
@@ -396,6 +405,9 @@ function updatePaymentQR() {
   $$("[data-payment-method]").forEach((button) => button.classList.toggle("active", button.dataset.paymentMethod === state.activePaymentMethod));
   const { number, total } = state.lastOrder; const content = encodeURIComponent(number); const transferNote = `${number} thanh toan NEXORA`;
   els.qrOrderNumber.textContent = number; els.qrTotal.textContent = formatCurrency(total); els.qrContent.textContent = number; renderZaloConfirmation();
+  if (state.activePaymentMethod === "wallet") {
+    els.qrImage.hidden = true; showQRState("Đơn đã được thanh toán bằng số dư NEXORA."); els.qrStateMessage.textContent = "Số dư đã được trừ và giao dịch được ghi vào Account Center."; els.paymentInstruction.textContent = "Bạn có thể xem số dư và sổ cái bằng nút tài khoản trên header."; return;
+  }
   if (state.activePaymentMethod === "vietqr") {
     if (!isPaymentConfigured("vietqr")) { showQRState("Cần điền mã ngân hàng, số tài khoản và tên người nhận thật trong PAYMENT_CONFIG."); return; }
     els.qrImage.hidden = false;

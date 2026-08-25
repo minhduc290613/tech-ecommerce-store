@@ -1,0 +1,7 @@
+.account-signout {
+  width: 100%;
+  margin-top: .25rem;
+  border: 1px solid rgba(248, 135, 148, .35);
+  color: #fa8794;
+  background: rgba(111, 20, 39, .16);
+}

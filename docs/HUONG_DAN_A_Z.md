@@ -30,7 +30,7 @@ Tài liệu này hướng dẫn triển khai **NEXORA Tech Store** từ reposito
 | Command Deck | `/admin.html` → `client/admin.html` | Dashboard, sản phẩm, đơn hàng, giao nhận, CMS, FAQ, gian hàng và sale campaign. |
 | Trang thông tin | `/info.html` → `client/info.html` | Điều khoản, bảo mật, giao hàng/đổi trả, giới thiệu và liên hệ. |
 | Database/Auth | Supabase | PostgreSQL, Supabase Auth, RLS, RPC checkout và dữ liệu CMS. |
-| Schema chuẩn | `supabase-unified.sql` | Một file SQL canonical gồm 9 bảng public, policy, RPC, index và seed data. |
+| Schema chuẩn | `supabase-unified.sql` | Một file SQL canonical gồm 15 bảng public, policy, RPC, index, seed data và Account Center. |
 | Media source | GitHub `assets/media` + storage URL | Branch `assets` lưu backup binary; storefront dùng URL storage/CDN thay vì nhét media vào source build. |
 
 Luồng mua hàng tiêu chuẩn là: **khách xem sản phẩm → thêm giỏ localStorage → đăng nhập → tạo đơn qua RPC → nhận QR/chỉ dẫn thanh toán → nhắn Zalo xác nhận (nếu được cấu hình) → admin đối soát và cập nhật đơn**.
@@ -130,11 +130,12 @@ Schema tạo các thành phần sau:
 | Quản trị | `admin_users`, hàm `is_admin()` và policy Command Deck. |
 | CMS | `site_settings`, `site_pages`, `faqs`, `shops`. |
 | Khuyến mại | `sale_campaigns`, mã sale và `create_order_with_sale`. |
-| Bảo mật | RLS, policy catalog công khai, quyền user-own-order và giới hạn RPC checkout. |
+| Account Center | Hồ sơ khách, số dư, sổ cái, cảnh cáo, yêu cầu nạp tiền Zalo và audit log. |
+| Bảo mật | RLS, policy catalog công khai, quyền user-own-order, giới hạn RPC checkout và kiểm tra trạng thái account. |
 
 > **Không chạy 10 SQL migration legacy sau file canonical.** Nếu database đã chạy các migration cũ hoặc đang có đơn hàng thật, đừng chạy lại file unified. Hãy so sánh schema và viết migration nâng cấp riêng để bảo toàn dữ liệu. Xem [Ghi chú migration legacy](LEGACY_MIGRATIONS.md).
 
-Sau khi áp dụng thành công, nên thấy 9 bảng public. Seed mặc định gồm 6 product, 2 campaign, 1 site setting, 6 trang nội dung, 3 FAQ và 3 shop. Hãy thay dữ liệu demo trước khi kinh doanh.
+Sau khi áp dụng thành công, nên thấy 15 bảng public. Seed mặc định gồm 6 product, 2 campaign, 1 site setting, 6 trang nội dung, 3 FAQ và 3 shop. Hãy thay dữ liệu demo trước khi kinh doanh.
 
 ### 4.3 Kiểm tra RLS và checkout
 
@@ -348,6 +349,7 @@ RLS và quyền database cần được kiểm thử cùng nhau: policy quyết 
 | [README](../README.md) | Tổng quan kỹ thuật và lệnh nhanh. |
 | [Quy trình Supabase](SUPABASE.md) | Database, RLS, checkout và cấp admin. |
 | [Thiết lập admin](../ADMIN_SETUP.md) | Quy trình Command Deck ngắn gọn. |
+| [Vận hành Account & Wallet](ACCOUNT_WALLET.md) | Số dư, nạp tiền Zalo, khóa/cảnh cáo và audit log. |
 | [Asset Manifest](../ASSET_MANIFEST.md) | Media backup và checksum. |
 | [Chỉ mục tài liệu](INDEX.md) | Điểm điều hướng toàn bộ Markdown. |
 

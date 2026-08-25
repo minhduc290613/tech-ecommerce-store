@@ -1,8 +1,10 @@
 /* Circuit Atelier Command Deck — RLS-bound marketplace operations and CMS. */
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
+import "./admin-accounts.js";
 
 const configured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const db = configured && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+window.nexoraAdminDb = db;
 const $ = (selector, parent = document) => parent.querySelector(selector);
 const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
@@ -37,7 +39,7 @@ function bindEvents() {
   els.loginForm.addEventListener("submit", login);
   els.signOut.addEventListener("click", signOut);
   mountTechnicalSpecsEditor(); mountContactSettingsFields(); mountSaleAdminUI();
-  $$(".admin-nav button").forEach((button) => button.addEventListener("click", () => activateView(button.dataset.view)));
+  $$(".admin-nav button[data-view]").forEach((button) => button.addEventListener("click", () => activateView(button.dataset.view)));
   $$('[data-view-jump]').forEach((button) => button.addEventListener("click", () => activateView(button.dataset.viewJump)));
   els.newProduct.addEventListener("click", () => openProductModal());
   els.productSearch.addEventListener("input", renderProducts);
@@ -94,6 +96,7 @@ async function verifyAdmin(user) {
   els.operatorName.textContent = user.email || "Admin";
   els.operatorInitial.textContent = (user.email || "A")[0].toUpperCase();
   els.gate.hidden = true; els.app.hidden = false;
+  window.dispatchEvent(new Event("nexora:admin-ready"));
   await loadData();
 }
 

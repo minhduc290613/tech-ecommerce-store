@@ -108,3 +108,13 @@
 - [x] Soạn hướng dẫn triển khai, kết nối và vận hành NEXORA từ A–Z.
 - [x] Rà soát để không công khai secret, tài khoản hay dữ liệu nhạy cảm.
 - [x] Liên kết hướng dẫn mới vào chỉ mục tài liệu và README.
+
+## Quản lý tài khoản, ví và thông báo
+
+- [x] Gỡ Telegram Bot, webhook và tài liệu/secret liên quan theo yêu cầu mới.
+- [x] Khắc phục module tài khoản không hiển thị trên Command Deck sau nâng cấp backend.
+- [x] Thiết kế profile, trạng thái tài khoản, cảnh cáo và sổ cái số dư có audit log.
+- [x] Thêm quản trị khóa/mở khóa, cảnh cáo, điều chỉnh số dư và duyệt yêu cầu nạp tiền.
+- [x] Thêm khu vực tài khoản khách: hồ sơ, đổi email/mật khẩu, số dư và yêu cầu nạp Zalo.
+- [x] Kiểm thử RLS, build, route Command Deck và tài liệu vận hành.
+- [ ] Kiểm thử thủ công luồng nạp tiền/duyệt nạp/thanh toán số dư bằng tài khoản admin và khách thật.

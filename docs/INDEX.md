@@ -7,6 +7,7 @@ Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hà
 | Hiểu nhanh và chạy project | [README](../README.md) | Công nghệ, lệnh local, build, storefront và Command Deck. |
 | Cài đặt và vận hành từ A–Z | [Hướng dẫn public GitHub](HUONG_DAN_A_Z.md) | Hướng dẫn đầy đủ từ clone, Supabase, admin, QR, media, build đến checklist production. |
 | Kết nối/cài đặt cơ sở dữ liệu | [Hướng dẫn Supabase](SUPABASE.md) | Schema canonical, RLS, quy trình áp dụng một lần và xác minh. |
+| Vận hành tài khoản và số dư | [Account & Wallet](ACCOUNT_WALLET.md) | Sổ cái, nạp tiền Zalo, quản trị khách, RLS và quy trình đối soát. |
 | Cấp quyền Command Deck | [Thiết lập admin](../ADMIN_SETUP.md) | Tạo Supabase Auth user và cấp quyền an toàn, không dùng mật khẩu mặc định. |
 | Kiểm kê media GitHub | [Asset Manifest](../ASSET_MANIFEST.md) | Nguồn lưu asset, đường dẫn nhánh `assets` và checksum. |
 | Xem định hướng thiết kế | [Design brief](../ideas.md) | Hệ thống Circuit Atelier và những quyết định giao diện. |

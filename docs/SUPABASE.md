@@ -11,7 +11,7 @@ NEXORA sử dụng một schema canonical duy nhất: [`supabase-unified.sql`](.
 | Bước | Thao tác | Kết quả mong đợi |
 | --- | --- | --- |
 | 1 | Tạo/kết nối Supabase project trống. | Project ở trạng thái hoạt động. |
-| 2 | Áp dụng toàn bộ `supabase-unified.sql` như **một migration DDL**. | Tạo 9 bảng public, function/RPC, index, RLS policy và seed. |
+| 2 | Áp dụng toàn bộ `supabase-unified.sql` như **một migration DDL**. | Tạo 15 bảng public, function/RPC, index, RLS policy, Account Center và seed. |
 | 3 | Bật Email/Password trong Authentication. | Storefront có thể tạo tài khoản/đăng nhập. |
 | 4 | Lấy Project URL và anon/publishable key, điền vào `client/supabase-config.js`. | Storefront và `/admin.html` cùng dùng một project. |
 | 5 | Tạo user rồi cấp quyền trong `admin_users`. | User mở được Command Deck. |
@@ -38,7 +38,7 @@ Việc chạy schema là thay đổi DDL: **không chạy lại tùy tiện trê
 | `shops` | 3 |
 | `admin_users`, `orders`, `order_items` | 0 |
 
-Toàn bộ 9 bảng public phải có RLS bật. Dòng seed chỉ có vai trò giúp kiểm thử; hãy thay giá, tồn kho, ảnh, thông số và nội dung pháp lý bằng dữ liệu vận hành thật trước khi mở bán.
+Toàn bộ 15 bảng public phải có RLS bật. Dòng seed chỉ có vai trò giúp kiểm thử; hãy thay giá, tồn kho, ảnh, thông số và nội dung pháp lý bằng dữ liệu vận hành thật trước khi mở bán. Xem [Account & Wallet](ACCOUNT_WALLET.md) để vận hành số dư, nạp tiền Zalo và audit log.
 
 ## Kiểm soát checkout
 
