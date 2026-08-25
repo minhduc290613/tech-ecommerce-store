@@ -198,7 +198,7 @@ create policy "Users can read own admin status" on public.admin_users for select
 
 drop policy if exists "Public can read products" on public.products;
 drop policy if exists "Public can read active products" on public.products;
-create policy "Public can read active products" on public.products for select using (is_active = true or (auth.role() = 'authenticated' and public.is_admin()));
+create policy "Public can read active products" on public.products for select using (is_active = true);
 drop policy if exists "Admins can manage products" on public.products;
 create policy "Admins can manage products" on public.products for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
