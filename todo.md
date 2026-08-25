@@ -83,3 +83,9 @@
 - [x] Thêm migration chương trình sale và dữ liệu giảm giá cho orders.
 - [x] Xây dựng giao diện săn sale, nhập mã ưu đãi và quản trị sale trong Command Deck.
 - [x] Kiểm thử tính giá ưu đãi, tạo đơn và thao tác quản trị sale.
+
+## Khắc phục thông số và gian hàng
+
+- [x] Xác định nguyên nhân thông số kỹ thuật không hiển thị trên storefront.
+- [x] Sửa renderer thông số và hoàn thiện card gian hàng cùng trường quản trị tương ứng.
+- [x] Kiểm thử storefront và Command Deck sau khắc phục.
