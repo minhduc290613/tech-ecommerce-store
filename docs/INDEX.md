@@ -1,0 +1,26 @@
+# Chỉ mục tài liệu NEXORA
+
+Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hành cửa hàng và khôi phục hạ tầng. Các tài liệu được liên kết theo **mục đích sử dụng**, thay vì theo thứ tự tạo file.
+
+| Nhu cầu | Tài liệu | Mô tả |
+| --- | --- | --- |
+| Hiểu nhanh và chạy project | [README](../README.md) | Công nghệ, lệnh local, build, storefront và Command Deck. |
+| Kết nối/cài đặt cơ sở dữ liệu | [Hướng dẫn Supabase](SUPABASE.md) | Schema canonical, RLS, quy trình áp dụng một lần và xác minh. |
+| Cấp quyền Command Deck | [Thiết lập admin](../ADMIN_SETUP.md) | Tạo Supabase Auth user và cấp quyền an toàn, không dùng mật khẩu mặc định. |
+| Kiểm kê media GitHub | [Asset Manifest](../ASSET_MANIFEST.md) | Nguồn lưu asset, đường dẫn nhánh `assets` và checksum. |
+| Xem định hướng thiết kế | [Design brief](../ideas.md) | Hệ thống Circuit Atelier và những quyết định giao diện. |
+| Theo dõi việc còn lại | [Checklist dự án](../todo.md) | Các hạng mục đã hoàn tất và việc cần làm tiếp theo. |
+| Kiểm tra SQL legacy | [Ghi chú migration cũ](LEGACY_MIGRATIONS.md) | Danh sách 10 migration được thay thế bởi một schema canonical. |
+
+> **Lộ trình dành cho người mới:** đọc README, áp dụng `supabase-unified.sql` theo hướng dẫn Supabase, cấu hình `client/supabase-config.js`, rồi làm theo Thiết lập admin.
+
+## Quy ước nguồn chuẩn
+
+| Thành phần | Nguồn chuẩn |
+| --- | --- |
+| Schema Supabase | [`supabase-unified.sql`](../supabase-unified.sql) |
+| Media gốc | Nhánh GitHub [`assets/media`](https://github.com/minhduc290613/tech-ecommerce-store/tree/assets/media) |
+| Mã ứng dụng và tài liệu | Nhánh GitHub `main` |
+| Bản deploy | Media được tham chiếu qua storage URL; không sao chép binary vào `client/public` hoặc `client/src/assets`. |
+
+Các trang điều khoản, bảo mật, giao hàng/đổi trả trong CMS là nội dung khởi tạo cho vận hành. Chủ sở hữu cần có **rà soát pháp lý độc lập** trước khi công bố cho khách hàng thực.

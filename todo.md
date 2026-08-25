@@ -89,3 +89,10 @@
 - [x] Xác định nguyên nhân thông số kỹ thuật không hiển thị trên storefront.
 - [x] Sửa renderer thông số và hoàn thiện card gian hàng cùng trường quản trị tương ứng.
 - [x] Kiểm thử storefront và Command Deck sau khắc phục.
+
+## Chuẩn hóa GitHub, Supabase và tài liệu
+
+- [x] Rà soát asset, SQL migration, Markdown và cấu hình GitHub/Supabase hiện có.
+- [x] Gom asset đã dùng vào repository và hợp nhất các SQL migration.
+- [x] Tạo mục lục Markdown và quy trình áp dụng schema Supabase sau khi kết nối.
+- [x] Kiểm thử cấu trúc, đồng bộ GitHub và xác nhận bản phát hành.

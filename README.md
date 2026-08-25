@@ -4,6 +4,10 @@ NEXORA Tech Store là storefront công nghệ dark mode xây dựng theo phong c
 
 > **Lưu ý bảo mật:** Project chỉ dùng Supabase **anon public key** ở trình duyệt. Không đưa `service_role key`, mật khẩu mặc định, hay thông tin tài khoản nhận tiền thật vào repository công khai.
 
+## Điều hướng tài liệu
+
+Xem [chỉ mục tài liệu](docs/INDEX.md) để tra cứu nhanh hướng dẫn Supabase, thiết lập admin, manifest asset, design brief, checklist và ghi chú các migration lịch sử.
+
 ## Tính năng chính
 
 | Khu vực | Chức năng |
@@ -36,8 +40,9 @@ tech-ecommerce-store/
 │   ├── admin.js                # Logic quản trị Supabase
 │   ├── admin.css               # Style Command Deck
 │   └── supabase-config.js      # URL và anon key dùng chung
-├── supabase-schema.sql         # Schema catalog, orders, RPC checkout
-├── supabase-admin.sql          # Bảng/admin RLS policies cho Command Deck
+├── supabase-unified.sql        # Schema canonical: toàn bộ database, RLS, CMS, sale
+├── docs/                       # Chỉ mục và hướng dẫn vận hành liên kết chéo
+├── ASSET_MANIFEST.md           # Kiểm kê media được backup trên nhánh GitHub assets
 ├── ADMIN_SETUP.md              # Hướng dẫn nhanh cấp quyền admin
 ├── package.json                # Commands build/development
 └── vite.config.ts              # Vite multi-page build cho / và /admin.html
@@ -92,22 +97,9 @@ Cấu hình này được import cho cả storefront lẫn `/admin.html`; bạn 
 
 ### 3. Tạo database và chính sách RLS
 
-Trong **Supabase SQL Editor**, chạy lần lượt theo đúng thứ tự:
+Trên project Supabase **mới hoặc trống**, chỉ chạy một file: [`supabase-unified.sql`](supabase-unified.sql). File canonical này tạo toàn bộ database, RLS, CMS, sale campaign, checkout RPC và seed data. Xem quy trình chi tiết tại [Hướng dẫn Supabase](docs/SUPABASE.md).
 
-```text
-1. supabase-schema.sql
-2. supabase-admin.sql
-3. supabase-marketplace-cms.sql
-4. supabase-catalog-admin.sql
-5. supabase-order-operations.sql
-6. supabase-payment-confirmation.sql
-7. supabase-product-specifications.sql
-8. supabase-seller-contact.sql
-9. supabase-sale-campaigns.sql
-10. supabase-shop-contact.sql
-```
-
-Tệp đầu tạo ba bảng dữ liệu chính cùng policy và function checkout. Tệp sau tạo bảng `admin_users`, function `is_admin()` và các policy riêng cho Command Deck. Tệp thứ ba tạo CMS cho nhận diện website, banner, FAQ, nội dung điều khoản/bảo mật và danh mục gian hàng. Tệp thứ tư bổ sung SKU, thương hiệu, bảo hành, trạng thái hiển thị và policy catalog cho trình quản lý sản phẩm đầy đủ. Tệp thứ năm bổ sung thông tin khách/giao nhận, pipeline fulfillment và các chỉ mục dashboard đơn hàng/doanh thu. Tệp thứ sáu thêm số Zalo shop và dữ liệu xác nhận chuyển khoản. Tệp thứ bảy thêm thông số kỹ thuật sản phẩm và hotline/Zalo chân trang. Tệp thứ tám thêm liên hệ Zalo riêng cho người bán. Tệp thứ chín thêm săn sale và giảm giá theo đơn hàng. Tệp thứ mười thêm liên hệ Zalo riêng cho từng gian hàng.
+> Mười file SQL rời vẫn được giữ để đối chiếu lịch sử, nhưng không được chạy nối tiếp sau schema canonical. Nếu database production đã có dữ liệu, hãy tạo migration nâng cấp theo chênh lệch thay vì chạy lại file unified.
 
 | Bảng | Nội dung |
 | --- | --- |
@@ -127,7 +119,7 @@ Không có tài khoản hay mật khẩu admin mặc định trong code. Một t
 Quy trình cấp admin gồm ba bước ngắn:
 
 1. Tạo tài khoản bằng email và mật khẩu mạnh tại storefront: **Đăng nhập → Đăng ký**.
-2. Trong `supabase-admin.sql`, thay email trong câu lệnh mẫu sau bằng email vừa tạo và chạy câu lệnh đó trong Supabase SQL Editor.
+2. Trong [`supabase-unified.sql`](supabase-unified.sql), thay email trong câu lệnh mẫu cuối file bằng email vừa tạo và chạy riêng câu lệnh đó trong Supabase SQL Editor.
 
 ```sql
 insert into public.admin_users (user_id)
@@ -182,7 +174,7 @@ Function `create_order_with_items` dùng database làm nguồn giá và tồn kh
 | Hạng mục | Xác nhận |
 | --- | --- |
 | Storefront | Tìm kiếm, lọc, quick view, giỏ hàng và modal đăng nhập hoạt động. |
-| Supabase | `supabase-schema.sql` và `supabase-admin.sql` đã chạy không báo lỗi. |
+| Supabase | `supabase-unified.sql` đã chạy không báo lỗi; toàn bộ 9 bảng public đã bật RLS. |
 | Auth | Có thể đăng ký/đăng nhập và session được duy trì. |
 | Admin | User quản trị đã có bản ghi trong `admin_users` và đăng nhập được `/admin.html`. |
 | Payment | `PAYMENT_CONFIG` không còn placeholder và quét QR ra đúng thông tin. |
@@ -192,9 +184,9 @@ Function `create_order_with_items` dùng database làm nguồn giá và tồn kh
 
 | Hiện tượng | Nguyên nhân thường gặp | Cách xử lý |
 | --- | --- | --- |
-| Storefront hiển thị catalog mẫu | Chưa cấu hình Supabase hoặc truy vấn `products` bị RLS chặn. | Kiểm tra `supabase-config.js`, sau đó chạy `supabase-schema.sql`. |
+| Storefront hiển thị catalog mẫu | Chưa cấu hình Supabase hoặc truy vấn `products` bị RLS chặn. | Kiểm tra `supabase-config.js`, sau đó áp dụng `supabase-unified.sql`. |
 | Không đăng nhập được admin | User chưa được cấp quyền trong `admin_users`. | Chạy câu lệnh cấp quyền ở phần **Thiết lập tài khoản admin**. |
-| Admin báo không tải được dữ liệu | Chưa chạy `supabase-admin.sql` hoặc đang dùng sai anon key/project. | Chạy lại SQL, kiểm tra URL/key và đăng nhập lại. |
+| Admin báo không tải được dữ liệu | Schema chưa đầy đủ hoặc đang dùng sai anon key/project. | Kiểm tra migration canonical, URL/key và đăng nhập lại. |
 | QR không xuất hiện | `PAYMENT_CONFIG` vẫn là placeholder hoặc nguồn QR không tải được. | Điền dữ liệu nhận tiền thật và kiểm tra kết nối mạng. |
 | Đơn không tạo được | Người dùng chưa đăng nhập, RLS chưa đúng, hoặc tồn kho không đủ. | Kiểm tra session, SQL schema và stock của sản phẩm. |
 
