@@ -96,3 +96,15 @@
 - [x] Gom asset đã dùng vào repository và hợp nhất các SQL migration.
 - [x] Tạo mục lục Markdown và quy trình áp dụng schema Supabase sau khi kết nối.
 - [x] Kiểm thử cấu trúc, đồng bộ GitHub và xác nhận bản phát hành.
+
+## Xác thực email Supabase
+
+- [x] Khôi phục quyền truy cập Supabase Dashboard hoặc xác định kênh cấu hình thay thế.
+- [x] Tắt yêu cầu xác nhận email cho đăng ký tài khoản (`mailer_autoconfirm = true`).
+- [ ] Kiểm thử người dùng mới có thể đăng ký và đăng nhập ngay, không cần xác nhận email.
+
+## Hướng dẫn public trên GitHub
+
+- [x] Soạn hướng dẫn triển khai, kết nối và vận hành NEXORA từ A–Z.
+- [x] Rà soát để không công khai secret, tài khoản hay dữ liệu nhạy cảm.
+- [x] Liên kết hướng dẫn mới vào chỉ mục tài liệu và README.

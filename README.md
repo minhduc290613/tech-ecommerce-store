@@ -6,7 +6,7 @@ NEXORA Tech Store là storefront công nghệ dark mode xây dựng theo phong c
 
 ## Điều hướng tài liệu
 
-Xem [chỉ mục tài liệu](docs/INDEX.md) để tra cứu nhanh hướng dẫn Supabase, thiết lập admin, manifest asset, design brief, checklist và ghi chú các migration lịch sử.
+Đọc **[Hướng dẫn cài đặt, kết nối và vận hành từ A–Z](docs/HUONG_DAN_A_Z.md)** khi clone/fork repository hoặc chuẩn bị public GitHub. Xem [chỉ mục tài liệu](docs/INDEX.md) để tra cứu nhanh hướng dẫn Supabase, thiết lập admin, manifest asset, design brief, checklist và ghi chú các migration lịch sử.
 
 ## Tính năng chính
 
