@@ -5,3 +5,18 @@
   color: #fa8794;
   background: rgba(111, 20, 39, .16);
 }
+
+.account-head-signout {
+  margin-top: .85rem;
+  padding: .48rem .7rem;
+  border: 1px solid rgba(248, 135, 148, .38);
+  color: #fa8794;
+  background: rgba(111, 20, 39, .16);
+  font-family: var(--font-mono);
+  font-size: .62rem;
+}
+
+.account-head-signout:hover {
+  border-color: #fa8794;
+  background: rgba(111, 20, 39, .28);
+}

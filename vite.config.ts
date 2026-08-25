@@ -172,6 +172,7 @@ export default defineConfig({
         storefront: path.resolve(import.meta.dirname, "client", "index.html"),
         admin: path.resolve(import.meta.dirname, "client", "admin.html"),
         information: path.resolve(import.meta.dirname, "client", "info.html"),
+        article: path.resolve(import.meta.dirname, "client", "article.html"),
       },
     },
   },

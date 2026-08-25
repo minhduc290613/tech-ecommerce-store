@@ -1,5 +1,6 @@
 /* Circuit Atelier — Vanilla JS storefront logic: Supabase, catalogue, cart and payment signal. */
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
+import { COMMENT_ACTION, getCommunityFocusTarget } from "./product-community-actions.js";
 
 // ============================================================================
 // 1) SUPABASE CONFIGURATION
@@ -8,7 +9,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 // ============================================================================
 
 // Điền thông tin nhận tiền trước khi sử dụng ở môi trường thật.
-const PAYMENT_CONFIG = {
+let PAYMENT_CONFIG = {
   bankId: "MB", // Ví dụ: MB, VCB, TCB, ACB... theo mã ngân hàng VietQR.
   accountNumber: "0123456789",
   accountName: "NEXORA TECH STORE",
@@ -41,7 +42,7 @@ const state = {
   activeProduct: null,
   lastOrder: null,
   activePaymentMethod: "vietqr", settings: DEFAULT_SETTINGS, faqs: DEFAULT_FAQS, shops: DEFAULT_SHOPS, saleCampaigns: DEFAULT_SALE_CAMPAIGNS, appliedSaleCode: "",
-  filters: { category: "all", maxPrice: 35000000, saleOnly: false, search: "" },
+  filters: { category: "all", maxPrice: 35000000, saleOnly: false, search: "", technical: {} },
 };
 
 const $ = (selector, parent = document) => parent.querySelector(selector);
@@ -111,6 +112,7 @@ function bindEvents() {
     if (!product) return;
     if (actionButton.dataset.action === "add") addToCart(product);
     if (actionButton.dataset.action === "quick-view") openQuickView(product);
+    if (actionButton.dataset.action === COMMENT_ACTION) openProductComment(product);
   });
 
   els.cartButton.addEventListener("click", openCart);
@@ -131,6 +133,7 @@ function bindEvents() {
   els.zaloConfirmLink.addEventListener("click", markZaloConfirmationRequested);
   els.copyZaloMessage.addEventListener("click", copyZaloMessage);
   els.saleHuntGrid.addEventListener("click", (event) => { const button = event.target.closest("[data-sale-code]"); if (!button) return; applySaleCode(button.dataset.saleCode, true); openCart(); });
+  window.addEventListener("nexora:advanced-filter", (event) => { state.filters.technical = event.detail || {}; renderProducts(); });
 
   document.addEventListener("keydown", (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); els.searchInput.focus(); }
@@ -162,7 +165,7 @@ async function loadMarketplaceCMS() {
   }
   applySettings(); renderFAQs(); renderShops(); renderSaleHunt(); updateCartUI();
 }
-function applySettings() { const s = state.settings; document.title = `${s.site_name} Tech Store | ${s.hero_title}`; $("#announcementText").textContent = s.announcement_text; $("#heroKicker").textContent = s.hero_kicker; $("#heroTitlePlain").textContent = s.hero_title; $("#heroTitleEmphasis").textContent = s.hero_emphasis; $("#heroDescription").textContent = s.hero_description; $("#footerTagline").innerHTML = escapeHtml(s.site_tagline).replace(/\n/g, "<br />"); $("#footerSupportEmail").textContent = s.support_email; $("#footerSupportEmail").href = `mailto:${s.support_email}`; $("#footerSupportHours").textContent = s.support_hours; $("#footerAddress").textContent = s.address_text; if (s.hero_image_url) $("#heroImage").src = s.hero_image_url; $$("[data-site-logo]").forEach((img) => { if (s.logo_url) img.src = s.logo_url; }); $$("[data-site-name]").forEach((item) => item.textContent = s.site_name); renderFooterContacts(s); renderFooterSellerContact(s); renderZaloConfirmation(); }
+function applySettings() { const s = state.settings; document.title = `${s.site_name} Tech Store | ${s.hero_title}`; $("#announcementText").textContent = s.announcement_text; $("#heroKicker").textContent = s.hero_kicker; $("#heroTitlePlain").textContent = s.hero_title; $("#heroTitleEmphasis").textContent = s.hero_emphasis; $("#heroDescription").textContent = s.hero_description; $("#footerTagline").innerHTML = escapeHtml(s.site_tagline).replace(/\n/g, "<br />"); $("#footerSupportEmail").textContent = s.support_email; $("#footerSupportEmail").href = `mailto:${s.support_email}`; $("#footerSupportHours").textContent = s.support_hours; $("#footerAddress").textContent = s.address_text; if (s.hero_image_url) $("#heroImage").src = s.hero_image_url; if (s.favicon_url) { const favicon = document.querySelector("link[rel='icon']"); if (favicon) favicon.href = s.favicon_url; } PAYMENT_CONFIG = { bankId: s.payment_bank_id || PAYMENT_CONFIG.bankId, accountNumber: s.payment_account_number || PAYMENT_CONFIG.accountNumber, accountName: s.payment_account_name || PAYMENT_CONFIG.accountName, momoPhone: s.payment_momo_phone || PAYMENT_CONFIG.momoPhone }; $$("[data-site-logo]").forEach((img) => { if (s.logo_url) img.src = s.logo_url; }); $$("[data-site-name]").forEach((item) => item.textContent = s.site_name); renderFooterContacts(s); renderFooterSellerContact(s); renderZaloConfirmation(); window.dispatchEvent(new CustomEvent("nexora:settings", { detail: s })); }
 function renderFAQs() { els.faqList.innerHTML = state.faqs.map((faq, index) => `<details class="faq-item" ${index === 0 ? "open" : ""}><summary><span>${escapeHtml(faq.question)}</span><i class="fa-solid fa-plus" aria-hidden="true"></i></summary><p>${escapeHtml(faq.answer)}</p></details>`).join(""); }
 function renderShops() {
   els.shopsGrid.innerHTML = state.shops.map((shop) => {
@@ -183,7 +186,9 @@ function getFilteredProducts() {
     const matchesPrice = Number(product.price) <= state.filters.maxPrice;
     const matchesSale = !state.filters.saleOnly || Boolean(product.is_sale);
     const searchable = normalizeText(`${product.name} ${product.category} ${product.description}`);
-    return matchesCategory && matchesPrice && matchesSale && searchable.includes(search);
+    const specs = product.technical_specs || {};
+    const matchesTechnical = Object.entries(state.filters.technical || {}).every(([key, value]) => !value || normalizeText(String(specs[key] || "")).includes(normalizeText(value)));
+    return matchesCategory && matchesPrice && matchesSale && matchesTechnical && searchable.includes(search);
   });
 }
 
@@ -217,6 +222,7 @@ function createProductCard(product) {
         <div class="product-actions">
           <button class="button button-primary add-button" data-action="add" data-product-id="${escapeHtml(product.id)}" type="button" ${purchasable ? "" : "disabled"}>${purchasable ? 'Thêm giỏ <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>' : "Hết hàng"}</button>
           <button class="view-button" data-action="quick-view" data-product-id="${escapeHtml(product.id)}" type="button" aria-label="Xem nhanh"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+          <button class="comment-action" data-action="comment" data-product-id="${escapeHtml(product.id)}" type="button" aria-label="Bình luận về ${escapeHtml(product.name)}"><i class="fa-regular fa-comment" aria-hidden="true"></i><span>Bình luận</span></button>
         </div>
       </div>
     </article>`;
@@ -228,11 +234,13 @@ function renderActiveFilters() {
   if (state.filters.saleOnly) chips.push("Đang SALE");
   if (state.filters.maxPrice < Number(els.priceRange.max)) chips.push(`Tối đa ${formatCurrency(state.filters.maxPrice)}`);
   if (state.filters.search) chips.push(`Tìm: “${escapeHtml(state.filters.search)}”`);
+  Object.entries(state.filters.technical || {}).forEach(([key, value]) => { if (value) chips.push(`${({ processor: "CPU", ram: "RAM", storage: "Ổ cứng" })[key] || key}: ${escapeHtml(value)}`); });
   els.activeFilters.innerHTML = chips.map((chip) => `<span class="filter-chip"><i class="fa-solid fa-filter" aria-hidden="true"></i>${chip}</span>`).join("");
 }
 
 function resetFilters() {
-  state.filters = { category: "all", maxPrice: 35000000, saleOnly: false, search: "" };
+  state.filters = { category: "all", maxPrice: 35000000, saleOnly: false, search: "", technical: {} };
+  window.dispatchEvent(new Event("nexora:advanced-filter-reset"));
   $("input[name='category'][value='all']").checked = true;
   els.priceRange.value = "35000000"; els.priceOutput.textContent = formatCurrency(35000000); els.saleOnly.checked = false;
   els.searchInput.value = ""; els.mobileSearchInput.value = "";
@@ -257,10 +265,38 @@ function openQuickView(product) {
   els.quickViewPrice.innerHTML = `<strong>${formatCurrency(product.price)}</strong>${Number(product.original_price) > Number(product.price) ? `<del>${formatCurrency(product.original_price)}</del>` : ""}`;
   renderQuickViewSpecs(product);
   renderQuickViewSellerContact(product);
+  renderQuickViewCommentAction();
   const purchasable = canPurchaseProduct(product);
   els.quickViewAdd.disabled = !purchasable;
   els.quickViewAdd.innerHTML = purchasable ? 'Thêm vào giỏ <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>' : "Hết hàng";
   openModal("quick-view");
+  window.dispatchEvent(new CustomEvent("nexora:quickview", { detail: { product } }));
+}
+
+function openProductComment(product) {
+  openQuickView(product);
+  requestAnimationFrame(focusCommunityComposer);
+}
+
+function focusCommunityComposer() {
+  const selector = getCommunityFocusTarget(COMMENT_ACTION);
+  const input = selector ? $(selector) : null;
+  if (!input) return showToast("Khu vực bình luận đang được tải. Hãy thử lại sau giây lát.", "error");
+  input.closest(".product-community")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  window.setTimeout(() => input.focus(), 180);
+}
+
+function renderQuickViewCommentAction() {
+  let button = $("#quickViewCommentAction");
+  if (!button) {
+    button = document.createElement("button");
+    button.id = "quickViewCommentAction";
+    button.className = "button quick-view-comment";
+    button.type = "button";
+    els.quickViewAdd.after(button);
+  }
+  button.innerHTML = '<i class="fa-regular fa-comment" aria-hidden="true"></i> Bình luận';
+  button.onclick = focusCommunityComposer;
 }
 
 function safelyReadCart() {

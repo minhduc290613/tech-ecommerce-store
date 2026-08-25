@@ -29,8 +29,9 @@ Tài liệu này hướng dẫn triển khai **NEXORA Tech Store** từ reposito
 | Storefront | `/` → `client/index.html` | Catalog, tìm kiếm, lọc, sale hunt, quick view, giỏ hàng, Auth và checkout QR. |
 | Command Deck | `/admin.html` → `client/admin.html` | Dashboard, sản phẩm, đơn hàng, giao nhận, CMS, FAQ, gian hàng và sale campaign. |
 | Trang thông tin | `/info.html` → `client/info.html` | Điều khoản, bảo mật, giao hàng/đổi trả, giới thiệu và liên hệ. |
+| Trang bài viết | `/article.html?slug=<slug>` → `client/article.html` | Chỉ hiển thị bài đã `published`, có trạng thái không tìm thấy an toàn. |
 | Database/Auth | Supabase | PostgreSQL, Supabase Auth, RLS, RPC checkout và dữ liệu CMS. |
-| Schema chuẩn | `supabase-unified.sql` | Một file SQL canonical gồm 15 bảng public, policy, RPC, index, seed data và Account Center. |
+| Schema chuẩn | `supabase-unified.sql` | Một file SQL canonical gồm 24 bảng public, policy, RPC, index, seed, Account Center, role, moderation, affiliate và refund. |
 | Media source | GitHub `assets/media` + storage URL | Branch `assets` lưu backup binary; storefront dùng URL storage/CDN thay vì nhét media vào source build. |
 
 Luồng mua hàng tiêu chuẩn là: **khách xem sản phẩm → thêm giỏ localStorage → đăng nhập → tạo đơn qua RPC → nhận QR/chỉ dẫn thanh toán → nhắn Zalo xác nhận (nếu được cấu hình) → admin đối soát và cập nhật đơn**.
@@ -87,6 +88,7 @@ client/
 ├── style.css                  # giao diện storefront
 ├── admin.html / admin.js      # Command Deck
 ├── info.html                  # trang thông tin/chính sách
+├── article.html / article.js  # trang đọc bài viết public
 └── supabase-config.js         # Project URL + publishable key
 
 docs/                          # tài liệu vận hành public
@@ -131,11 +133,13 @@ Schema tạo các thành phần sau:
 | CMS | `site_settings`, `site_pages`, `faqs`, `shops`. |
 | Khuyến mại | `sale_campaigns`, mã sale và `create_order_with_sale`. |
 | Account Center | Hồ sơ khách, số dư, sổ cái, cảnh cáo, yêu cầu nạp tiền Zalo và audit log. |
+| Role & nội dung | `user_roles`, review/bình luận moderation, bài viết draft/pending/published và article reader. |
+| Affiliate & hoàn tiền | Referral được duyệt, hoa hồng 15% cấu hình được, `refund_requests`, hoàn wallet/manual và CSV quản trị. |
 | Bảo mật | RLS, policy catalog công khai, quyền user-own-order, giới hạn RPC checkout và kiểm tra trạng thái account. |
 
 > **Không chạy 10 SQL migration legacy sau file canonical.** Nếu database đã chạy các migration cũ hoặc đang có đơn hàng thật, đừng chạy lại file unified. Hãy so sánh schema và viết migration nâng cấp riêng để bảo toàn dữ liệu. Xem [Ghi chú migration legacy](LEGACY_MIGRATIONS.md).
 
-Sau khi áp dụng thành công, nên thấy 15 bảng public. Seed mặc định gồm 6 product, 2 campaign, 1 site setting, 6 trang nội dung, 3 FAQ và 3 shop. Hãy thay dữ liệu demo trước khi kinh doanh.
+Sau khi áp dụng thành công, nên thấy **24 bảng public**. Seed mặc định gồm 6 product, 2 campaign, 1 site setting, 6 trang nội dung, 3 FAQ và 3 shop; các sản phẩm seed được gán vào `shop_id` theo gian hàng. Hãy thay dữ liệu demo trước khi kinh doanh.
 
 ### 4.3 Kiểm tra RLS và checkout
 
@@ -238,7 +242,7 @@ pnpm build
 pnpm preview
 ```
 
-Build thành công tạo `dist/public` với `index.html`, `admin.html`, `info.html` và asset đã bundle. Test tối thiểu cả ba URL trước release.
+Build thành công tạo `dist/public` với `index.html`, `admin.html`, `info.html`, `article.html` và asset đã bundle. Test tối thiểu cả bốn URL trước release.
 
 ### 9.2 Lựa chọn hosting
 
@@ -281,6 +285,11 @@ git push origin assets
 | Thương hiệu/CMS | Đổi tên site, banner, logo, contact, Zalo và hero. |
 | Nội dung & FAQ | Quản lý trang thông tin, FAQ, điều khoản, bảo mật và chính sách. |
 | Gian hàng/Sale | Quản lý shop, liên hệ shop và campaign giảm giá. |
+| Role & kiểm duyệt | Gán role theo phân cấp, duyệt affiliate, review, bình luận và bài viết. |
+| Hoàn tiền & CSV | Xử lý refund theo quy trình đối soát và xuất sổ cái/nạp tiền cho admin. |
+| Cấu hình nâng cao | Payment config, favicon và hiệu ứng tuyết/cánh hoa storefront. |
+
+Tỷ lệ affiliate mặc định là 15%, nhưng **admin** có thể thay đổi trong **Cấu hình nâng cao** cùng điều kiện đơn delivered và yêu cầu duyệt. Hệ thống không áp dụng hồi tố lên commission đã được ghi; hãy đối soát trước khi điều chỉnh tỷ lệ trên store đang vận hành.
 
 ### 10.2 Quy trình xử lý đơn đề xuất
 
@@ -306,7 +315,9 @@ Không đánh dấu `paid` chỉ dựa vào nội dung tin nhắn; cần đối 
 | Sale code | Thử mã còn hạn và mã sai/hết hạn. | Chỉ mã hợp lệ được giảm. |
 | QR/Zalo | Kiểm tra cấu hình payment thật. | Thông tin người nhận, tổng tiền và mã đơn chính xác. |
 | RLS | Dùng user A thử truy cập đơn user B. | Không đọc/cập nhật được. |
-| Build | Chạy `pnpm build`. | Không có lỗi build; cả `/`, `/admin.html`, `/info.html` mở được. |
+| Role/moderation | Dùng customer/moderator/admin tách biệt. | Customer bị chặn Command Deck; moderator không đổi `admin`; nội dung chỉ public sau duyệt. |
+| Affiliate/refund | Dùng tài khoản test và đơn không có tiền thật. | Hoa hồng đúng 15% khi delivered; refund wallet thay đổi ledger/balance đồng thời. |
+| Build | Chạy `pnpm build`. | Không có lỗi build; cả `/`, `/admin.html`, `/info.html`, `/article.html` mở được. |
 
 ## 12. Xử lý lỗi thường gặp
 
@@ -350,6 +361,7 @@ RLS và quyền database cần được kiểm thử cùng nhau: policy quyết 
 | [Quy trình Supabase](SUPABASE.md) | Database, RLS, checkout và cấp admin. |
 | [Thiết lập admin](../ADMIN_SETUP.md) | Quy trình Command Deck ngắn gọn. |
 | [Vận hành Account & Wallet](ACCOUNT_WALLET.md) | Số dư, nạp tiền Zalo, khóa/cảnh cáo và audit log. |
+| [Role, Content & Affiliate](ROLE_CONTENT_AFFILIATE.md) | Ma trận quyền, moderation, affiliate 15%, hoàn tiền và CSV. |
 | [Asset Manifest](../ASSET_MANIFEST.md) | Media backup và checksum. |
 | [Chỉ mục tài liệu](INDEX.md) | Điểm điều hướng toàn bộ Markdown. |
 

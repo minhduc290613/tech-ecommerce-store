@@ -1,6 +1,8 @@
 /* Circuit Atelier Command Deck — RLS-bound marketplace operations and CMS. */
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
+import { canAccessCommandDeck, isAdminRole } from "./role-permissions.js";
 import "./admin-accounts.js";
+import "./admin-roles-content.js";
 
 const configured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const db = configured && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -9,7 +11,7 @@ const $ = (selector, parent = document) => parent.querySelector(selector);
 const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
 const state = {
-  user: null, products: [], orders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
+  user: null, role: "customer", products: [], orders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
   fulfillmentFilter: "all", paymentFilter: "all", activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null, editingSaleCampaignId: null,
 };
 
@@ -38,7 +40,7 @@ async function init() {
 function bindEvents() {
   els.loginForm.addEventListener("submit", login);
   els.signOut.addEventListener("click", signOut);
-  mountTechnicalSpecsEditor(); mountContactSettingsFields(); mountSaleAdminUI();
+  mountTechnicalSpecsEditor(); mountContactSettingsFields(); mountSaleAdminUI(); mountProductShopSelector();
   $$(".admin-nav button[data-view]").forEach((button) => button.addEventListener("click", () => activateView(button.dataset.view)));
   $$('[data-view-jump]').forEach((button) => button.addEventListener("click", () => activateView(button.dataset.viewJump)));
   els.newProduct.addEventListener("click", () => openProductModal());
@@ -78,6 +80,20 @@ function bindEvents() {
   $$(".admin-modal").forEach((modal) => modal.addEventListener("click", (event) => { if (event.target === modal) closeModal(modal.id.replace("Modal", "")); }));
 }
 
+function mountProductShopSelector() {
+  if ($("#productShopId")) return;
+  const categoryField = $("#productCategory")?.closest("label");
+  if (!categoryField) return;
+  categoryField.insertAdjacentHTML("afterend", '<label>Gian hàng<select id="productShopId"><option value="">Chưa gán gian hàng</option></select></label>');
+}
+
+function populateProductShopOptions(selectedId = "") {
+  const select = $("#productShopId");
+  if (!select) return;
+  select.innerHTML = `<option value="">Chưa gán gian hàng</option>${state.shops.map((shop) => `<option value="${escapeHtml(shop.id)}">${escapeHtml(shop.name)}${shop.is_active ? "" : " (ẩn)"}</option>`).join("")}`;
+  select.value = selectedId || "";
+}
+
 async function login(event) {
   event.preventDefault();
   const email = els.loginEmail.value.trim(); const password = els.loginPassword.value;
@@ -90,14 +106,27 @@ async function login(event) {
 }
 
 async function verifyAdmin(user) {
-  const { data: allowed, error } = await db.rpc("is_admin");
-  if (error || !allowed) { await db.auth.signOut(); return showGate("Tài khoản này chưa có quyền quản trị. Hãy thêm email vào bảng admin_users theo supabase-admin.sql."); }
+  const [{ data: allowed, error }, { data: roleData }, { data: isAdmin }] = await Promise.all([db.rpc("can_access_command_deck"), db.from("user_roles").select("role").eq("user_id", user.id).maybeSingle(), db.rpc("is_admin")]);
+  const resolvedRole = roleData?.role || (isAdmin ? "admin" : "customer");
+  if (error || !allowed || !canAccessCommandDeck(resolvedRole)) { await db.auth.signOut(); return showGate("Tài khoản này chưa có role vận hành. Cần một trong các role: admin, moderator, order_manager hoặc marketing."); }
   state.user = user;
-  els.operatorName.textContent = user.email || "Admin";
+  state.role = resolvedRole;
+  els.operatorName.textContent = `${user.email || "Operator"} · ${state.role}`;
   els.operatorInitial.textContent = (user.email || "A")[0].toUpperCase();
   els.gate.hidden = true; els.app.hidden = false;
-  window.dispatchEvent(new Event("nexora:admin-ready"));
+  applyRoleVisibility();
+  window.dispatchEvent(new CustomEvent("nexora:operator-ready", { detail: { user, role: state.role, isAdmin: Boolean(isAdmin) } }));
+  if (isAdmin) window.dispatchEvent(new Event("nexora:admin-ready"));
   await loadData();
+}
+
+function applyRoleVisibility() {
+  const isAdmin = isAdminRole(state.role); const canOrders = isAdmin || state.role === "order_manager";
+  const canModerate = isAdmin || state.role === "moderator";
+  const canMarketing = isAdmin || state.role === "marketing" || state.role === "moderator";
+  const hide = (view, hidden) => { const nav = $(`.admin-nav [data-view="${view}"]`); const section = $(`[data-admin-view="${view}"]`); if (nav) nav.hidden = hidden; if (section) section.hidden = hidden; };
+  hide("products", !isAdmin); hide("brand", !isAdmin); hide("shops", !isAdmin); hide("sale-campaigns", !isAdmin); hide("orders", !canOrders); hide("content", !(isAdmin || canMarketing));
+  if (!isAdmin && !canOrders && !canModerate && !canMarketing) hide("overview", true);
 }
 
 async function signOut() { if (db) await db.auth.signOut(); showGate("Bạn đã đăng xuất khỏi Command Deck."); }
@@ -117,7 +146,7 @@ async function loadData() {
   if (productsResult.error || ordersResult.error) return toast(productsResult.error?.message || ordersResult.error?.message || "Không tải được dữ liệu quản trị.", "error");
   state.products = productsResult.data || []; state.orders = ordersResult.data || [];
   if (settingsResult.error || pagesResult.error || faqsResult.error || shopsResult.error || campaignsResult.error) toast("CMS/sale chưa sẵn sàng. Hãy chạy các migration Supabase mới nhất.", "error");
-  state.settings = settingsResult.data || null; state.pages = pagesResult.data || []; state.faqs = faqsResult.data || []; state.shops = shopsResult.data || []; state.saleCampaigns = campaignsResult.data || [];
+  state.settings = settingsResult.data || null; state.pages = pagesResult.data || []; state.faqs = faqsResult.data || []; state.shops = shopsResult.data || []; state.saleCampaigns = campaignsResult.data || []; populateProductShopOptions($("#productShopId")?.value || "");
   renderMetrics(); renderOperationsMetrics(); renderRevenueChart(); renderProducts(); renderOrders(); renderRecentOrders(); renderSettings(); renderFaqs(); renderShops(); renderSaleCampaigns(); fillPageForm();
 }
 
@@ -157,7 +186,7 @@ function renderProducts() {
   const query = normalize(els.productSearch.value);
   const products = state.products.filter((product) => normalize(`${product.name} ${product.category} ${product.sku || ""} ${product.brand || ""}`).includes(query));
   els.productCount.textContent = `${products.length} sản phẩm`;
-  els.productsBody.innerHTML = products.map((product) => `<tr><td><div class="product-cell"><img src="${escapeHtml(product.image_url)}" alt="" /><span><b>${escapeHtml(product.name)}</b><small>${escapeHtml(product.sku || product.slug)} · ${escapeHtml(product.brand || "NEXORA")}</small></span></div></td><td>${escapeHtml(product.category)}</td><td><b>${currency(product.price)}</b><br /><small>${product.warranty_months ?? 12} tháng BH</small></td><td>${product.stock}</td><td><span class="sale-pill ${product.is_sale ? "yes" : "no"}">${product.is_sale ? "SALE" : "STANDARD"}</span></td><td>${salesStateBadge(product)}</td><td><div class="sales-actions"><button class="sales-action ${product.is_active !== false && Number(product.stock) > 0 ? "is-active" : ""}" data-sales-action="selling" data-product-id="${escapeHtml(product.id)}" type="button" title="Mở bán" ${product.is_active !== false && Number(product.stock) > 0 ? "disabled" : ""}><i class="fa-solid fa-play"></i></button><button class="sales-action ${product.is_active === false ? "is-paused" : ""}" data-sales-action="paused" data-product-id="${escapeHtml(product.id)}" type="button" title="Ngừng bán" ${product.is_active === false ? "disabled" : ""}><i class="fa-solid fa-pause"></i></button><button class="sales-action ${product.is_active !== false && Number(product.stock) === 0 ? "is-out" : ""}" data-sales-action="out" data-product-id="${escapeHtml(product.id)}" type="button" title="Đánh dấu hết hàng" ${product.is_active !== false && Number(product.stock) === 0 ? "disabled" : ""}><i class="fa-solid fa-box-open"></i></button></div></td><td><button class="row-action" data-edit-product="${escapeHtml(product.id)}" aria-label="Chỉnh sửa ${escapeHtml(product.name)}"><i class="fa-solid fa-pen"></i></button></td></tr>`).join("") || emptyRow("Không tìm thấy sản phẩm.", 8);
+  els.productsBody.innerHTML = products.map((product) => { const shop = state.shops.find((item) => item.id === product.shop_id); return `<tr><td><div class="product-cell"><img src="${escapeHtml(product.image_url)}" alt="" /><span><b>${escapeHtml(product.name)}</b><small>${escapeHtml(product.sku || product.slug)} · ${escapeHtml(product.brand || "NEXORA")}${shop ? ` · ${escapeHtml(shop.name)}` : " · Chưa gán gian hàng"}</small></span></div></td><td>${escapeHtml(product.category)}</td><td><b>${currency(product.price)}</b><br /><small>${product.warranty_months ?? 12} tháng BH</small></td><td>${product.stock}</td><td><span class="sale-pill ${product.is_sale ? "yes" : "no"}">${product.is_sale ? "SALE" : "STANDARD"}</span></td><td>${salesStateBadge(product)}</td><td><div class="sales-actions"><button class="sales-action ${product.is_active !== false && Number(product.stock) > 0 ? "is-active" : ""}" data-sales-action="selling" data-product-id="${escapeHtml(product.id)}" type="button" title="Mở bán" ${product.is_active !== false && Number(product.stock) > 0 ? "disabled" : ""}><i class="fa-solid fa-play"></i></button><button class="sales-action ${product.is_active === false ? "is-paused" : ""}" data-sales-action="paused" data-product-id="${escapeHtml(product.id)}" type="button" title="Ngừng bán" ${product.is_active === false ? "disabled" : ""}><i class="fa-solid fa-pause"></i></button><button class="sales-action ${product.is_active !== false && Number(product.stock) === 0 ? "is-out" : ""}" data-sales-action="out" data-product-id="${escapeHtml(product.id)}" type="button" title="Đánh dấu hết hàng" ${product.is_active !== false && Number(product.stock) === 0 ? "disabled" : ""}><i class="fa-solid fa-box-open"></i></button></div></td><td><button class="row-action" data-edit-product="${escapeHtml(product.id)}" aria-label="Chỉnh sửa ${escapeHtml(product.name)}"><i class="fa-solid fa-pen"></i></button></td></tr>`; }).join("") || emptyRow("Không tìm thấy sản phẩm.", 8);
 }
 
 function renderSettings() {
@@ -169,7 +198,7 @@ function fillPageForm() { const page = state.pages.find((item) => item.slug === 
 function renderFaqs() { els.faqCount.textContent = state.faqs.length; els.faqBody.innerHTML = state.faqs.map((faq) => `<tr><td><span class="list-name">${escapeHtml(faq.question)}</span><span class="list-description">${escapeHtml(faq.answer)}</span></td><td><input class="status-toggle" type="checkbox" disabled ${faq.is_published ? "checked" : ""} /></td><td><button class="row-action" data-edit-faq="${escapeHtml(faq.id)}"><i class="fa-solid fa-pen"></i></button></td></tr>`).join("") || emptyRow("Chưa có FAQ.", 3); }
 function renderShops() { els.shopsBody.innerHTML = state.shops.map((shop) => `<tr><td><div class="product-cell">${shop.banner_url ? `<img class="image-mini" src="${escapeHtml(shop.banner_url)}" alt="" />` : ""}<span><b>${escapeHtml(shop.name)}</b><small>${escapeHtml(shop.slug)}</small></span></div></td><td>${escapeHtml(shop.category)}</td><td class="customer-email">${escapeHtml(shop.contact_email || "—")}</td><td><span class="shop-flag ${shop.is_verified ? "" : "muted"}"><i class="fa-solid fa-circle-check"></i>${shop.is_verified ? "Verified" : "Chưa xác minh"}</span></td><td><span class="sale-pill ${shop.is_active ? "yes" : "no"}">${shop.is_active ? "ACTIVE" : "HIDDEN"}</span></td><td><button class="row-action" data-edit-shop="${escapeHtml(shop.id)}"><i class="fa-solid fa-pen"></i></button></td></tr>`).join("") || emptyRow("Chưa có gian hàng.", 6); }
 
-function openProductModal(product = null) {
+  function openProductModal(product = null) {
   state.editingProductId = product?.id || null;
   $("#productForm").reset();
   $("#productModalTitle").textContent = product ? "Chỉnh sửa sản phẩm" : "Tạo sản phẩm mới";
@@ -177,6 +206,7 @@ function openProductModal(product = null) {
   $("#productBrand").value = product?.brand || "NEXORA";
   $("#productWarranty").value = product?.warranty_months ?? 12;
   $("#productActive").checked = product?.is_active !== false;
+  populateProductShopOptions(product?.shop_id || "");
   if (product) {
     $("#productId").value = product.id; $("#productName").value = product.name; $("#productSku").value = product.sku || "";
     $("#productCategory").value = product.category; $("#productStock").value = product.stock; $("#productDescription").value = product.description;
@@ -209,7 +239,7 @@ async function saveProduct(event) {
   const payload = {
     name, sku, slug: slugify(name), brand: $("#productBrand").value.trim() || "NEXORA", category: $("#productCategory").value,
     stock: Number($("#productStock").value), warranty_months: Number($("#productWarranty").value), description: $("#productDescription").value.trim(), image_url: $("#productImageUrl").value.trim(),
-    price, original_price: originalPrice, technical_specs: collectTechnicalSpecs(), is_active: $("#productActive").checked, is_sale: $("#productSale").checked, featured: $("#productFeatured").checked, updated_at: new Date().toISOString(),
+    price, original_price: originalPrice, shop_id: $("#productShopId").value || null, technical_specs: collectTechnicalSpecs(), is_active: $("#productActive").checked, is_sale: $("#productSale").checked, featured: $("#productFeatured").checked, updated_at: new Date().toISOString(),
   };
   setLoading($("#saveProductButton"), true, "Đang lưu");
   const result = state.editingProductId ? await db.from("products").update(payload).eq("id", state.editingProductId) : await db.from("products").insert(payload);

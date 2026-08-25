@@ -119,3 +119,22 @@
 - [x] Thêm khu vực tài khoản khách: hồ sơ, đổi email/mật khẩu, số dư và yêu cầu nạp Zalo.
 - [x] Kiểm thử RLS, build, route Command Deck và tài liệu vận hành.
 - [x] Kiểm thử thủ công luồng điều chỉnh số dư bằng tài khoản admin và khách thật: cộng/trừ 1.000 ₫, kiểm tra sổ cái/audit log, hoàn tác về 0 ₫.
+
+## Role, nội dung, affiliate và vận hành mở rộng
+
+- [x] Rà soát yêu cầu từ ảnh và xác nhận mô hình role/quyền theo từng chức năng.
+- [x] Thêm phân quyền admin, moderator, order manager, marketing và affiliate có audit log.
+- [x] Hoàn thiện bài viết cho marketing/moderator/admin/affiliate bằng trang đọc đầy đủ, cùng bình luận–đánh giá có kiểm duyệt.
+- [x] Thêm điều kiện affiliate, link giới thiệu và hoa hồng 15% theo đơn đủ điều kiện.
+- [x] Hoàn thiện bộ lọc thông số kỹ thuật, gán sản phẩm–gian hàng có quản trị và xác minh luồng hoàn tiền.
+- [x] Thêm cấu hình thanh toán/Zalo, xuất CSV và CMS điều khiển nhận diện/hiệu ứng storefront.
+- [x] Đồng bộ module role/content/affiliate/refund vào schema canonical và kiểm thử đầu-cuối role, moderation, hoa hồng, hoàn tiền, CSV.
+- [x] Thêm cấu hình admin cho tỷ lệ hoa hồng affiliate, điều kiện đơn delivered và yêu cầu duyệt; kiểm thử thay đổi 12,5% rồi khôi phục 15%.
+- [x] Kiểm thử E2E comment: tạo fixture pending, ẩn bằng moderation, xác nhận reviewed_by/reviewed_at và dọn fixture/audit; không tạo review/rating giả.
+- [x] Hoãn kiểm thử E2E review thật theo xác nhận người dùng ngày 25/08/2026; guard review, UI và moderation chung đã được kiểm tra, còn review thật sẽ xác minh khi có khách đã nhận hàng gửi nội dung.
+- [x] Kiểm thử trực tiếp RPC tạo bài với toàn bộ role marketing, moderator, admin và affiliate bằng draft kỹ thuật có thu dọn.
+- [x] Hiển thị nút bình luận dễ tìm từ thẻ sản phẩm và/hoặc Quick View, mở đúng khu vực gửi bình luận có trạng thái pending.
+- [x] Bổ sung thao tác đăng xuất rõ ràng trong Account Center và xác minh session Supabase được kết thúc đúng.
+- [x] Kiểm thử E2E bình luận kỹ thuật trung tính: pending → hidden, có reviewed_by/reviewed_at và dọn fixture/audit.
+- [x] Kiểm thử đăng xuất Supabase với tài khoản disposable: xác minh session bị xóa, rồi dọn tài khoản test.
+- [x] Mở rộng chứng cứ fixture bình luận: ghi nhận trạng thái pending ban đầu và xác nhận audit moderation bị dọn.

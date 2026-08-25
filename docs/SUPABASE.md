@@ -2,7 +2,7 @@
 
 ## Mục tiêu
 
-NEXORA sử dụng một schema canonical duy nhất: [`supabase-unified.sql`](../supabase-unified.sql). File này bao gồm catalog, đơn hàng, RLS, Command Deck, CMS, Zalo, thông số kỹ thuật, săn sale, RPC checkout và dữ liệu khởi tạo.
+NEXORA sử dụng một schema canonical duy nhất: [`supabase-unified.sql`](../supabase-unified.sql). File này bao gồm catalog, đơn hàng, RLS, Command Deck, Account Center, CMS/Zalo, thông số kỹ thuật, săn sale, role, moderation, bài viết, affiliate 15%, hoàn tiền, RPC checkout và dữ liệu khởi tạo.
 
 > Không chạy tiếp 10 migration rời sau khi đã chạy schema canonical. Các file cũ chỉ được giữ để đối chiếu lịch sử.
 
@@ -11,7 +11,7 @@ NEXORA sử dụng một schema canonical duy nhất: [`supabase-unified.sql`](.
 | Bước | Thao tác | Kết quả mong đợi |
 | --- | --- | --- |
 | 1 | Tạo/kết nối Supabase project trống. | Project ở trạng thái hoạt động. |
-| 2 | Áp dụng toàn bộ `supabase-unified.sql` như **một migration DDL**. | Tạo 15 bảng public, function/RPC, index, RLS policy, Account Center và seed. |
+| 2 | Áp dụng toàn bộ `supabase-unified.sql` như **một migration DDL**. | Tạo 24 bảng public, function/RPC, index, RLS policy, Account Center, role/moderation/affiliate/refund và seed. |
 | 3 | Bật Email/Password trong Authentication. | Storefront có thể tạo tài khoản/đăng nhập. |
 | 4 | Lấy Project URL và anon/publishable key, điền vào `client/supabase-config.js`. | Storefront và `/admin.html` cùng dùng một project. |
 | 5 | Tạo user rồi cấp quyền trong `admin_users`. | User mở được Command Deck. |
@@ -26,6 +26,8 @@ Khi project Supabase đã được kết nối với môi trường quản lý, 
 
 Việc chạy schema là thay đổi DDL: **không chạy lại tùy tiện trên production đã có dữ liệu**. Hãy sao lưu, kiểm tra migration hiện có và chuẩn bị migration nâng cấp riêng nếu schema production đã khác canonical.
 
+Nếu project đã có module role/affiliate từ trước, áp dụng thêm [`supabase-affiliate-program-settings-rpc.sql`](../supabase-affiliate-program-settings-rpc.sql) một lần để cấp RPC admin chỉnh tỷ lệ hoa hồng và điều kiện chương trình. Schema canonical hiện hành đã bao gồm RPC này cho fresh install.
+
 ## Xác minh sau khi áp dụng
 
 | Bảng/module | Số bản ghi khởi tạo mong đợi |
@@ -36,9 +38,9 @@ Việc chạy schema là thay đổi DDL: **không chạy lại tùy tiện trê
 | `site_pages` | 6 |
 | `faqs` | 3 |
 | `shops` | 3 |
-| `admin_users`, `orders`, `order_items` | 0 |
+| `admin_users`, `orders`, `order_items`, `user_roles`, moderation, affiliate, refund | 0 |
 
-Toàn bộ 15 bảng public phải có RLS bật. Dòng seed chỉ có vai trò giúp kiểm thử; hãy thay giá, tồn kho, ảnh, thông số và nội dung pháp lý bằng dữ liệu vận hành thật trước khi mở bán. Xem [Account & Wallet](ACCOUNT_WALLET.md) để vận hành số dư, nạp tiền Zalo và audit log.
+Toàn bộ **24 bảng public** phải có RLS bật. Dòng seed chỉ có vai trò giúp kiểm thử; hãy thay giá, tồn kho, ảnh, thông số và nội dung pháp lý bằng dữ liệu vận hành thật trước khi mở bán. Seed catalog được liên kết theo `products.shop_id` với ba shop khởi tạo; admin có thể đổi mapping trong biểu mẫu sản phẩm. Xem [Account & Wallet](ACCOUNT_WALLET.md) để vận hành số dư, nạp tiền Zalo và audit log; xem [Role, Content & Affiliate](ROLE_CONTENT_AFFILIATE.md) cho luồng quyền và moderation.
 
 ## Kiểm soát checkout
 
