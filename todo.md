@@ -138,3 +138,7 @@
 - [x] Kiểm thử E2E bình luận kỹ thuật trung tính: pending → hidden, có reviewed_by/reviewed_at và dọn fixture/audit.
 - [x] Kiểm thử đăng xuất Supabase với tài khoản disposable: xác minh session bị xóa, rồi dọn tài khoản test.
 - [x] Mở rộng chứng cứ fixture bình luận: ghi nhận trạng thái pending ban đầu và xác nhận audit moderation bị dọn.
+- [x] Hiển thị thông báo/badge trong Command Deck khi có bình luận hoặc đánh giá mới ở trạng thái chờ duyệt.
+- [x] Cho phép mở thẳng workspace kiểm duyệt từ thông báo và kiểm thử cập nhật số lượng chờ xử lý.
+- [x] Mở rộng Realtime moderation để bắt cả UPDATE chuyển review/bình luận sang `pending`, không chỉ INSERT.
+- [x] Kiểm thử E2E notification với comment kỹ thuật `UPDATE → pending`, xác nhận badge/notice tăng rồi giảm sau moderation; unit test xác nhận cùng payload review upsert mà không tạo review/rating giả.

@@ -28,6 +28,8 @@ Việc chạy schema là thay đổi DDL: **không chạy lại tùy tiện trê
 
 Nếu project đã có module role/affiliate từ trước, áp dụng thêm [`supabase-affiliate-program-settings-rpc.sql`](../supabase-affiliate-program-settings-rpc.sql) một lần để cấp RPC admin chỉnh tỷ lệ hoa hồng và điều kiện chương trình. Schema canonical hiện hành đã bao gồm RPC này cho fresh install.
 
+Với project đã chạy role/moderation trước phiên bản notification, áp dụng thêm [`supabase-moderation-realtime.sql`](../supabase-moderation-realtime.sql) một lần. Migration này đưa `product_reviews` và `product_comments` vào publication Realtime để badge **Role & kiểm duyệt** trong Command Deck tự cập nhật khi có nội dung mới ở trạng thái `pending`. Fresh install dùng `supabase-unified.sql` hiện hành đã bao gồm cấu hình này.
+
 ## Xác minh sau khi áp dụng
 
 | Bảng/module | Số bản ghi khởi tạo mong đợi |

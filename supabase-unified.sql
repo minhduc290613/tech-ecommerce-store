@@ -1016,3 +1016,7 @@ update public.products p set shop_id = case p.category
   when 'Laptop' then (select id from public.shops where slug = 'orion-compute' limit 1)
   else (select id from public.shops where slug = 'nexora-select' limit 1)
 end where p.shop_id is null;
+
+-- Cập nhật badge moderation trong Command Deck khi review/comment mới vào queue pending.
+alter publication supabase_realtime add table public.product_reviews;
+alter publication supabase_realtime add table public.product_comments;

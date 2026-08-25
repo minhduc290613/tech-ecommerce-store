@@ -65,3 +65,17 @@ Guard `submit_product_review` cũng đã được gọi với input không hợp
 Sau restart, Command Deck `/admin.html` tải đầy đủ với menu Role & kiểm duyệt, Hoàn tiền & CSV và Cấu hình nâng cao; console phiên mới trống. Cảnh báo import `admin-roles-content.js` và `mountProductShopSelector` trong log cũ không tái diễn khi tải trang quản trị hiện tại.
 
 Snapshot mobile 390 × 844 sau thay đổi cho thấy catalog vẫn responsive; CTA **Bình luận** được tách thành hàng riêng dưới các nút mua/xem nhanh để tránh co hẹp thao tác trên thẻ sản phẩm.
+
+Notification moderation: Command Deck đã đăng ký thành công kênh Realtime `nexora-moderation-notifications` ở trạng thái `joined` cho bảng review và bình luận; bước tiếp theo dùng fixture bình luận kỹ thuật để xác minh badge/queue cập nhật thực tế.
+
+Fixture comment pending đã cập nhật Command Deck tức thời: nav **Role & kiểm duyệt** hiện badge `1`, workspace hiển thị panel cảnh báo “1 nội dung cần kiểm duyệt”, và queue chứa đúng fixture với thao tác Duyệt/Ẩn. Không cần tải lại trang.
+
+Khi ẩn fixture từ chính queue moderation, badge và panel trở về trạng thái ẩn, queue trả empty state. Sau kiểm tra, cả fixture comment lẫn audit moderation đã được xóa thành công.
+
+Sau cập nhật subscription cho cả `INSERT` và `UPDATE`, kênh Realtime Command Deck đã reload và trở lại trạng thái `joined`; kiểm thử tiếp theo dùng comment kỹ thuật chuyển hidden → pending để xác nhận event UPDATE.
+
+Fixture transition đã được chuyển sang `hidden` và queue được làm mới; badge, panel cảnh báo và danh sách review/bình luận đều trở về empty state trước event `UPDATE → pending`.
+
+Sau khi cập nhật fixture về `pending`, badge Role & kiểm duyệt tăng lại thành `1` ngay trên màn hình tổng quan không cần reload. Khi ẩn fixture qua UI moderation, badge/panel quay về ẩn và queue rỗng. Đây là xác minh E2E cho cơ chế `UPDATE → pending`; cùng guard unit áp dụng cho payload review upsert mà không tạo review/rating giả.
+
+Fixture transition và audit moderation của nó đã được xóa thành công sau kiểm tra.
