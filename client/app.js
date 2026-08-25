@@ -27,6 +27,7 @@ const LOCAL_DEMO_PRODUCTS = [
 const DEFAULT_SETTINGS = { site_name: "NEXORA", site_tagline: "Thiết bị đúng chuẩn.\nMức giá đúng thời điểm.", announcement_text: "Freeship toàn quốc cho đơn từ 1.500.000đ", support_email: "support@nexora.vn", support_hours: "Thứ 2 — Thứ 7 / 09:00–18:00", address_text: "Việt Nam", zalo_phone: "", zalo_confirmation_message: "Tôi đã chuyển khoản đơn {order_number} với số tiền {total}. Nhờ shop xác nhận giúp tôi.", logo_url: "/manus-storage/nexora-logo_3c03446b.png", hero_kicker: "CURATED TECH / 2026", hero_title: "Thiết bị đúng chuẩn.", hero_emphasis: "Mức giá đúng thời điểm.", hero_description: "Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.", hero_image_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg" };
 const DEFAULT_FAQS = [{ question: "Tôi có cần tạo tài khoản để đặt hàng không?", answer: "Bạn có thể xem catalog mà không cần đăng nhập. Để tạo đơn hàng và đồng bộ thanh toán, bạn cần đăng nhập bằng email." }, { question: "Giá sản phẩm có thể thay đổi không?", answer: "Giá và ưu đãi có thể thay đổi khi chương trình kết thúc hoặc tồn kho được cập nhật." }, { question: "Làm thế nào để thanh toán đơn hàng?", answer: "Sau khi tạo đơn, hãy quét VietQR hoặc MoMo và kiểm tra đúng mã đơn, số tiền trước khi xác nhận." }, { question: "Tôi muốn đổi trả hoặc bảo hành thì làm gì?", answer: "Gửi mã đơn, mô tả và hình ảnh liên quan đến kênh hỗ trợ để được hướng dẫn theo chính sách công bố." }];
 const DEFAULT_SHOPS = [{ name: "NEXORA Select", category: "Công nghệ tuyển chọn", description: "Thiết bị chính hãng, phụ kiện thiết yếu và các ưu đãi theo mùa.", banner_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg", is_verified: true }, { name: "Nova Mobile", category: "Điện thoại", description: "Thiết bị di động, phụ kiện bảo vệ và tư vấn lựa chọn theo nhu cầu.", banner_url: "/manus-storage/nexora-phone-category_b50b5ab7.jpg", is_verified: true }, { name: "Orion Compute", category: "Laptop", description: "Laptop và giải pháp làm việc di động cho học tập, sáng tạo và doanh nghiệp nhỏ.", banner_url: "/manus-storage/nexora-laptop-category_9690fafd.jpg", is_verified: true }];
+const DEFAULT_SALE_CAMPAIGNS = [{ id: "demo-hunt-cyan", code: "HUNTCYAN10", title: "Săn Sale Cyan 10%", description: "Giảm 10% cho đơn từ 3.000.000đ, tối đa 1.000.000đ.", badge_text: "SĂN SALE 10%", discount_type: "percent", discount_value: 10, minimum_order_amount: 3000000, maximum_discount_amount: 1000000, starts_at: new Date(Date.now() - 86400000).toISOString(), ends_at: new Date(Date.now() + 7 * 86400000).toISOString(), is_active: true, is_hunt_featured: true }];
 
 const validSupabaseConfig = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const db = validSupabaseConfig && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -38,7 +39,7 @@ const state = {
   authMode: "login",
   activeProduct: null,
   lastOrder: null,
-  activePaymentMethod: "vietqr", settings: DEFAULT_SETTINGS, faqs: DEFAULT_FAQS, shops: DEFAULT_SHOPS,
+  activePaymentMethod: "vietqr", settings: DEFAULT_SETTINGS, faqs: DEFAULT_FAQS, shops: DEFAULT_SHOPS, saleCampaigns: DEFAULT_SALE_CAMPAIGNS, appliedSaleCode: "",
   filters: { category: "all", maxPrice: 35000000, saleOnly: false, search: "" },
 };
 
@@ -51,7 +52,7 @@ const els = {
   cartButton: $("#cartButton"), cartDrawer: $("#cartDrawer"), cartBadge: $("#cartBadge"), cartItemLabel: $("#cartItemLabel"), cartItems: $("#cartItems"), cartTotal: $("#cartTotal"), checkoutButton: $("#checkoutButton"),
   overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authPassword: $("#authPassword"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authHelper: $("#authHelper"),
   quickViewModal: $("#quickViewModal"), quickViewImage: $("#quickViewImage"), quickViewCategory: $("#quickViewCategory"), quickViewTitle: $("#quickViewTitle"), quickViewDescription: $("#quickViewDescription"), quickViewPrice: $("#quickViewPrice"), quickViewAdd: $("#quickViewAdd"),
-  qrModal: $("#qrModal"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), faqList: $("#faqList"),
+  qrModal: $("#qrModal"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), faqList: $("#faqList"), saleHuntGrid: $("#saleHuntGrid"),
 };
 
 document.addEventListener("DOMContentLoaded", initializeApp);
@@ -67,6 +68,7 @@ async function initializeApp() {
 }
 
 function bindEvents() {
+  mountSaleCart();
   els.headerSearch.addEventListener("submit", handleSearchSubmit);
   els.mobileSearchForm.addEventListener("submit", handleSearchSubmit);
   [els.searchInput, els.mobileSearchInput].forEach((input) => input.addEventListener("input", (event) => {
@@ -127,6 +129,7 @@ function bindEvents() {
   els.qrImage.addEventListener("load", hideQRState);
   els.zaloConfirmLink.addEventListener("click", markZaloConfirmationRequested);
   els.copyZaloMessage.addEventListener("click", copyZaloMessage);
+  els.saleHuntGrid.addEventListener("click", (event) => { const button = event.target.closest("[data-sale-code]"); if (!button) return; applySaleCode(button.dataset.saleCode, true); openCart(); });
 
   document.addEventListener("keydown", (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); els.searchInput.focus(); }
@@ -153,14 +156,15 @@ async function loadProducts() {
 
 async function loadMarketplaceCMS() {
   if (db) {
-    const [settingsResult, faqsResult, shopsResult] = await Promise.all([db.from("site_settings").select("*").eq("singleton", true).maybeSingle(), db.from("faqs").select("*").eq("is_published", true).order("sort_order"), db.from("shops").select("*").eq("is_active", true).order("created_at")]);
-    if (settingsResult.data) state.settings = { ...DEFAULT_SETTINGS, ...settingsResult.data }; if (faqsResult.data?.length) state.faqs = faqsResult.data; if (shopsResult.data?.length) state.shops = shopsResult.data;
+    const [settingsResult, faqsResult, shopsResult, saleResult] = await Promise.all([db.from("site_settings").select("*").eq("singleton", true).maybeSingle(), db.from("faqs").select("*").eq("is_published", true).order("sort_order"), db.from("shops").select("*").eq("is_active", true).order("created_at"), db.from("sale_campaigns").select("*").eq("is_hunt_featured", true).order("created_at", { ascending: false })]);
+    if (settingsResult.data) state.settings = { ...DEFAULT_SETTINGS, ...settingsResult.data }; if (faqsResult.data?.length) state.faqs = faqsResult.data; if (shopsResult.data?.length) state.shops = shopsResult.data; if (saleResult.data?.length) state.saleCampaigns = saleResult.data;
   }
-  applySettings(); renderFAQs(); renderShops();
+  applySettings(); renderFAQs(); renderShops(); renderSaleHunt(); updateCartUI();
 }
 function applySettings() { const s = state.settings; document.title = `${s.site_name} Tech Store | ${s.hero_title}`; $("#announcementText").textContent = s.announcement_text; $("#heroKicker").textContent = s.hero_kicker; $("#heroTitlePlain").textContent = s.hero_title; $("#heroTitleEmphasis").textContent = s.hero_emphasis; $("#heroDescription").textContent = s.hero_description; $("#footerTagline").innerHTML = escapeHtml(s.site_tagline).replace(/\n/g, "<br />"); $("#footerSupportEmail").textContent = s.support_email; $("#footerSupportEmail").href = `mailto:${s.support_email}`; $("#footerSupportHours").textContent = s.support_hours; $("#footerAddress").textContent = s.address_text; if (s.hero_image_url) $("#heroImage").src = s.hero_image_url; $$("[data-site-logo]").forEach((img) => { if (s.logo_url) img.src = s.logo_url; }); $$("[data-site-name]").forEach((item) => item.textContent = s.site_name); renderFooterContacts(s); renderFooterSellerContact(s); renderZaloConfirmation(); }
 function renderFAQs() { els.faqList.innerHTML = state.faqs.map((faq, index) => `<details class="faq-item" ${index === 0 ? "open" : ""}><summary><span>${escapeHtml(faq.question)}</span><i class="fa-solid fa-plus" aria-hidden="true"></i></summary><p>${escapeHtml(faq.answer)}</p></details>`).join(""); }
 function renderShops() { els.shopsGrid.innerHTML = state.shops.map((shop) => `<article class="shop-card"><div class="shop-card-image">${shop.banner_url ? `<img src="${escapeHtml(shop.banner_url)}" alt="" loading="lazy" />` : ""}<span>${escapeHtml(shop.category)}</span></div><div class="shop-card-body"><div class="shop-card-title"><h3>${escapeHtml(shop.name)}</h3>${shop.is_verified ? '<i class="fa-solid fa-circle-check" aria-label="Gian hàng đã xác minh"></i>' : ""}</div><p>${escapeHtml(shop.description)}</p><a href="/info.html?page=seller-guide">Khám phá gian hàng <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div></article>`).join(""); }
+function renderSaleHunt() { const campaigns = state.saleCampaigns.filter(isCampaignActive); els.saleHuntGrid.innerHTML = campaigns.length ? campaigns.map((campaign) => `<article class="sale-hunt-card"><span class="sale-hunt-code">${escapeHtml(campaign.code)}</span><div><h3>${escapeHtml(campaign.title)}</h3><p>${escapeHtml(campaign.description)}</p></div><button data-sale-code="${escapeHtml(campaign.code)}" type="button">Dùng mã</button></article>`).join("") : '<p class="sale-hunt-empty">Chưa có mã săn sale đang mở. Hãy quay lại trong đợt tiếp theo.</p>'; }
 function renderLoadingCards() {
   els.productsGrid.innerHTML = Array.from({ length: 6 }, () => '<div class="loading-card" aria-label="Đang tải sản phẩm"></div>').join("");
 }
@@ -280,8 +284,9 @@ function handleCartActions(event) {
 
 function updateCartUI() {
   const quantity = state.cart.reduce((sum, item) => sum + Number(item.quantity), 0);
-  const total = cartTotal();
+  const pricing = cartPricing(); const total = pricing.total;
   els.cartBadge.textContent = quantity > 99 ? "99+" : quantity; els.cartItemLabel.textContent = `(${quantity})`; els.cartTotal.textContent = formatCurrency(total);
+  updateSaleCartUI(pricing);
   els.checkoutButton.disabled = !state.cart.length;
   els.cartItems.innerHTML = state.cart.length ? state.cart.map((item) => `
     <article class="cart-item">
@@ -292,7 +297,14 @@ function updateCartUI() {
     </article>`).join("") : `<div class="cart-empty"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><p>Giỏ hàng đang trống. Chọn một thiết bị để bắt đầu phiên mua sắm.</p></div>`;
 }
 
-function cartTotal() { return state.cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0); }
+function cartSubtotal() { return state.cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0); }
+function cartTotal() { return cartPricing().total; }
+function getCampaignByCode(code) { return state.saleCampaigns.find((campaign) => campaign.code === String(code || "").trim().toUpperCase()); }
+function isCampaignActive(campaign) { const now = Date.now(); return campaign?.is_active !== false && new Date(campaign.starts_at).getTime() <= now && new Date(campaign.ends_at).getTime() >= now && (!campaign.usage_limit || Number(campaign.usage_count || 0) < Number(campaign.usage_limit)); }
+function cartPricing() { const subtotal = cartSubtotal(); const campaign = getCampaignByCode(state.appliedSaleCode); if (!campaign || !isCampaignActive(campaign) || subtotal < Number(campaign.minimum_order_amount || 0)) return { subtotal, discount: 0, total: subtotal, campaign: null }; let discount = campaign.discount_type === "percent" ? Math.floor(subtotal * Number(campaign.discount_value) / 100) : Number(campaign.discount_value); if (campaign.maximum_discount_amount) discount = Math.min(discount, Number(campaign.maximum_discount_amount)); discount = Math.min(discount, subtotal); return { subtotal, discount, total: subtotal - discount, campaign }; }
+function mountSaleCart() { const footer = $(".drawer-footer"); if (!footer || $("#saleCodeInput")) return; const module = document.createElement("div"); module.className = "cart-sale-box"; module.innerHTML = '<span class="panel-label">SALE HUNT CODE</span><div class="sale-code-row"><input id="saleCodeInput" maxlength="32" placeholder="NHẬP MÃ SĂN SALE" /><button id="applySaleCode" type="button">Áp dụng</button></div><small id="cartSaleFeedback" class="cart-sale-feedback">Nhập mã ưu đãi đang mở để kiểm tra mức giảm.</small>'; footer.prepend(module); const summary = $(".cart-total", footer); summary.querySelector("span").textContent = "Tổng cộng"; summary.insertAdjacentHTML("beforebegin", '<div class="cart-total"><span>Tạm tính</span><strong id="cartSubtotal">0đ</strong></div><div class="cart-total cart-discount-row" id="cartDiscountRow"><span>Ưu đãi</span><strong id="cartDiscount">-0đ</strong></div>'); $("#applySaleCode").addEventListener("click", () => applySaleCode($("#saleCodeInput").value)); $("#saleCodeInput").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); applySaleCode(event.currentTarget.value); } }); }
+function applySaleCode(code, openDrawer = false) { const normalized = String(code || "").trim().toUpperCase(); const campaign = getCampaignByCode(normalized); if (!campaign) { state.appliedSaleCode = ""; updateCartUI(); showToast("Mã săn sale không tồn tại hoặc chưa được mở.", "error"); return; } state.appliedSaleCode = normalized; const pricing = cartPricing(); if (!pricing.campaign) { state.appliedSaleCode = ""; updateCartUI(); showToast(`Đơn cần tối thiểu ${formatCurrency(campaign.minimum_order_amount)} để dùng mã này.`, "error"); return; } updateCartUI(); if (openDrawer) $("#saleCodeInput").value = normalized; showToast(`Đã áp dụng ${campaign.code}: giảm ${formatCurrency(pricing.discount)}.`, "success"); }
+function updateSaleCartUI(pricing) { const input = $("#saleCodeInput"); const feedback = $("#cartSaleFeedback"); const subtotal = $("#cartSubtotal"); const discountRow = $("#cartDiscountRow"); const discount = $("#cartDiscount"); if (!input || !feedback || !subtotal || !discountRow || !discount) return; input.value = state.appliedSaleCode; subtotal.textContent = formatCurrency(pricing.subtotal); discount.textContent = `-${formatCurrency(pricing.discount)}`; discountRow.classList.toggle("active", Boolean(pricing.campaign)); feedback.className = `cart-sale-feedback ${pricing.campaign ? "success" : ""}`; feedback.textContent = pricing.campaign ? `${pricing.campaign.badge_text || pricing.campaign.title}: đã giảm ${formatCurrency(pricing.discount)}.` : "Nhập mã ưu đãi đang mở để kiểm tra mức giảm."; }
 function canPurchaseProduct(product) { return Boolean(product) && product.is_active !== false && Number(product.stock) > 0; }
 function openCart() { els.overlay.hidden = false; els.cartDrawer.classList.add("open"); els.cartDrawer.setAttribute("aria-hidden", "false"); document.body.classList.add("no-scroll"); }
 function closeCart() { els.overlay.hidden = true; els.cartDrawer.classList.remove("open"); els.cartDrawer.setAttribute("aria-hidden", "true"); if (![els.authModal, els.quickViewModal, els.qrModal].some((modal) => !modal.hidden)) document.body.classList.remove("no-scroll"); }
@@ -350,18 +362,19 @@ async function checkout() {
   if (!db) { showToast("Để tạo đơn hàng, hãy kết nối Supabase trong app.js.", "error"); return; }
   if (state.cart.some((item) => String(item.id).startsWith("demo-"))) { showToast("Catalog mẫu chỉ để xem giao diện. Hãy chạy supabase-schema.sql và kết nối Supabase để thanh toán.", "error"); return; }
   setButtonLoading(els.checkoutButton, true, "Đang tạo đơn hàng");
-  const total = cartTotal(); const orderNumber = createOrderNumber();
+  const pricing = cartPricing(); const total = pricing.total; const orderNumber = createOrderNumber();
   const items = state.cart.map((item) => ({ product_id: item.id, quantity: Number(item.quantity) }));
-  const { data: order, error: orderError } = await db.rpc("create_order_with_items", {
+  const { data: order, error: orderError } = await db.rpc("create_order_with_sale", {
     p_order_number: orderNumber,
     p_payment_method: "vietqr",
     p_payment_note: "Đơn được tạo từ NEXORA Tech Store",
+    p_sale_code: state.appliedSaleCode || null,
     p_items: items,
   });
   setButtonLoading(els.checkoutButton, false);
   if (orderError) { showToast(`Không thể tạo đơn hàng: ${orderError.message}`, "error"); return; }
-  state.lastOrder = { id: order.id, number: order.order_number, total: Number(order.total_amount) };
-  state.cart = []; persistCart(); updateCartUI(); closeCart(); openPaymentModal(); showToast("Đã tạo đơn hàng. Vui lòng quét QR để thanh toán.", "success");
+  state.lastOrder = { id: order.id, number: order.order_number, total: Number(order.total_amount), subtotal: Number(order.subtotal_amount), discount: Number(order.discount_amount || 0), saleCode: order.sale_code || "" };
+  state.cart = []; state.appliedSaleCode = ""; persistCart(); updateCartUI(); closeCart(); openPaymentModal(); showToast("Đã tạo đơn hàng. Vui lòng quét QR để thanh toán.", "success");
 }
 
 function openPaymentModal() { state.activePaymentMethod = "vietqr"; updatePaymentQR(); openModal("qr"); }

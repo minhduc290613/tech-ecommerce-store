@@ -76,3 +76,10 @@
 - [x] Xác định CTA liên hệ người bán và dữ liệu Zalo có thể cấu hình.
 - [x] Thêm liên kết Zalo người bán trên storefront và trường chỉnh sửa trong Command Deck.
 - [x] Kiểm thử liên kết người bán trên website gốc.
+
+## Săn sale & ưu đãi đơn hàng
+
+- [x] Thiết kế quy tắc chương trình sale, mã giảm giá và điều kiện áp dụng theo đơn.
+- [x] Thêm migration chương trình sale và dữ liệu giảm giá cho orders.
+- [x] Xây dựng giao diện săn sale, nhập mã ưu đãi và quản trị sale trong Command Deck.
+- [x] Kiểm thử tính giá ưu đãi, tạo đơn và thao tác quản trị sale.

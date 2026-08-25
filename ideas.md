@@ -72,3 +72,6 @@ Wordmark `NEXORA` có ký tự **X** tạo từ hai đường tín hiệu cắt 
 2. Signal rail, node dot, capsule kỹ thuật và measurement frame được lặp lại xuyên suốt catalog, FAQ, trust center và trang thông tin, không chỉ giới hạn ở hero.
 3. Cyan `#38BDF8` dành cho hành động, trạng thái live và tín hiệu; violet `#8B5CF6` chỉ dành cho Flash Sale hoặc năng lượng giảm giá.
 4. Nội dung công khai giữ giọng NEXORA ngắn gọn, rõ lợi ích và hướng giao dịch; nội dung triển khai nội bộ chỉ xuất hiện trong khu vực Command Deck hoặc tài liệu dự án.
+5. Hình catalog dùng lớp hiệu chỉnh **graphite showroom** với ánh cyan có kiểm soát để tránh cảm giác ảnh stock rời rạc.
+6. Wordmark ưu tiên can thiệp bằng hai nét cyan giao cắt đúng vị trí ký tự **X** trong các điểm chạm thương hiệu chính.
+7. Bề mặt Command Deck cần mang tín hiệu **restricted console** thông qua microcopy access-state, khung đo đạc và rail mảnh thay vì chỉ dùng dark form thông thường.
