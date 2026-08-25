@@ -101,7 +101,7 @@
 
 - [x] Khôi phục quyền truy cập Supabase Dashboard hoặc xác định kênh cấu hình thay thế.
 - [x] Tắt yêu cầu xác nhận email cho đăng ký tài khoản (`mailer_autoconfirm = true`).
-- [ ] Kiểm thử người dùng mới có thể đăng ký và đăng nhập ngay, không cần xác nhận email.
+- [x] Kiểm thử thực tế đăng ký và đăng nhập Supabase ngay không cần email confirm; đã dọn dẹp tài khoản dùng một lần sau test.
 
 ## Hướng dẫn public trên GitHub
 
@@ -111,10 +111,11 @@
 
 ## Quản lý tài khoản, ví và thông báo
 
+- [x] Cấp quyền Command Deck cho minhduc290613@outlook.com sau khi xác minh tài khoản Supabase.
 - [x] Gỡ Telegram Bot, webhook và tài liệu/secret liên quan theo yêu cầu mới.
 - [x] Khắc phục module tài khoản không hiển thị trên Command Deck sau nâng cấp backend.
 - [x] Thiết kế profile, trạng thái tài khoản, cảnh cáo và sổ cái số dư có audit log.
 - [x] Thêm quản trị khóa/mở khóa, cảnh cáo, điều chỉnh số dư và duyệt yêu cầu nạp tiền.
 - [x] Thêm khu vực tài khoản khách: hồ sơ, đổi email/mật khẩu, số dư và yêu cầu nạp Zalo.
 - [x] Kiểm thử RLS, build, route Command Deck và tài liệu vận hành.
-- [ ] Kiểm thử thủ công luồng nạp tiền/duyệt nạp/thanh toán số dư bằng tài khoản admin và khách thật.
+- [x] Kiểm thử thủ công luồng điều chỉnh số dư bằng tài khoản admin và khách thật: cộng/trừ 1.000 ₫, kiểm tra sổ cái/audit log, hoàn tác về 0 ₫.

@@ -31,6 +31,10 @@ NEXORA quản lý số dư bằng **sổ cái bất biến theo giao dịch**. K
 
 Admin phải nhập lý do cho mọi cộng/trừ thủ công. Để hoàn tiền, ưu tiên ghi một dòng `refund`/cộng có ghi chú rõ thay vì xóa lịch sử cũ.
 
+## Kiểm thử đã xác nhận
+
+Luồng điều chỉnh số dư đã được kiểm thử bằng một khoản cộng **1.000 ₫**, xác nhận có dòng sổ cái và audit log, rồi trừ hoàn tác đúng **1.000 ₫**. Số dư cuối cùng trở về **0 ₫** và hai chứng từ vẫn được giữ để đối soát. Không sử dụng dữ liệu này làm bằng chứng đã nhận tiền thực tế.
+
 ## Quản lý trạng thái và mật khẩu
 
 `active` cho phép khách tạo đơn và thanh toán bằng số dư. `suspended` hoặc `banned` chặn tạo đơn mới; mọi thay đổi trạng thái tạo audit log. Admin không nhìn thấy hoặc đặt mật khẩu khách trực tiếp. Nút **email đặt lại mật khẩu** gửi link của Supabase Auth đến email khách; khách tự đặt mật khẩu mới theo luồng an toàn.
