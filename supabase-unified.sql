@@ -176,6 +176,9 @@ create table if not exists public.site_pages (
   title text not null,
   subtitle text not null default '',
   content text not null,
+  title_en text,
+  subtitle_en text,
+  content_en text,
   updated_at timestamptz not null default now()
 );
 
@@ -183,6 +186,8 @@ create table if not exists public.faqs (
   id uuid primary key default gen_random_uuid(),
   question text not null,
   answer text not null,
+  question_en text,
+  answer_en text,
   sort_order integer not null default 0,
   is_published boolean not null default true,
   created_at timestamptz not null default now(),
@@ -1078,6 +1083,17 @@ alter table public.site_settings add column if not exists favicon_url text;
 alter table public.site_settings add column if not exists seo_title text;
 alter table public.site_settings add column if not exists seo_description text;
 alter table public.site_settings add column if not exists seo_og_image_url text;
+alter table public.site_settings add column if not exists announcement_text_en text;
+alter table public.site_settings add column if not exists site_tagline_en text;
+alter table public.site_settings add column if not exists hero_kicker_en text;
+alter table public.site_settings add column if not exists hero_title_en text;
+alter table public.site_settings add column if not exists hero_emphasis_en text;
+alter table public.site_settings add column if not exists hero_description_en text;
+alter table public.faqs add column if not exists question_en text;
+alter table public.faqs add column if not exists answer_en text;
+alter table public.site_pages add column if not exists title_en text;
+alter table public.site_pages add column if not exists subtitle_en text;
+alter table public.site_pages add column if not exists content_en text;
 alter table public.site_settings add column if not exists payment_bank_id text;
 alter table public.site_settings add column if not exists payment_account_number text;
 alter table public.site_settings add column if not exists payment_account_name text;
@@ -1105,3 +1121,11 @@ end where p.shop_id is null;
 -- Cập nhật badge moderation trong Command Deck khi review/comment mới vào queue pending.
 alter publication supabase_realtime add table public.product_reviews;
 alter publication supabase_realtime add table public.product_comments;
+
+-- 26. Public branding assets: chỉ role có capability siteSettings được upload.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('nexora-brand-assets', 'nexora-brand-assets', true, 5242880, array['image/jpeg','image/png','image/webp','image/svg+xml']::text[])
+on conflict (id) do update set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+drop policy if exists "NEXORA branding asset upload" on storage.objects;
+create policy "NEXORA branding asset upload" on storage.objects for insert to authenticated
+with check (bucket_id = 'nexora-brand-assets' and (storage.foldername(name))[1] = 'branding' and public.has_role_capability('siteSettings'));

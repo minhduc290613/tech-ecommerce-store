@@ -2,7 +2,7 @@
 
 ## Mục tiêu
 
-NEXORA sử dụng một schema canonical duy nhất: [`supabase-unified.sql`](../supabase-unified.sql). File này bao gồm catalog, đơn hàng, RLS, Command Deck, Account Center, CMS/Zalo, thông số kỹ thuật, săn sale, role, moderation, bài viết, affiliate 15%, hoàn tiền, RPC checkout và dữ liệu khởi tạo.
+NEXORA sử dụng một schema canonical duy nhất: [`supabase-unified.sql`](../supabase-unified.sql). File này bao gồm catalog, đơn hàng, RLS, Command Deck, Account Center, CMS/Zalo, thông số kỹ thuật, săn sale, role, moderation, bài viết, affiliate 15%, hoàn tiền, RPC checkout, bucket ảnh thương hiệu và dữ liệu khởi tạo.
 
 > Repository chỉ giữ `supabase-unified.sql`; không có migration SQL rời để chạy lần lượt.
 
@@ -26,7 +26,7 @@ Khi project Supabase đã được kết nối với môi trường quản lý, 
 
 Việc chạy schema là thay đổi DDL: **không chạy lại tùy tiện trên production đã có dữ liệu**. Hãy sao lưu, kiểm tra migration hiện có và chuẩn bị migration nâng cấp riêng nếu schema production đã khác canonical.
 
-Schema canonical hiện hành đã bao gồm RPC chỉnh tỷ lệ affiliate, Realtime moderation và role/capability. Với project đang hoạt động, áp dụng phần chênh lệch qua migration DDL có quản lý, không tạo file SQL rời trong repository.
+Schema canonical hiện hành đã bao gồm RPC chỉnh tỷ lệ affiliate, Realtime moderation, role/capability và bucket công khai `nexora-brand-assets`. Chỉ role có capability `siteSettings` mới được upload vào thư mục `branding/`; storefront chỉ nhận URL ảnh sau khi admin lưu form Thương hiệu. Command Deck cũng hiển thị audit gán/lưu/xóa role, có thể giới hạn CSV sổ cái/yêu cầu nạp theo khoảng ngày, và quản lý bản tiếng Anh tùy chọn cho FAQ cùng nội dung hero/announcement. Với project đang hoạt động, áp dụng phần chênh lệch qua migration DDL có quản lý, không tạo file SQL rời trong repository.
 
 ## Xác minh sau khi áp dụng
 

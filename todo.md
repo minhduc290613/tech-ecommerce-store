@@ -149,3 +149,13 @@
 - [x] Hợp nhất toàn bộ SQL dự án về một file canonical duy nhất, cập nhật tài liệu và cưỡng chế không tạo migration SQL rời trong các thay đổi sau.
 - [x] Thêm script kiểm tra repository chỉ cho phép `supabase-unified.sql` trong nhóm schema Supabase trước khi `pnpm check` và `pnpm build`.
 - [x] Bổ sung loading animation mượt, có hỗ trợ trợ năng, khi storefront đang chờ dữ liệu Supabase.
+- [x] Khắc phục dứt điểm menu ba gạch mobile, bổ sung shortcut tài khoản cạnh menu và kiểm thử chạm/keyboard trên mobile.
+- [x] Bổ sung English mode cho các nhãn giao diện storefront có thể dịch trực tiếp.
+- [x] Thêm loading cục bộ khi tìm kiếm/lọc catalog, retry cho lỗi tải dữ liệu và ảnh catalog responsive/lazy loading.
+- [x] Bổ sung upload ảnh trực tiếp cho logo/favicon/OG image trong Command Deck bằng kho lưu trữ dự án.
+- [x] Ghi và hiển thị lịch sử thay đổi role an toàn trong Command Deck.
+- [x] Bổ sung bộ lọc khoảng ngày cho các xuất CSV quản trị.
+- [x] Hoàn thiện English mode cho toàn bộ storefront: filter, trạng thái empty/loading/retry, giỏ hàng/checkout, sale hunt, FAQ/help/trust/footer và CTA còn lại.
+- [x] Kiểm thử chuyển ngôn ngữ end-to-end ở desktop/mobile để xác nhận mọi nhãn đồng bộ và không phát sinh lỗi runtime.
+- [x] Bổ sung trường CMS English tùy chọn cho FAQ, Brand và trang hướng dẫn; khi chưa có bản dịch đã lưu, sử dụng bản dịch mặc định thay vì thay đổi nội dung CMS đang công bố.
+- [x] Kiểm thử chuyển EN/VI qua toggle trên DOM desktop, responsive mobile bằng `?lang=en`, cùng các vùng header, filter, retry, sale, cart, help/trust/footer, FAQ và console sạch.

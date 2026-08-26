@@ -228,3 +228,18 @@ h1 em, h2 em { color: var(--cyan); font-style: normal; }
   .mobile-nav-scrim.open { opacity: 1; pointer-events: auto; }
   body.mobile-nav-open { overflow: hidden; }
 }
+
+/* Mobile navigation reliability override: hidden state prevents stale collapsed menus from capturing taps. */
+.mobile-account-button { display: none; }
+@media (max-width: 720px) {
+  .mobile-account-button { display: grid; }
+  .mobile-nav { max-height: none; display: grid; gap: 0; overflow: visible; padding: .55rem var(--frame) .7rem; border-top: 1px solid var(--line); opacity: 0; pointer-events: none; transform: translateY(-9px); transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out); }
+  .mobile-nav[hidden] { display: none !important; }
+  .mobile-nav.open { max-height: none; padding: .55rem var(--frame) .7rem; border-top-width: 1px; opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .mobile-nav-inner { display: grid; gap: .2rem; }
+  .mobile-nav a { display: block; padding: .62rem .15rem; color: #dceaf5; font-weight: 600; }
+  .mobile-language-toggle { justify-self: start; margin-top: .45rem; padding: .42rem .58rem; border: 1px solid rgba(56, 189, 248, .4); color: var(--cyan-bright); background: rgba(56, 189, 248, .08); font: 600 .62rem var(--font-mono); letter-spacing: .08em; }
+}
+
+.catalog-retry { display: flex; align-items: center; gap: .75rem; margin: 1rem 0; padding: .85rem .95rem; border: 1px solid rgba(251, 191, 36, .34); color: #e4eff8; background: rgba(91, 62, 13, .18); }.catalog-retry > i { color: #f8c86a; }.catalog-retry div { display: grid; min-width: 0; gap: .1rem; flex: 1; }.catalog-retry strong { font-family: var(--font-display); font-size: .78rem; }.catalog-retry span { color: #b9cbd9; font-size: .68rem; }.catalog-retry .quiet-button { flex: 0 0 auto; }.catalog-inline-loading { grid-column: 1 / -1; min-height: 190px; display: grid; place-content: center; justify-items: center; gap: .65rem; color: var(--cyan-bright); border: 1px solid var(--line); background: rgba(17, 33, 53, .42); font: .68rem var(--font-mono); letter-spacing: .04em; }.catalog-inline-loading i { font-size: 1.45rem; color: var(--cyan); }
+@media (max-width: 560px) { .catalog-retry { align-items: flex-start; flex-wrap: wrap; }.catalog-retry .quiet-button { margin-left: 1.55rem; } }
