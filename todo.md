@@ -168,3 +168,5 @@
 - [x] Cấu hình build multipage để `orders.html` được xuất bản production và kiểm tra route sau build.
 - [x] Sửa chuyển workspace Command Deck để chỉ một view hiển thị tại một thời điểm, rồi kiểm thử Tài khoản/Role/Logistics.
 - [x] Kiểm thử an toàn RPC lưu/xóa nhà vận chuyển với bản ghi tạm tự dọn; form cập nhật hành trình không được dùng để ghi dữ liệu vận chuyển giả vào đơn khách thực.
+- [x] Bổ sung tra cứu và bộ lọc nâng cao trong quản lý đơn theo mã đơn, mã vận đơn, khách hàng, nhà vận chuyển và trạng thái vận hành.
+- [x] Kiểm thử UI tìm theo mã vận đơn và lọc nhà vận chuyển bằng fixture tạm tự dọn, không sửa dữ liệu đơn khách thực.

@@ -1,6 +1,7 @@
 /* Circuit Atelier Command Deck — RLS-bound marketplace operations and CMS. */
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 import { isAdminRole, resolveRoleCapabilities } from "./role-permissions.js";
+import { filterOrders } from "./order-filters.js";
 import "./admin-accounts.js";
 import "./admin-roles-content.js";
 import "./admin-logistics.js";
@@ -13,7 +14,7 @@ const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector
 
 const state = {
   user: null, role: "customer", roleDefinitions: [], capabilities: {}, products: [], orders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
-  fulfillmentFilter: "all", paymentFilter: "all", activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null, editingSaleCampaignId: null,
+  fulfillmentFilter: "all", paymentFilter: "all", orderQuery: "", carrierFilter: "all", activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null, editingSaleCampaignId: null,
 };
 
 const els = {
@@ -63,6 +64,7 @@ function bindEvents() {
     renderOrders();
   });
   els.paymentFilter.addEventListener("change", () => { state.paymentFilter = els.paymentFilter.value; renderOrders(); });
+  mountAdvancedOrderFilters();
   els.ordersBody.addEventListener("click", (event) => { const paymentButton = event.target.closest("[data-payment-action]"); if (paymentButton) { updatePaymentStatus(paymentButton.dataset.orderId, paymentButton.dataset.paymentAction); return; } const button = event.target.closest("[data-edit-order]"); if (button) openOrderModal(getOrder(button.dataset.editOrder)); });
   els.refreshOrders.addEventListener("click", loadData);
   $("#orderForm").addEventListener("submit", saveOrder);
@@ -149,7 +151,7 @@ async function loadData() {
     db.from("sale_campaigns").select("*").order("created_at", { ascending: false }),
   ]);
   if (productsResult.error || ordersResult.error) return toast(productsResult.error?.message || ordersResult.error?.message || "Không tải được dữ liệu quản trị.", "error");
-  state.products = productsResult.data || []; state.orders = ordersResult.data || [];
+  state.products = productsResult.data || []; state.orders = ordersResult.data || []; refreshCarrierFilterOptions();
   if (settingsResult.error || pagesResult.error || faqsResult.error || shopsResult.error || campaignsResult.error) toast("CMS/sale chưa sẵn sàng. Hãy chạy các migration Supabase mới nhất.", "error");
   state.settings = settingsResult.data || null; state.pages = pagesResult.data || []; state.faqs = faqsResult.data || []; state.shops = shopsResult.data || []; state.saleCampaigns = campaignsResult.data || []; populateProductShopOptions($("#productShopId")?.value || "");
   renderMetrics(); renderOperationsMetrics(); renderRevenueChart(); renderProducts(); renderOrders(); renderRecentOrders(); renderSettings(); renderFaqs(); renderShops(); renderSaleCampaigns(); fillPageForm();
@@ -178,9 +180,21 @@ function renderRevenueChart() {
 function renderRecentOrders() { els.recentOrders.innerHTML = state.orders.slice(0, 5).map(compactOrderRow).join("") || emptyRow("Chưa có đơn hàng nào.", 5); }
 function compactOrderRow(order) { return `<tr><td><b>${escapeHtml(order.order_number)}</b></td><td>${formatDate(order.created_at)}</td><td>${order.payment_method === "momo" ? "MoMo" : "VietQR"}</td><td><b>${currency(order.total_amount)}</b></td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td></tr>`; }
 function renderOrders() {
-  const rows = state.orders.filter((order) => (state.fulfillmentFilter === "all" || (order.fulfillment_status || "unfulfilled") === state.fulfillmentFilter) && (state.paymentFilter === "all" || order.status === state.paymentFilter));
-  els.ordersBody.innerHTML = rows.map(orderRow).join("") || emptyRow("Không có đơn hàng thuộc bộ lọc này.", 8);
+  const rows = filterOrders(state.orders, { query: state.orderQuery, carrier: state.carrierFilter, fulfillment: state.fulfillmentFilter, payment: state.paymentFilter });
+  $("#orderFilterCount").textContent = `${rows.length}/${state.orders.length} đơn`;
+  els.ordersBody.innerHTML = rows.map(orderRow).join("") || emptyRow("Không tìm thấy đơn phù hợp với điều kiện tra cứu.", 8);
 }
+
+function mountAdvancedOrderFilters() {
+  if ($("#orderSearch")) return;
+  const host = els.fulfillmentFilters?.closest(".fulfillment-filter-row"); if (!host) return;
+  host.insertAdjacentHTML("afterend", '<div class="order-advanced-filters"><label class="table-search order-search"><i class="fa-solid fa-magnifying-glass"></i><input id="orderSearch" type="search" placeholder="Mã đơn, mã vận đơn, khách hàng, SĐT hoặc nhà vận chuyển..." /></label><select class="payment-filter" id="orderCarrierFilter" aria-label="Lọc nhà vận chuyển"><option value="all">Tất cả nhà vận chuyển</option></select><button class="quiet-button" id="clearOrderFilters" type="button"><i class="fa-solid fa-filter-circle-xmark"></i> Xóa lọc</button><span id="orderFilterCount" class="order-filter-count">0/0 đơn</span></div>');
+  document.head.insertAdjacentHTML("beforeend", '<style>.order-advanced-filters{display:flex;align-items:center;gap:.6rem;margin:0 0 1rem}.order-advanced-filters .order-search{flex:1;min-width:15rem}.order-filter-count{margin-left:auto;color:#91afc9;font:600 .65rem var(--font-mono);white-space:nowrap}@media(max-width:720px){.order-advanced-filters{align-items:stretch;flex-wrap:wrap}.order-advanced-filters .order-search{flex:1 0 100%}.order-advanced-filters select,.order-advanced-filters button{flex:1}.order-filter-count{width:100%;margin-left:0}}</style>');
+  $("#orderSearch").addEventListener("input", (event) => { state.orderQuery = event.target.value; renderOrders(); });
+  $("#orderCarrierFilter").addEventListener("change", (event) => { state.carrierFilter = event.target.value; renderOrders(); });
+  $("#clearOrderFilters").addEventListener("click", () => { state.orderQuery = ""; state.carrierFilter = "all"; state.fulfillmentFilter = "all"; state.paymentFilter = "all"; $("#orderSearch").value = ""; $("#orderCarrierFilter").value = "all"; els.paymentFilter.value = "all"; $$("button", els.fulfillmentFilters).forEach((button) => button.classList.toggle("active", button.dataset.fulfillmentFilter === "all")); renderOrders(); });
+}
+function refreshCarrierFilterOptions() { const select = $("#orderCarrierFilter"); if (!select) return; const current = state.carrierFilter; const carriers = [...new Set(state.orders.map((order) => String(order.carrier || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi")); select.innerHTML = `<option value="all">Tất cả nhà vận chuyển</option>${carriers.map((carrier) => `<option value="${escapeHtml(carrier)}">${escapeHtml(carrier)}</option>`).join("")}`; state.carrierFilter = carriers.some((carrier) => carrier === current) ? current : "all"; select.value = state.carrierFilter; }
 function orderRow(order) {
   const customerName = order.customer_name || shortId(order.user_id); const itemCount = order.order_items?.reduce((sum, item) => sum + Number(item.quantity), 0) || 0;
   const sale = Number(order.discount_amount || 0) > 0 ? `<small class="sale-status-live">${escapeHtml(order.sale_code || "SALE")} · -${currency(order.discount_amount)}</small>` : "";
