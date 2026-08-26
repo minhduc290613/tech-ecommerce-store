@@ -181,3 +181,5 @@
 - [ ] Kiểm thử recovery với link hợp lệ và không hợp lệ qua mailbox/Supabase Auth thực tế sau khi SMTP được cấu hình.
 - [ ] Kiểm thử end-to-end Quên mật khẩu bằng recovery link hợp lệ hoặc môi trường email test, xác nhận người dùng đặt được mật khẩu mới.
 - [ ] Hoàn tất SMTP/Send Email Hook thật sau khi có provider, sender domain đã xác minh và secret được cung cấp an toàn.
+- [x] Mở rộng Command Deck để hướng dẫn/kích hoạt đồng thời SMTP trực tiếp và Send Email Hook, không lưu secret ở browser/database.
+- [x] Thêm form admin chỉnh nội dung email Quên mật khẩu với biến callback an toàn và preview.

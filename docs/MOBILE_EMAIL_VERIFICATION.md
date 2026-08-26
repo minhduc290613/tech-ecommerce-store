@@ -16,3 +16,9 @@ Kiểm tra trực tiếp trong Command Deck bằng tài khoản admin đã xác 
 Kiểm tra recovery UI với callback `/?recovery=1` trên phiên đã xác thực xác nhận modal tự mở đúng chế độ đặt mật khẩu mới, chỉ hiển thị hai trường mật khẩu, có kiểm tra khớp/độ dài trước khi gọi cập nhật và dùng mô tả riêng cho phiên recovery. Không gửi email hoặc đổi mật khẩu thật trong bài kiểm tra giao diện này.
 
 Kiểm tra callback lỗi `?recovery=1&error=access_denied&error_code=otp_expired` xác nhận URL được dọn về `/`, modal chuyển sang **Quên mật khẩu**, người dùng có thể nhập email để xin link mới và nhận thông báo lỗi rõ ràng. Console không có lỗi runtime. Cơ chế này dựa trên tham số lỗi callback, không dùng timeout đoán trạng thái phiên.
+
+Command Deck đã được kiểm tra trực tiếp bằng phiên admin: workspace **Email & Domain** hiển thị cả SMTP trực tiếp, Resend Hook, Postmark Hook và provider khác; mỗi lựa chọn có checklist riêng, không có trường nhập secret. Form email Quên mật khẩu hiển thị nội dung, preview và nút sao chép HTML chứa `{{ .ConfirmationURL }}` cố định.
+
+Kiểm thử tương tác không lưu dữ liệu xác nhận chọn **Resend Hook** cập nhật checklist Edge Function/secret manager tức thì. Khi thay heading trong form mẫu email, preview cập nhật tức thì và không phát sinh ghi dữ liệu cho đến khi admin bấm nút lưu.
+
+Nút **Sao chép HTML Supabase** đã tạo HTML recovery và hiển thị phản hồi thành công; HTML giữ placeholder `{{ .ConfirmationURL }}`. Console sau các thao tác provider, preview và sao chép không có lỗi runtime.

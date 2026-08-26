@@ -206,7 +206,15 @@ Quy trình triển khai an toàn là: gắn domain → chờ HTTPS → nhập do
 
 Với mọi provider, hoàn thành bản ghi DNS **SPF** và **DKIM** do provider cấp; cân nhắc thêm **DMARC** sau khi đã xác minh luồng gửi. Workspace hiển thị trạng thái “Chờ cấu hình secret/Dashboard” cho đến khi người vận hành hoàn tất thao tác này ngoài frontend. Không được tự đánh dấu đã gửi thành công khi chưa có một email test thực tế.[5]
 
-### 5.7 Đóng và xóa tài khoản khách
+### 5.7 Chỉnh mẫu email Quên mật khẩu
+
+Admin mở **Command Deck → Email & Domain → Chỉnh form email Quên mật khẩu** để sửa subject, preheader, heading, nội dung, nhãn CTA và footer. Form có preview và nút **Sao chép HTML Supabase**. Sau khi lưu mẫu, sao chép HTML, mở **Supabase Dashboard → Authentication → Email Templates → Reset Password**, dán HTML và lưu.
+
+> Không xóa hoặc thay bằng URL tự tạo cho `{{ .ConfirmationURL }}`. Đây là placeholder do Supabase thay bằng link recovery đã ký; NEXORA luôn chèn nó vào nút CTA khi tạo HTML preview.[4]
+
+Mẫu được lưu có audit log và chỉ admin đọc/chỉnh sửa. Việc lưu mẫu trong Command Deck chưa tự xuất bản template vào Supabase Dashboard, vì thao tác đó thuộc cấu hình Auth bên ngoài browser và cần người vận hành xác nhận.
+
+### 5.8 Đóng và xóa tài khoản khách
 
 Supabase lưu mật khẩu dưới dạng băm; admin không thể xem hay khôi phục mật khẩu plaintext. Admin chỉ có thể gửi link reset, còn khách có nút **Quên mật khẩu** ở modal đăng nhập và đổi mật khẩu trong Account Center.
 

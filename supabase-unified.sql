@@ -200,6 +200,17 @@ create table if not exists public.email_delivery_settings (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.password_recovery_email_template (
+  singleton boolean primary key default true check (singleton),
+  subject text not null default 'Đặt lại mật khẩu NEXORA',
+  preheader text not null default 'Dùng liên kết an toàn để đặt lại mật khẩu NEXORA của bạn.',
+  heading text not null default 'Đặt lại mật khẩu của bạn',
+  body_text text not null default 'Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản NEXORA của bạn. Liên kết chỉ dùng một lần và có thể hết hạn theo cấu hình Supabase Auth.',
+  cta_label text not null default 'Đặt lại mật khẩu',
+  footer_text text not null default 'Nếu bạn không gửi yêu cầu này, bạn có thể bỏ qua email một cách an toàn.',
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.site_pages (
   slug text primary key check (slug in ('about', 'terms', 'privacy', 'shipping-returns', 'seller-guide', 'contact')),
   title text not null,
@@ -413,6 +424,9 @@ alter table public.account_deletion_requests enable row level security;
 alter table public.email_delivery_settings enable row level security;
 revoke all on table public.account_deletion_requests, public.email_delivery_settings from anon, authenticated;
 grant select on table public.account_deletion_requests, public.email_delivery_settings to authenticated;
+alter table public.password_recovery_email_template enable row level security;
+revoke all on table public.password_recovery_email_template from anon, authenticated;
+grant select on table public.password_recovery_email_template to authenticated;
 
 drop policy if exists "Users can read own customer profile" on public.customer_profiles;
 create policy "Users can read own customer profile" on public.customer_profiles for select to authenticated using (user_id = auth.uid());
@@ -442,6 +456,8 @@ drop policy if exists "Admins can read deletion requests" on public.account_dele
 create policy "Admins can read deletion requests" on public.account_deletion_requests for select to authenticated using (public.is_admin());
 drop policy if exists "Admins can read email delivery settings" on public.email_delivery_settings;
 create policy "Admins can read email delivery settings" on public.email_delivery_settings for select to authenticated using (public.is_admin());
+drop policy if exists "Admins can read password recovery email template" on public.password_recovery_email_template;
+create policy "Admins can read password recovery email template" on public.password_recovery_email_template for select to authenticated using (public.is_admin());
 
 create or replace function public.ensure_my_account(p_display_name text default null, p_username text default null)
 returns public.customer_profiles language plpgsql security definer set search_path = public, auth
@@ -597,6 +613,23 @@ begin
 end;
 $$;
 
+create or replace function public.admin_update_password_recovery_email_template(p_subject text, p_preheader text, p_heading text, p_body_text text, p_cta_label text, p_footer_text text)
+returns public.password_recovery_email_template language plpgsql security definer set search_path = public, auth
+as $$
+declare v_template public.password_recovery_email_template;
+begin
+  if not public.is_admin() then raise exception 'Chỉ quản trị viên được chỉnh email Quên mật khẩu.'; end if;
+  if nullif(trim(p_subject), '') is null or nullif(trim(p_heading), '') is null or nullif(trim(p_body_text), '') is null or nullif(trim(p_cta_label), '') is null then raise exception 'Tiêu đề, heading, nội dung và nhãn nút không được để trống.'; end if;
+  if greatest(length(p_subject), length(coalesce(p_preheader, '')), length(p_heading), length(p_body_text), length(p_cta_label), length(coalesce(p_footer_text, ''))) > 4000 then raise exception 'Nội dung email quá dài.'; end if;
+  insert into public.password_recovery_email_template (singleton, subject, preheader, heading, body_text, cta_label, footer_text, updated_at)
+  values (true, trim(p_subject), trim(coalesce(p_preheader, '')), trim(p_heading), trim(p_body_text), trim(p_cta_label), trim(coalesce(p_footer_text, '')), now())
+  on conflict (singleton) do update set subject = excluded.subject, preheader = excluded.preheader, heading = excluded.heading, body_text = excluded.body_text, cta_label = excluded.cta_label, footer_text = excluded.footer_text, updated_at = now()
+  returning * into v_template;
+  insert into public.account_audit_log (target_user_id, actor_user_id, action, metadata) values (auth.uid(), auth.uid(), 'password_recovery_email_template_updated', jsonb_build_object('subject', v_template.subject));
+  return v_template;
+end;
+$$;
+
 create or replace function public.admin_add_account_warning(p_user_id uuid, p_message text)
 returns public.account_warnings language plpgsql security definer set search_path = public, auth
 as $$
@@ -648,10 +681,10 @@ $$;
 
 insert into public.customer_profiles (user_id, email) select id, email from auth.users on conflict (user_id) do update set email = excluded.email, updated_at = now() where public.customer_profiles.account_status <> 'deactivated';
 insert into public.wallet_accounts (user_id) select id from auth.users on conflict (user_id) do nothing;
-revoke all on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.request_my_account_deletion(text), public.admin_close_customer_account(uuid, text), public.admin_update_email_delivery_settings(text, text, text, text, text, integer, text), public.enforce_active_order_account() from public;
-revoke execute on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.request_my_account_deletion(text), public.admin_close_customer_account(uuid, text), public.admin_update_email_delivery_settings(text, text, text, text, text, integer, text), public.enforce_active_order_account() from anon;
+revoke all on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.request_my_account_deletion(text), public.admin_close_customer_account(uuid, text), public.admin_update_email_delivery_settings(text, text, text, text, text, integer, text), public.admin_update_password_recovery_email_template(text, text, text, text, text, text), public.enforce_active_order_account() from public;
+revoke execute on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.request_my_account_deletion(text), public.admin_close_customer_account(uuid, text), public.admin_update_email_delivery_settings(text, text, text, text, text, integer, text), public.admin_update_password_recovery_email_template(text, text, text, text, text, text), public.enforce_active_order_account() from anon;
 revoke execute on function public.enforce_active_order_account() from authenticated;
-grant execute on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.request_my_account_deletion(text), public.admin_close_customer_account(uuid, text), public.admin_update_email_delivery_settings(text, text, text, text, text, integer, text) to authenticated;
+grant execute on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.request_my_account_deletion(text), public.admin_close_customer_account(uuid, text), public.admin_update_email_delivery_settings(text, text, text, text, text, integer, text), public.admin_update_password_recovery_email_template(text, text, text, text, text, text) to authenticated;
 
 -- --------------------------------------------------------------------------
 -- 6. DỮ LIỆU KHỞI TẠO: CẬP NHẬT THEO NHU CẦU TRƯỚC KHI VẬN HÀNH THẬT
