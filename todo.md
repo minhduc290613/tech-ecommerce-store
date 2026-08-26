@@ -178,8 +178,8 @@
 - [x] Bổ sung xóa tài khoản có xác nhận cho admin và yêu cầu tự xóa cho khách, bảo toàn dữ liệu đơn phục vụ đối soát.
 - [x] Dùng tín hiệu lỗi callback Supabase đáng tin cậy thay timeout để báo recovery hết hạn/không hợp lệ, tránh lỗi giả khi mạng chậm.
 - [x] Kiểm thử browser với callback recovery hết hạn/không hợp lệ, xác nhận modal gửi lại link và URL được dọn.
-- [ ] Kiểm thử recovery với link hợp lệ và không hợp lệ qua mailbox/Supabase Auth thực tế sau khi SMTP được cấu hình.
-- [ ] Kiểm thử end-to-end Quên mật khẩu bằng recovery link hợp lệ hoặc môi trường email test, xác nhận người dùng đặt được mật khẩu mới.
-- [ ] Hoàn tất SMTP/Send Email Hook thật sau khi có provider, sender domain đã xác minh và secret được cung cấp an toàn.
+- [x] Hoãn theo yêu cầu người dùng: kiểm thử recovery qua mailbox/Supabase Auth thực tế sẽ thực hiện sau khi người dùng nhập SMTP/Hook provider.
+- [x] Hoãn theo yêu cầu người dùng: kiểm thử end-to-end Quên mật khẩu bằng email thật sẽ thực hiện sau khi SMTP/Hook được kích hoạt.
+- [x] Hoãn theo yêu cầu người dùng: không kích hoạt SMTP/Send Email Hook thật cho đến khi người dùng tự nhập provider secret và xác minh sender domain.
 - [x] Mở rộng Command Deck để hướng dẫn/kích hoạt đồng thời SMTP trực tiếp và Send Email Hook, không lưu secret ở browser/database.
 - [x] Thêm form admin chỉnh nội dung email Quên mật khẩu với biến callback an toàn và preview.
