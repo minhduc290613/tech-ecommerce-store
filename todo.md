@@ -187,3 +187,5 @@
 - [x] Chẩn đoán và sửa lỗi không thể nhập mật khẩu trong modal đăng nhập trên desktop/mobile.
 - [x] Chẩn đoán và khắc phục thông báo không thể đồng bộ catalog, bảo đảm storefront tải dữ liệu chính xác.
 - [x] Sửa menu ba gạch mobile để mở/đóng điều hướng ổn định và không che nội dung.
+- [x] Chuyển khách đến trang Đơn hàng ngay sau khi thanh toán bằng số dư thành công.
+- [x] Bảo toàn quy tắc chuyển khoản chỉ đổi sang đã thanh toán sau thao tác xác nhận của shop.

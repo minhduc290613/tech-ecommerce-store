@@ -34,3 +34,5 @@ Truy vấn chỉ đọc production bằng đúng câu lệnh `products.select('*
 Sau khi đặt `hidden` là trạng thái CSS ưu tiên, preview storefront tải sáu sản phẩm thật và không còn render panel “Không thể đồng bộ catalog mới nhất”.
 
 Kiểm thử điều khiển menu xác nhận nút ba gạch mở menu với `aria-expanded=true`, nav không còn hidden và scrim hoạt động; bấm scrim đóng lại, trả `aria-expanded=false` và `hidden=true`. Snapshot 390 px xác nhận khi đóng, header/menu không che hero content.
+
+Luồng thanh toán số dư chỉ tạo URL `/orders.html?paid=wallet&order=…` khi RPC trả đơn có `status=paid` và `payment_method=wallet`; không gọi RPC thanh toán thật trong kiểm thử để tránh thay đổi số dư. Đích Đơn hàng đã tải được với URL này. RPC yêu cầu xác nhận chuyển khoản chỉ ghi `zalo_confirmation_requested_at`, không cập nhật `status=paid`.
