@@ -148,3 +148,4 @@
 - [x] Chuẩn hóa nhãn khu vực CSV thành “Xuất CSV”.
 - [x] Hợp nhất toàn bộ SQL dự án về một file canonical duy nhất, cập nhật tài liệu và cưỡng chế không tạo migration SQL rời trong các thay đổi sau.
 - [x] Thêm script kiểm tra repository chỉ cho phép `supabase-unified.sql` trong nhóm schema Supabase trước khi `pnpm check` và `pnpm build`.
+- [x] Bổ sung loading animation mượt, có hỗ trợ trợ năng, khi storefront đang chờ dữ liệu Supabase.

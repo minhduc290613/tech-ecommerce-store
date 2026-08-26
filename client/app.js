@@ -1,6 +1,7 @@
 /* Circuit Atelier — Vanilla JS storefront logic: Supabase, catalogue, cart and payment signal. */
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 import { COMMENT_ACTION, getCommunityFocusTarget } from "./product-community-actions.js";
+import { setBusyRegion, setLoadingSurface } from "./loading-state.js";
 
 // ============================================================================
 // 1) SUPABASE CONFIGURATION
@@ -54,7 +55,7 @@ const els = {
   cartButton: $("#cartButton"), cartDrawer: $("#cartDrawer"), cartBadge: $("#cartBadge"), cartItemLabel: $("#cartItemLabel"), cartItems: $("#cartItems"), cartTotal: $("#cartTotal"), checkoutButton: $("#checkoutButton"),
   overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authPassword: $("#authPassword"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authHelper: $("#authHelper"),
   quickViewModal: $("#quickViewModal"), quickViewImage: $("#quickViewImage"), quickViewCategory: $("#quickViewCategory"), quickViewTitle: $("#quickViewTitle"), quickViewDescription: $("#quickViewDescription"), quickViewPrice: $("#quickViewPrice"), quickViewAdd: $("#quickViewAdd"),
-  qrModal: $("#qrModal"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), faqList: $("#faqList"), saleHuntGrid: $("#saleHuntGrid"),
+  qrModal: $("#qrModal"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), faqList: $("#faqList"), saleHuntGrid: $("#saleHuntGrid"), pageLoader: $("#pageLoader"),
 };
 
 document.addEventListener("DOMContentLoaded", initializeApp);
@@ -65,8 +66,17 @@ async function initializeApp() {
   renderLoadingCards();
   updateCartUI();
   startCountdown();
-  await Promise.all([loadProducts(), loadMarketplaceCMS()]);
-  await restoreSession();
+  try {
+    await Promise.all([loadProducts(), loadMarketplaceCMS()]);
+    await restoreSession();
+  } finally {
+    setPageLoading(false);
+  }
+}
+
+function setPageLoading(isLoading) {
+  setLoadingSurface(els.pageLoader, isLoading);
+  document.body.classList.toggle("page-loading", Boolean(isLoading));
 }
 
 function bindEvents() {
@@ -196,7 +206,10 @@ function renderShops() {
 }
 function renderSaleHunt() { const campaigns = state.saleCampaigns.filter(isCampaignActive); els.saleHuntGrid.innerHTML = campaigns.length ? campaigns.map((campaign) => `<article class="sale-hunt-card"><span class="sale-hunt-code">${escapeHtml(campaign.code)}</span><div><h3>${escapeHtml(campaign.title)}</h3><p>${escapeHtml(campaign.description)}</p></div><button data-sale-code="${escapeHtml(campaign.code)}" type="button">Dùng mã</button></article>`).join("") : '<p class="sale-hunt-empty">Chưa có mã săn sale đang mở. Hãy quay lại trong đợt tiếp theo.</p>'; }
 function renderLoadingCards() {
-  els.productsGrid.innerHTML = Array.from({ length: 6 }, () => '<div class="loading-card" aria-label="Đang tải sản phẩm"></div>').join("");
+  setBusyRegion(els.productsGrid, true);
+  els.productCount.textContent = "Đang đồng bộ catalog...";
+  els.emptyState.classList.add("hidden");
+  els.productsGrid.innerHTML = Array.from({ length: 6 }, () => '<article class="loading-card" aria-hidden="true"><div class="loading-card-media"></div><div class="loading-card-body"><span></span><b></b><i></i><em></em></div></article>').join("");
 }
 
 function getFilteredProducts() {
@@ -214,7 +227,7 @@ function getFilteredProducts() {
 
 function renderProducts() {
   const products = getFilteredProducts();
-  els.productsGrid.setAttribute("aria-busy", "false");
+  setBusyRegion(els.productsGrid, false);
   els.productCount.textContent = `${products.length.toString().padStart(2, "0")} thiết bị đang hiển thị`;
   els.productsGrid.innerHTML = products.map(createProductCard).join("");
   els.emptyState.classList.toggle("hidden", products.length > 0);
