@@ -185,3 +185,5 @@
 - [x] Thêm form admin chỉnh nội dung email Quên mật khẩu với biến callback an toàn và preview.
 - [x] Bổ sung hướng dẫn SMTP nhanh dùng placeholder domain để người dùng tự thay domain production của họ.
 - [x] Chẩn đoán và sửa lỗi không thể nhập mật khẩu trong modal đăng nhập trên desktop/mobile.
+- [x] Chẩn đoán và khắc phục thông báo không thể đồng bộ catalog, bảo đảm storefront tải dữ liệu chính xác.
+- [x] Sửa menu ba gạch mobile để mở/đóng điều hướng ổn định và không che nội dung.

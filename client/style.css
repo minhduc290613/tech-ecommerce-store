@@ -218,6 +218,7 @@ h1 em, h2 em { color: var(--cyan); font-style: normal; }
 @media (max-width: 390px) { .hero-actions { display: grid; }.button { width: 100%; }.countdown { justify-content: space-between; gap: .2rem; }.countdown > div { min-width: auto; }.products-grid { grid-template-columns: 1fr 1fr; }.product-image-wrap { height: 142px; }.price-row { gap: .2rem; }.filter-panel { grid-template-columns: 1fr; }.filter-group:nth-of-type(2) { border-left: 0; border-top: 1px solid var(--line); }.footer-main { grid-template-columns: 1fr; }.footer-brand { grid-column: auto; } }
 .modal[hidden] { display: none !important; }
 #authEmailField[hidden], #authPasswordField[hidden], #authPasswordConfirmField[hidden] { display: none !important; }
+[hidden] { display: none !important; }
 
 @media (max-width: 720px) {
   .site-header { isolation: isolate; }

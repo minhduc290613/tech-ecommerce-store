@@ -26,3 +26,11 @@ Nút **Sao chép HTML Supabase** đã tạo HTML recovery và hiển thị phả
 Sau bản sửa login, kiểm tra trực tiếp trong browser xác nhận `#authPassword` còn gắn trong DOM, có `type=password`, không bị disabled/hidden và nhận focus. Nguyên nhân trước đó là bộ dịch ghi đè `textContent` của nhãn chứa input.
 
 Kiểm thử modal đăng nhập bằng giá trị không nhạy cảm `demo-pass-123` xác nhận trường mật khẩu nhận và giữ được dữ liệu, không gửi form hoặc thực hiện đăng nhập thật.
+
+Production đã tái hiện thông báo fallback catalog trong khi sáu sản phẩm dự phòng vẫn hiển thị. Console không có exception runtime; cần truy vấn trực tiếp phản hồi Supabase để xác định lỗi dữ liệu/RLS thay vì lỗi JavaScript.
+
+Truy vấn chỉ đọc production bằng đúng câu lệnh `products.select('*').order('featured').order('created_at')` trả về sáu bản ghi và không có lỗi. Do đó cảnh báo UI là fallback sai/thất bại tải tạm thời lúc khởi động, không phải catalog thiếu dữ liệu hay RLS hiện tại.
+
+Sau khi đặt `hidden` là trạng thái CSS ưu tiên, preview storefront tải sáu sản phẩm thật và không còn render panel “Không thể đồng bộ catalog mới nhất”.
+
+Kiểm thử điều khiển menu xác nhận nút ba gạch mở menu với `aria-expanded=true`, nav không còn hidden và scrim hoạt động; bấm scrim đóng lại, trả `aria-expanded=false` và `hidden=true`. Snapshot 390 px xác nhận khi đóng, header/menu không che hero content.
