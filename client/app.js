@@ -2,6 +2,8 @@
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 import { COMMENT_ACTION, getCommunityFocusTarget } from "./product-community-actions.js";
 import { setBusyRegion, setLoadingSurface } from "./loading-state.js";
+import { getAuthRedirectUrl } from "./public-url.js";
+import { hasRecoveryCallbackError, isPasswordRecoveryEvent, isRecoveryCallback, stripRecoveryParameters } from "./auth-recovery.js";
 
 const UI_TRANSLATIONS = {
   vi: { discover: "Khám phá", discoverProducts: "Khám phá sản phẩm", flashSale: "Flash Sale", categories: "Danh mục", shops: "Gian hàng", journal: "Bài viết", help: "Trợ giúp", exploreDeals: "Khám phá ưu đãi", viewFlashSale: "Xem Flash Sale", searchPlaceholder: "Tìm thiết bị, phụ kiện...", mobileSearchPlaceholder: "Tìm kiếm trong NEXORA", skipCatalog: "Đi tới danh sách sản phẩm", loaderTitle: "Đang đưa thiết bị lên màn hình", loaderDetail: "Chờ một nhịp để đồng bộ catalog và ưu đãi.", storeOnline: "Storefront online", curatedDevices: "Thiết bị tuyển chọn", orderResponse: "Phản hồi đơn hàng", productSupport: "Hỗ trợ sản phẩm", flashHeading: "Flash Sale<br /><em>đang truyền tín hiệu.</em>", flashDescription: "Giá ưu đãi chỉ mở trong khung giờ này. Hãy thêm sản phẩm trước khi đồng hồ quay về 00.", huntNow: "Săn giá ngay", saleHuntHeading: "Săn mã đúng nhịp.<br /><em>Giảm thẳng vào đơn.</em>", saleHuntDescription: "Chọn một mã đang mở, mã sẽ được đưa vào giỏ. Tổng ưu đãi cuối cùng luôn được kiểm tra lại khi tạo đơn.", catalogHeading: "Thiết bị<br /><em>đang bắt sóng.</em>", clearFilters: "Xóa lọc", categoryLabel: "Danh mục", allDevices: "Tất cả thiết bị", phones: "Điện thoại", accessories: "Phụ kiện", priceRange: "Khoảng giá", saleOnly: "Chỉ xem đang SALE", filterNote: "Giá đã hiển thị là giá hiện tại. Các ưu đãi Flash Sale có thể kết thúc sớm.", catalogUnavailable: "Không thể đồng bộ catalog mới nhất.", catalogFallback: "Đang hiển thị dữ liệu dự phòng để bạn tiếp tục xem sản phẩm.", retry: "Thử lại", emptyTitle: "Không tìm thấy tín hiệu phù hợp.", emptyDetail: "Điều chỉnh bộ lọc hoặc thử một từ khóa khác.", resetFilters: "Thiết lập lại bộ lọc", shopsHeading: "Gian hàng<br /><em>đang được xác minh.</em>", shopsDescription: "Khám phá các không gian công nghệ theo nhu cầu, có mô tả hoạt động và đầu mối hỗ trợ rõ ràng.", sellerStandard: "Tìm hiểu về tiêu chuẩn gian hàng", helpHeading: "Câu hỏi có<br /><em>tín hiệu rõ ràng.</em>", helpDescription: "Thông tin về tài khoản, thanh toán và hỗ trợ sau đơn được tập hợp ở một nơi.", helpCenter: "Đến trung tâm hỗ trợ", trustHeading: "Mua sắm với<br />thông tin rõ ràng.", trustDescription: "Các chính sách và hướng dẫn được công bố tập trung để bạn xem trước khi giao dịch.", shippingReturns: "Giao hàng & đổi trả", shippingReturnsDetail: "Quy trình và thông tin cần chuẩn bị", privacy: "Bảo mật dữ liệu", privacyDetail: "Nguyên tắc xử lý tài khoản và đơn hàng", terms: "Điều khoản sử dụng", termsDetail: "Các nguyên tắc vận hành nền tảng", about: "Về NEXORA", aboutDetail: "Cam kết về trải nghiệm và minh bạch", clearInfo: "Minh bạch thông tin", clearInfoDetail: "Mô tả, giá và ưu đãi hiển thị rõ ràng.", carefulPacking: "Đóng gói cẩn thận", carefulPackingDetail: "Kiểm tra thiết bị trước khi bàn giao.", afterOrderSupport: "Hỗ trợ sau đơn", afterOrderSupportDetail: "Đội ngũ NEXORA sẵn sàng phản hồi.", storeAdmin: "Quản trị cửa hàng", cartTitle: "Giỏ hàng", subtotal: "Tạm tính", securePayment: "Thanh toán an toàn qua VietQR hoặc MoMo.", continueCheckout: "Tiếp tục thanh toán", authHeading: "Đăng nhập để<br /><em>đồng bộ đơn hàng.</em>", authIntro: "Tạo tài khoản hoặc đăng nhập bằng email để tiếp tục với thanh toán và quản lý đơn hàng.", login: "Đăng nhập", signup: "Đăng ký", passwordLabel: "Mật khẩu", passwordPlaceholder: "Tối thiểu 6 ký tự", inStock: "Còn hàng", nationwideDelivery: "Giao hàng toàn quốc", addToCart: "Thêm vào giỏ", orderCreated: "ĐƠN HÀNG ĐÃ ĐƯỢC TẠO", qrHeading: "Quét mã để<br /><em>hoàn tất thanh toán.</em>", devicesShown: (count) => `${count.toString().padStart(2, "0")} thiết bị đang hiển thị`, catalogLoading: "Đang đồng bộ catalog...", searchLoading: "Đang tìm trong catalog...", searchHint: "Đang lọc thiết bị phù hợp…", addCart: "Thêm giỏ", soldOut: "Hết hàng", comments: "Bình luận", useCode: "Dùng mã", noActiveSale: "Chưa có mã săn sale đang mở. Hãy quay lại trong đợt tiếp theo.", verified: "Đã xác minh", updating: "Đang cập nhật", contactSupport: "Liên hệ hỗ trợ", standard: "Tiêu chuẩn", emptyCart: "Giỏ hàng đang trống. Chọn một thiết bị để bắt đầu phiên mua sắm." },
@@ -65,7 +67,7 @@ const els = {
   priceRange: $("#priceRange"), priceOutput: $("#priceOutput"), saleOnly: $("#saleOnly"), clearFilters: $("#clearFilters"), emptyReset: $("#emptyReset"),
   searchInput: $("#searchInput"), mobileSearchInput: $("#mobileSearchInput"), headerSearch: $("#headerSearch"), mobileSearchForm: $("#mobileSearchForm"), mobileSearchButton: $("#mobileSearchButton"), mobileMenuButton: $("#mobileMenuButton"), mobileAccountButton: $("#mobileAccountButton"), mobileNav: $("#mobileNav"), mobileNavScrim: $("#mobileNavScrim"), languageToggle: $("#languageToggle"),
   cartButton: $("#cartButton"), cartDrawer: $("#cartDrawer"), cartBadge: $("#cartBadge"), cartItemLabel: $("#cartItemLabel"), cartItems: $("#cartItems"), cartTotal: $("#cartTotal"), checkoutButton: $("#checkoutButton"),
-  overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authPassword: $("#authPassword"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authHelper: $("#authHelper"),
+  overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authEmailField: $("#authEmailField"), authPassword: $("#authPassword"), authPasswordField: $("#authPasswordField"), authPasswordConfirm: $("#authPasswordConfirm"), authPasswordConfirmField: $("#authPasswordConfirmField"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authIntro: $("#authIntro"), authHelper: $("#authHelper"),
   quickViewModal: $("#quickViewModal"), quickViewImage: $("#quickViewImage"), quickViewCategory: $("#quickViewCategory"), quickViewTitle: $("#quickViewTitle"), quickViewDescription: $("#quickViewDescription"), quickViewPrice: $("#quickViewPrice"), quickViewAdd: $("#quickViewAdd"),
   qrModal: $("#qrModal"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), carrierSection: $("#shipping-partners"), carrierGrid: $("#carrierStorefrontGrid"), faqList: $("#faqList"), saleHuntGrid: $("#saleHuntGrid"), pageLoader: $("#pageLoader"),
 };
@@ -436,7 +438,13 @@ async function restoreSession() {
   if (!db) return;
   const { data } = await db.auth.getSession();
   setCurrentUser(data.session?.user || null);
-  db.auth.onAuthStateChange((_event, session) => setCurrentUser(session?.user || null));
+  const recoveryRequested = isRecoveryCallback(window.location.search);
+  if (recoveryRequested && hasRecoveryCallbackError(window.location.search)) showInvalidRecoveryLink();
+  else if (recoveryRequested && data.session?.user) openRecoveryForm();
+  db.auth.onAuthStateChange((event, session) => {
+    setCurrentUser(session?.user || null);
+    if (isPasswordRecoveryEvent(event)) openRecoveryForm();
+  });
 }
 
 function setCurrentUser(user) {
@@ -452,27 +460,46 @@ function setCurrentUser(user) {
 function setAuthMode(mode) {
   state.authMode = mode;
   const signup = mode === "signup";
+  const forgotten = mode === "forgot";
+  const recovery = mode === "recovery";
   $$("[data-auth-mode]").forEach((button) => { const active = button.dataset.authMode === mode; button.classList.toggle("active", active); button.setAttribute("aria-selected", String(active)); });
   const en = state.locale === "en";
-  els.authTitle.innerHTML = signup ? (en ? "Create an account to<br /><em>keep every step.</em>" : "Tạo tài khoản để<br /><em>lưu trọn hành trình.</em>") : t("authHeading");
-  els.authSubmit.innerHTML = `${signup ? (en ? "Create account" : "Tạo tài khoản") : t("login")} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>`;
-  els.authHelper.innerHTML = signup ? (en ? 'Already have an account? <button data-auth-mode="login" type="button">Sign in</button>.' : 'Đã có tài khoản? <button data-auth-mode="login" type="button">Đăng nhập</button>.') : (en ? 'New here? Switch to the <button data-auth-mode="signup" type="button">Create account</button> tab.' : 'Chưa có tài khoản? Chuyển sang tab <button data-auth-mode="signup" type="button">Đăng ký</button>.');
-  $("[data-auth-mode]", els.authHelper).addEventListener("click", () => setAuthMode(signup ? "login" : "signup"));
-  els.authPassword.autocomplete = signup ? "new-password" : "current-password";
+  els.authEmailField.hidden = recovery;
+  els.authEmail.required = !recovery;
+  els.authPasswordField.hidden = forgotten;
+  els.authPasswordConfirmField.hidden = !recovery;
+  els.authPassword.required = !forgotten;
+  els.authPassword.minLength = recovery ? 8 : 6;
+  els.authPasswordConfirm.required = recovery;
+  if (forgotten) { els.authPassword.value = ""; els.authPasswordConfirm.value = ""; }
+  els.authTitle.innerHTML = recovery ? (en ? "Choose a new<br /><em>secure password.</em>" : "Đặt mật khẩu<br /><em>mới an toàn.</em>") : forgotten ? (en ? "Reset your<br /><em>password safely.</em>" : "Khôi phục<br /><em>mật khẩu an toàn.</em>") : signup ? (en ? "Create an account to<br /><em>keep every step.</em>" : "Tạo tài khoản để<br /><em>lưu trọn hành trình.</em>") : t("authHeading");
+  els.authIntro.textContent = recovery ? (en ? "Set a new password for the recovery session opened from your email link." : "Đặt mật khẩu mới cho phiên khôi phục được mở từ link trong email của bạn.") : forgotten ? (en ? "Enter your account email and we will send a secure password reset link." : "Nhập email tài khoản để nhận link đặt lại mật khẩu an toàn.") : t("authIntro");
+  els.authSubmit.innerHTML = `${recovery ? (en ? "Update password" : "Cập nhật mật khẩu") : forgotten ? (en ? "Send reset link" : "Gửi link đặt lại") : signup ? (en ? "Create account" : "Tạo tài khoản") : t("login")} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>`;
+  els.authHelper.innerHTML = recovery ? (en ? 'This link is valid for one recovery session. <button data-auth-mode="login" type="button">Back to sign in</button>.' : 'Link này chỉ dùng cho một phiên khôi phục. <button data-auth-mode="login" type="button">Quay về đăng nhập</button>.') : forgotten ? (en ? 'Remember it? <button data-auth-mode="login" type="button">Sign in</button>.' : 'Đã nhớ mật khẩu? <button data-auth-mode="login" type="button">Đăng nhập</button>.') : signup ? (en ? 'Already have an account? <button data-auth-mode="login" type="button">Sign in</button>.' : 'Đã có tài khoản? <button data-auth-mode="login" type="button">Đăng nhập</button>.') : (en ? 'Forgot your password? <button data-auth-mode="forgot" type="button">Send a reset link</button> · New here? <button data-auth-mode="signup" type="button">Create account</button>.' : 'Quên mật khẩu? <button data-auth-mode="forgot" type="button">Gửi link đặt lại</button> · Chưa có tài khoản? <button data-auth-mode="signup" type="button">Đăng ký</button>.');
+  $$("[data-auth-mode]", els.authHelper).forEach((button) => button.addEventListener("click", () => setAuthMode(button.dataset.authMode)));
+  els.authPassword.autocomplete = signup || recovery ? "new-password" : "current-password";
 }
 
 async function handleAuthSubmit(event) {
   event.preventDefault();
   if (!db) { showToast("Hãy điền SUPABASE_URL và SUPABASE_ANON_KEY trong app.js trước khi dùng đăng nhập.", "error"); return; }
-  const email = els.authEmail.value.trim(); const password = els.authPassword.value;
-  if (!email || password.length < 6) { showToast("Vui lòng nhập email hợp lệ và mật khẩu từ 6 ký tự.", "error"); return; }
-  setButtonLoading(els.authSubmit, true, state.authMode === "signup" ? "Đang tạo tài khoản" : "Đang đăng nhập");
-  const result = state.authMode === "signup" ? await db.auth.signUp({ email, password }) : await db.auth.signInWithPassword({ email, password });
+  const email = els.authEmail.value.trim(); const password = els.authPassword.value; const recovery = state.authMode === "recovery";
+  if ((!recovery && !email) || (state.authMode !== "forgot" && password.length < (recovery ? 8 : 6))) { showToast(state.authMode === "forgot" ? "Vui lòng nhập email hợp lệ." : recovery ? "Mật khẩu mới cần ít nhất 8 ký tự." : "Vui lòng nhập email hợp lệ và mật khẩu từ 6 ký tự.", "error"); return; }
+  if (recovery && password !== els.authPasswordConfirm.value) { showToast("Hai mật khẩu mới chưa khớp.", "error"); return; }
+  const redirectTo = getAuthRedirectUrl(state.settings?.public_site_url, "/?recovery=1");
+  setButtonLoading(els.authSubmit, true, recovery ? "Đang cập nhật" : state.authMode === "forgot" ? "Đang gửi liên kết" : state.authMode === "signup" ? "Đang tạo tài khoản" : "Đang đăng nhập");
+  const result = recovery ? await db.auth.updateUser({ password }) : state.authMode === "forgot" ? await db.auth.resetPasswordForEmail(email, { redirectTo }) : state.authMode === "signup" ? await db.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } }) : await db.auth.signInWithPassword({ email, password });
   setButtonLoading(els.authSubmit, false);
   if (result.error) { showToast(result.error.message, "error"); return; }
+  if (recovery) { clearRecoveryUrl(); els.authForm.reset(); setAuthMode("login"); closeModal("auth"); showToast("Đã cập nhật mật khẩu. Bạn có thể tiếp tục đăng nhập an toàn.", "success"); return; }
+  if (state.authMode === "forgot") { showToast("Nếu email tồn tại, NEXORA đã gửi liên kết đặt lại mật khẩu về domain production.", "success"); setAuthMode("login"); return; }
   if (state.authMode === "signup" && !result.data.session) showToast("Tài khoản đã được tạo. Hãy kiểm tra email để xác nhận rồi đăng nhập.", "success");
   else { showToast(state.authMode === "signup" ? "Tạo tài khoản thành công." : "Đăng nhập thành công.", "success"); closeModal("auth"); }
 }
+
+function openRecoveryForm() { setAuthMode("recovery"); openModal("auth"); }
+function showInvalidRecoveryLink() { clearRecoveryUrl(); setAuthMode("forgot"); openModal("auth"); showToast("Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Hãy nhập email để nhận link mới.", "error"); }
+function clearRecoveryUrl() { window.history.replaceState({}, document.title, `${window.location.pathname}${stripRecoveryParameters(window.location.search)}`); }
 
 async function signOut() {
   if (!db) return;

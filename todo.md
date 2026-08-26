@@ -170,3 +170,14 @@
 - [x] Kiểm thử an toàn RPC lưu/xóa nhà vận chuyển với bản ghi tạm tự dọn; form cập nhật hành trình không được dùng để ghi dữ liệu vận chuyển giả vào đơn khách thực.
 - [x] Bổ sung tra cứu và bộ lọc nâng cao trong quản lý đơn theo mã đơn, mã vận đơn, khách hàng, nhà vận chuyển và trạng thái vận hành.
 - [x] Kiểm thử UI tìm theo mã vận đơn và lọc nhà vận chuyển bằng fixture tạm tự dọn, không sửa dữ liệu đơn khách thực.
+- [x] Chuẩn hóa URL redirect email production, loại bỏ localhost và cho phép admin quản lý site URL an toàn.
+- [x] Bổ sung workspace SMTP chỉ cho admin trong Command Deck, giữ secret không hiển thị lại sau khi lưu.
+- [x] Hoàn thiện hướng dẫn A–Z về custom SMTP, DNS/domain, redirect URL và xử lý link localhost.
+- [x] Rà soát và cải thiện trải nghiệm storefront/Command Deck trên mobile.
+- [x] Thay yêu cầu xem mật khẩu bằng reset mật khẩu an toàn, dùng URL production thay vì localhost.
+- [x] Bổ sung xóa tài khoản có xác nhận cho admin và yêu cầu tự xóa cho khách, bảo toàn dữ liệu đơn phục vụ đối soát.
+- [x] Dùng tín hiệu lỗi callback Supabase đáng tin cậy thay timeout để báo recovery hết hạn/không hợp lệ, tránh lỗi giả khi mạng chậm.
+- [x] Kiểm thử browser với callback recovery hết hạn/không hợp lệ, xác nhận modal gửi lại link và URL được dọn.
+- [ ] Kiểm thử recovery với link hợp lệ và không hợp lệ qua mailbox/Supabase Auth thực tế sau khi SMTP được cấu hình.
+- [ ] Kiểm thử end-to-end Quên mật khẩu bằng recovery link hợp lệ hoặc môi trường email test, xác nhận người dùng đặt được mật khẩu mới.
+- [ ] Hoàn tất SMTP/Send Email Hook thật sau khi có provider, sender domain đã xác minh và secret được cung cấp an toàn.

@@ -3,6 +3,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 import { isAdminRole, resolveRoleCapabilities } from "./role-permissions.js";
 import { filterOrders } from "./order-filters.js";
 import "./admin-accounts.js";
+import "./admin-email-delivery.js";
 import "./admin-roles-content.js";
 import "./admin-logistics.js";
 

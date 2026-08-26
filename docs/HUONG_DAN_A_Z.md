@@ -169,7 +169,48 @@ Thiết lập NEXORA hiện tại chọn **tắt Confirm email**, nên user mớ
 
 ### 5.3 Luồng frontend
 
-Storefront dùng `supabase.auth.signUp()` để đăng ký và `supabase.auth.signInWithPassword()` để đăng nhập. Khi không yêu cầu xác nhận email, session có thể được cấp ngay sau đăng ký nếu thông tin hợp lệ. Không lưu mật khẩu, JWT hay service role key vào local file ngoài cơ chế session của Supabase Auth.
+Storefront dùng `supabase.auth.signUp()` để đăng ký, `supabase.auth.signInWithPassword()` để đăng nhập và `resetPasswordForEmail()` cho **Quên mật khẩu**. Khi không yêu cầu xác nhận email, session có thể được cấp ngay sau đăng ký nếu thông tin hợp lệ. Không lưu mật khẩu, JWT hay service role key vào local file ngoài cơ chế session của Supabase Auth.
+
+### 5.4 Khắc phục link email trỏ về `localhost`
+
+> `localhost` chỉ phù hợp lúc phát triển. Email xác nhận, đổi email và Quên mật khẩu ở production phải quay về một origin HTTPS công khai đã được cho phép tại Supabase.[4]
+
+NEXORA có fallback production hiện tại là `https://nexorashop-gpjdasbm.manus.space`. Nếu đã có domain riêng, ví dụ `https://shop.example.vn`, admin vào **Command Deck → Email & Domain**, nhập URL đó rồi lưu. Workspace này đồng bộ giá trị public URL để frontend luôn truyền redirect production; nó từ chối `localhost`, preview `*.manus.computer`, HTTP không mã hóa và URL có thông tin đăng nhập.
+
+Sau đó bắt buộc mở Supabase Dashboard → **Authentication → URL Configuration** và đặt các giá trị tương ứng. Thay `shop.example.vn` bằng domain thật của bạn; với domain Manus hiện tại, dùng `nexorashop-gpjdasbm.manus.space`.
+
+| Trường trong Supabase | Giá trị ví dụ | Mục đích |
+| --- | --- | --- |
+| **Site URL** | `https://shop.example.vn` | URL mặc định cho các email Auth. |
+| **Redirect URLs** | `https://shop.example.vn/**` | Cho phép các callback tại website production. |
+| Redirect tạm thời khi chuyển domain | `https://nexorashop-gpjdasbm.manus.space/**` | Giữ link cũ còn hoạt động trong giai đoạn chuyển đổi. |
+| Không được dùng production | `http://localhost:3000/**` | Chỉ dùng local development, không đưa vào luồng email thật. |
+
+Sau khi lưu, mở website production, dùng **Quên mật khẩu**, rồi kiểm tra link trong email bắt đầu bằng domain đã chọn. Nếu Supabase báo `redirect_to is not allowed`, kiểm tra lại đúng protocol `https`, không có slash/domain khác và wildcard `/**` trong danh sách Redirect URLs.[4]
+
+### 5.5 Gắn domain thật vào website
+
+Trong trang quản trị hosting của Manus, mở **Settings → Domains**, thêm hoặc gán domain. Nhà cung cấp domain sẽ yêu cầu bản ghi DNS; thường là CNAME hoặc A/ALIAS tùy hướng dẫn hiển thị trong giao diện. Chờ DNS xác minh và chứng chỉ HTTPS được cấp trước khi dùng URL đó làm **Site URL**. Không xóa domain Manus mặc định cho đến khi thử thành công đăng nhập, Quên mật khẩu, đổi email và mở lại link từ một cửa sổ ẩn danh.
+
+Quy trình triển khai an toàn là: gắn domain → chờ HTTPS → nhập domain tại **Email & Domain** → cập nhật **Site URL/Redirect URLs** trong Supabase → gửi email test → chỉ sau đó công bố domain mới. Không cần sửa `SUPABASE_URL` hoặc anon key khi chỉ thay domain storefront.
+
+### 5.6 Custom SMTP qua Admin nhưng không lộ secret
+
+**Command Deck → Email & Domain** cho phép admin quản lý dữ liệu không bí mật: public URL, tên/email người gửi, provider, SMTP host/port và username. Mật khẩu SMTP, API key Resend/Postmark, `service_role key` và hook secret **không được nhập hoặc lưu trong form này**. Browser và `site_settings` không phải nơi an toàn cho secret.
+
+| Phương án | Cấu hình thực hiện | Khi dùng |
+| --- | --- | --- |
+| SMTP của Supabase | Supabase Dashboard → **Authentication → SMTP Settings**; điền host, port, username, password/app password và sender đã xác minh. | Muốn Supabase gửi email Auth trực tiếp. |
+| Resend/Postmark Send Email Hook | Deploy Edge Function dùng API key ở server secret, tạo `SEND_EMAIL_HOOK_SECRET`, rồi bật **Authentication → Hooks → Send Email**. | Muốn kiểm soát provider/template qua hook. |
+| Provider SMTP khác | Xác minh sender/DNS theo provider, cấu hình trong SMTP Settings, thử reset password. | Provider email doanh nghiệp riêng. |
+
+Với mọi provider, hoàn thành bản ghi DNS **SPF** và **DKIM** do provider cấp; cân nhắc thêm **DMARC** sau khi đã xác minh luồng gửi. Workspace hiển thị trạng thái “Chờ cấu hình secret/Dashboard” cho đến khi người vận hành hoàn tất thao tác này ngoài frontend. Không được tự đánh dấu đã gửi thành công khi chưa có một email test thực tế.[5]
+
+### 5.7 Đóng và xóa tài khoản khách
+
+Supabase lưu mật khẩu dưới dạng băm; admin không thể xem hay khôi phục mật khẩu plaintext. Admin chỉ có thể gửi link reset, còn khách có nút **Quên mật khẩu** ở modal đăng nhập và đổi mật khẩu trong Account Center.
+
+Vì đơn hàng, sổ cái ví và yêu cầu nạp cần được giữ để đối soát, NEXORA dùng **đóng và ẩn danh hóa có kiểm tra** thay cho xóa cứng Auth. Khách gửi yêu cầu tại **Account Center → Bảo mật → Yêu cầu đóng tài khoản**; hệ thống khóa giao dịch ngay. Admin chỉ có thể đóng khi số dư bằng 0 và không còn đơn đang xử lý/giao nhận. Khi đủ điều kiện, profile được đổi sang `deactivated`, thông tin hiển thị/email storefront được ẩn danh và audit log được giữ lại.
 
 ## 6. Cấp quyền Command Deck
 

@@ -47,6 +47,10 @@ create table if not exists public.customer_profiles (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+alter table public.customer_profiles add column if not exists deletion_requested_at timestamptz;
+alter table public.customer_profiles add column if not exists deletion_note text;
+alter table public.customer_profiles drop constraint if exists customer_profiles_account_status_check;
+alter table public.customer_profiles add constraint customer_profiles_account_status_check check (account_status in ('active', 'suspended', 'banned', 'deletion_requested', 'deactivated'));
 create unique index if not exists customer_profiles_username_ci_idx on public.customer_profiles (lower(username)) where username is not null;
 
 create table if not exists public.wallet_accounts (
@@ -78,6 +82,17 @@ create table if not exists public.account_warnings (
 create table if not exists public.account_audit_log (
   id uuid primary key default gen_random_uuid(), target_user_id uuid references auth.users(id) on delete set null,
   actor_user_id uuid references auth.users(id) on delete set null, action text not null, metadata jsonb not null default '{}'::jsonb, created_at timestamptz not null default now()
+);
+
+create table if not exists public.account_deletion_requests (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null unique references auth.users(id) on delete restrict,
+  reason text,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'closed')),
+  requested_at timestamptz not null default now(),
+  reviewed_at timestamptz,
+  reviewed_by uuid references auth.users(id) on delete set null,
+  review_note text
 );
 
 create table if not exists public.sale_campaigns (
@@ -168,6 +183,20 @@ create table if not exists public.site_settings (
   seller_zalo_phone text,
   seller_contact_label text not null default 'Liên hệ người bán',
   seller_contact_message text not null default 'Xin chào, tôi muốn tư vấn về sản phẩm {product_name}.',
+  updated_at timestamptz not null default now()
+);
+alter table public.site_settings add column if not exists public_site_url text not null default 'https://nexorashop-gpjdasbm.manus.space';
+
+create table if not exists public.email_delivery_settings (
+  singleton boolean primary key default true check (singleton),
+  public_site_url text not null default 'https://nexorashop-gpjdasbm.manus.space',
+  sender_name text,
+  sender_address text,
+  provider text not null default 'supabase_smtp' check (provider in ('supabase_smtp', 'resend_hook', 'postmark_hook', 'other')),
+  smtp_host text,
+  smtp_port integer check (smtp_port is null or smtp_port between 1 and 65535),
+  smtp_username text,
+  status text not null default 'handoff_required' check (status in ('handoff_required', 'configured_externally')),
   updated_at timestamptz not null default now()
 );
 
@@ -380,6 +409,10 @@ alter table public.account_warnings enable row level security;
 alter table public.account_audit_log enable row level security;
 revoke all on table public.customer_profiles, public.wallet_accounts, public.wallet_ledger, public.wallet_topup_requests, public.account_warnings, public.account_audit_log from anon, authenticated;
 grant select on table public.customer_profiles, public.wallet_accounts, public.wallet_ledger, public.wallet_topup_requests, public.account_warnings, public.account_audit_log to authenticated;
+alter table public.account_deletion_requests enable row level security;
+alter table public.email_delivery_settings enable row level security;
+revoke all on table public.account_deletion_requests, public.email_delivery_settings from anon, authenticated;
+grant select on table public.account_deletion_requests, public.email_delivery_settings to authenticated;
 
 drop policy if exists "Users can read own customer profile" on public.customer_profiles;
 create policy "Users can read own customer profile" on public.customer_profiles for select to authenticated using (user_id = auth.uid());
@@ -403,6 +436,12 @@ drop policy if exists "Admins can read warnings" on public.account_warnings;
 create policy "Admins can read warnings" on public.account_warnings for select to authenticated using (public.is_admin());
 drop policy if exists "Admins can read account audit" on public.account_audit_log;
 create policy "Admins can read account audit" on public.account_audit_log for select to authenticated using (public.is_admin());
+drop policy if exists "Users can read own deletion request" on public.account_deletion_requests;
+create policy "Users can read own deletion request" on public.account_deletion_requests for select to authenticated using (user_id = auth.uid());
+drop policy if exists "Admins can read deletion requests" on public.account_deletion_requests;
+create policy "Admins can read deletion requests" on public.account_deletion_requests for select to authenticated using (public.is_admin());
+drop policy if exists "Admins can read email delivery settings" on public.email_delivery_settings;
+create policy "Admins can read email delivery settings" on public.email_delivery_settings for select to authenticated using (public.is_admin());
 
 create or replace function public.ensure_my_account(p_display_name text default null, p_username text default null)
 returns public.customer_profiles language plpgsql security definer set search_path = public, auth
@@ -410,9 +449,10 @@ as $$
 declare v_profile public.customer_profiles;
 begin
   if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status in ('deletion_requested', 'deactivated')) then raise exception 'Tài khoản đang trong quy trình đóng.'; end if;
   insert into public.customer_profiles (user_id, display_name, username, email)
   values (auth.uid(), nullif(trim(p_display_name), ''), nullif(lower(trim(p_username)), ''), auth.jwt() ->> 'email')
-  on conflict (user_id) do update set email = excluded.email, updated_at = now() returning * into v_profile;
+  on conflict (user_id) do update set email = excluded.email, updated_at = now() where public.customer_profiles.account_status <> 'deactivated' returning * into v_profile;
   insert into public.wallet_accounts (user_id) values (auth.uid()) on conflict (user_id) do nothing;
   return v_profile;
 end;
@@ -424,6 +464,7 @@ as $$
 declare v_profile public.customer_profiles;
 begin
   if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status <> 'active') then raise exception 'Tài khoản hiện không thể cập nhật hồ sơ.'; end if;
   perform public.ensure_my_account(null, null);
   if p_username is not null and (length(trim(p_username)) < 3 or trim(p_username) !~ '^[a-zA-Z0-9_.-]+$') then raise exception 'Username chỉ gồm 3–40 ký tự chữ, số, dấu gạch ngang, gạch dưới hoặc dấu chấm.'; end if;
   update public.customer_profiles set display_name = nullif(trim(p_display_name), ''), username = nullif(lower(trim(p_username)), ''), email = auth.jwt() ->> 'email', updated_at = now() where user_id = auth.uid() returning * into v_profile;
@@ -437,6 +478,7 @@ as $$
 declare v_request public.wallet_topup_requests;
 begin
   if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status <> 'active') then raise exception 'Tài khoản hiện không thể tạo yêu cầu nạp.'; end if;
   if p_amount is null or p_amount <= 0 then raise exception 'Số tiền nạp phải lớn hơn 0.'; end if;
   perform public.ensure_my_account(null, null);
   insert into public.wallet_topup_requests (user_id, amount, customer_note) values (auth.uid(), p_amount, nullif(trim(p_customer_note), '')) returning * into v_request;
@@ -492,10 +534,66 @@ declare v_profile public.customer_profiles;
 begin
   if not public.is_admin() then raise exception 'Chỉ quản trị viên được đổi trạng thái tài khoản.'; end if;
   if p_status not in ('active', 'suspended', 'banned') then raise exception 'Trạng thái không hợp lệ.'; end if;
+  if exists (select 1 from public.customer_profiles where user_id = p_user_id and account_status = 'deactivated') then raise exception 'Tài khoản đã đóng không thể mở lại từ thao tác này.'; end if;
   insert into public.customer_profiles (user_id, email) values (p_user_id, (select email from auth.users where id = p_user_id)) on conflict (user_id) do nothing;
   update public.customer_profiles set account_status = p_status, admin_note = nullif(trim(p_note), ''), updated_at = now() where user_id = p_user_id returning * into v_profile;
   insert into public.account_audit_log (target_user_id, actor_user_id, action, metadata) values (p_user_id, auth.uid(), 'account_status_changed', jsonb_build_object('status', p_status, 'note', p_note));
   return v_profile;
+end;
+$$;
+
+create or replace function public.request_my_account_deletion(p_reason text default null)
+returns public.account_deletion_requests language plpgsql security definer set search_path = public, auth
+as $$
+declare v_request public.account_deletion_requests;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status = 'deactivated') then raise exception 'Tài khoản đã được đóng.'; end if;
+  insert into public.account_deletion_requests (user_id, reason, status, requested_at, reviewed_at, reviewed_by, review_note)
+  values (auth.uid(), nullif(trim(p_reason), ''), 'pending', now(), null, null, null)
+  on conflict (user_id) do update set reason = excluded.reason, status = 'pending', requested_at = now(), reviewed_at = null, reviewed_by = null, review_note = null
+  returning * into v_request;
+  update public.customer_profiles set account_status = 'deletion_requested', deletion_requested_at = now(), deletion_note = nullif(trim(p_reason), ''), updated_at = now() where user_id = auth.uid();
+  insert into public.account_audit_log (target_user_id, actor_user_id, action, metadata) values (auth.uid(), auth.uid(), 'account_deletion_requested', jsonb_build_object('has_reason', nullif(trim(p_reason), '') is not null));
+  return v_request;
+end;
+$$;
+
+create or replace function public.admin_close_customer_account(p_user_id uuid, p_note text)
+returns public.customer_profiles language plpgsql security definer set search_path = public, auth
+as $$
+declare v_profile public.customer_profiles; v_balance numeric(12,0); v_alias text;
+begin
+  if not public.is_admin() then raise exception 'Chỉ quản trị viên được đóng tài khoản.'; end if;
+  if p_user_id = auth.uid() then raise exception 'Không thể tự đóng tài khoản quản trị đang đăng nhập.'; end if;
+  if nullif(trim(p_note), '') is null then raise exception 'Cần ghi chú đối soát trước khi đóng tài khoản.'; end if;
+  select balance into v_balance from public.wallet_accounts where user_id = p_user_id;
+  if coalesce(v_balance, 0) <> 0 then raise exception 'Không thể đóng khi số dư chưa về 0.'; end if;
+  if exists (select 1 from public.orders where user_id = p_user_id and (status in ('paid', 'processing') or fulfillment_status in ('preparing', 'ready_to_ship', 'shipped'))) then raise exception 'Không thể đóng khi còn đơn đang xử lý/giao nhận.'; end if;
+  v_alias := concat('closed-', left(replace(p_user_id::text, '-', ''), 10));
+  update public.customer_profiles set account_status = 'deactivated', display_name = 'Tài khoản đã đóng', username = v_alias, email = null, admin_note = trim(p_note), deletion_note = trim(p_note), updated_at = now() where user_id = p_user_id returning * into v_profile;
+  update public.account_deletion_requests set status = 'closed', reviewed_at = now(), reviewed_by = auth.uid(), review_note = trim(p_note) where user_id = p_user_id;
+  insert into public.account_audit_log (target_user_id, actor_user_id, action, metadata) values (p_user_id, auth.uid(), 'account_closed_anonymized', jsonb_build_object('note', trim(p_note)));
+  return v_profile;
+end;
+$$;
+
+create or replace function public.admin_update_email_delivery_settings(p_public_site_url text, p_sender_name text default null, p_sender_address text default null, p_provider text default 'supabase_smtp', p_smtp_host text default null, p_smtp_port integer default null, p_smtp_username text default null)
+returns public.email_delivery_settings language plpgsql security definer set search_path = public, auth
+as $$
+declare v_settings public.email_delivery_settings; v_url text;
+begin
+  if not public.is_admin() then raise exception 'Chỉ quản trị viên được cập nhật email/domain.'; end if;
+  v_url := regexp_replace(trim(coalesce(p_public_site_url, '')), '/+$', '');
+  if v_url !~ '^https://[^/[:space:]]+' or v_url ~* '^https://(localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0|\\[::1\\]|[^/]+\\.local|[^/]+\\.manus\\.computer)(/|$)' then raise exception 'URL website phải là HTTPS công khai, không dùng localhost hoặc preview.'; end if;
+  if p_provider not in ('supabase_smtp', 'resend_hook', 'postmark_hook', 'other') then raise exception 'Nhà cung cấp email không hợp lệ.'; end if;
+  insert into public.email_delivery_settings (singleton, public_site_url, sender_name, sender_address, provider, smtp_host, smtp_port, smtp_username, status, updated_at)
+  values (true, v_url, nullif(trim(p_sender_name), ''), nullif(lower(trim(p_sender_address)), ''), p_provider, nullif(trim(p_smtp_host), ''), p_smtp_port, nullif(trim(p_smtp_username), ''), 'handoff_required', now())
+  on conflict (singleton) do update set public_site_url = excluded.public_site_url, sender_name = excluded.sender_name, sender_address = excluded.sender_address, provider = excluded.provider, smtp_host = excluded.smtp_host, smtp_port = excluded.smtp_port, smtp_username = excluded.smtp_username, status = 'handoff_required', updated_at = now()
+  returning * into v_settings;
+  insert into public.site_settings (singleton, public_site_url) values (true, v_url) on conflict (singleton) do update set public_site_url = excluded.public_site_url, updated_at = now();
+  insert into public.account_audit_log (target_user_id, actor_user_id, action, metadata) values (auth.uid(), auth.uid(), 'email_delivery_settings_updated', jsonb_build_object('provider', p_provider, 'public_site_url', v_url, 'has_sender', nullif(trim(p_sender_address), '') is not null));
+  return v_settings;
 end;
 $$;
 
@@ -548,12 +646,12 @@ begin
 end;
 $$;
 
-insert into public.customer_profiles (user_id, email) select id, email from auth.users on conflict (user_id) do update set email = excluded.email, updated_at = now();
+insert into public.customer_profiles (user_id, email) select id, email from auth.users on conflict (user_id) do update set email = excluded.email, updated_at = now() where public.customer_profiles.account_status <> 'deactivated';
 insert into public.wallet_accounts (user_id) select id from auth.users on conflict (user_id) do nothing;
-revoke all on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.enforce_active_order_account() from public;
-revoke execute on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.enforce_active_order_account() from anon;
+revoke all on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.request_my_account_deletion(text), public.admin_close_customer_account(uuid, text), public.admin_update_email_delivery_settings(text, text, text, text, text, integer, text), public.enforce_active_order_account() from public;
+revoke execute on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.request_my_account_deletion(text), public.admin_close_customer_account(uuid, text), public.admin_update_email_delivery_settings(text, text, text, text, text, integer, text), public.enforce_active_order_account() from anon;
 revoke execute on function public.enforce_active_order_account() from authenticated;
-grant execute on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid) to authenticated;
+grant execute on function public.ensure_my_account(text, text), public.update_my_account(text, text), public.request_wallet_topup(numeric, text), public.admin_adjust_wallet(uuid, numeric, text), public.review_wallet_topup(uuid, text, text), public.admin_set_account_status(uuid, text, text), public.admin_add_account_warning(uuid, text), public.admin_update_account_profile(uuid, text, text), public.pay_order_with_wallet(uuid), public.request_my_account_deletion(text), public.admin_close_customer_account(uuid, text), public.admin_update_email_delivery_settings(text, text, text, text, text, integer, text) to authenticated;
 
 -- --------------------------------------------------------------------------
 -- 6. DỮ LIỆU KHỞI TẠO: CẬP NHẬT THEO NHU CẦU TRƯỚC KHI VẬN HÀNH THẬT

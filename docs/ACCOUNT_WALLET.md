@@ -6,8 +6,8 @@ NEXORA quản lý số dư bằng **sổ cái bất biến theo giao dịch**. K
 
 | Nhóm người dùng | Chức năng |
 | --- | --- |
-| Khách hàng | Cập nhật tên/username, đổi email/mật khẩu, xem số dư, xem sổ cái, gửi yêu cầu nạp và mở Zalo shop. |
-| Quản trị viên | Xem khách, khóa/mở tài khoản, cảnh cáo, sửa tên/username, gửi email đặt lại mật khẩu, cộng/trừ số dư, duyệt/từ chối yêu cầu nạp và xem audit log. |
+| Khách hàng | Cập nhật tên/username, đổi email/mật khẩu, dùng Quên mật khẩu, xem số dư, xem sổ cái, gửi yêu cầu nạp và yêu cầu đóng tài khoản. |
+| Quản trị viên | Xem khách, khóa/mở tài khoản, cảnh cáo, sửa tên/username, gửi email đặt lại mật khẩu, đóng/ẩn danh hóa sau đối soát, cộng/trừ số dư, duyệt/từ chối yêu cầu nạp và xem audit log. |
 | Database | Áp dụng RLS, kiểm tra `is_admin()`, khóa dòng lúc điều chỉnh số dư và chặn account không active tạo đơn. |
 
 ## Luồng nạp tiền qua Zalo
@@ -37,9 +37,11 @@ Luồng điều chỉnh số dư đã được kiểm thử bằng một khoản
 
 ## Quản lý trạng thái và mật khẩu
 
-`active` cho phép khách tạo đơn và thanh toán bằng số dư. `suspended` hoặc `banned` chặn tạo đơn mới; mọi thay đổi trạng thái tạo audit log. Admin không nhìn thấy hoặc đặt mật khẩu khách trực tiếp. Nút **email đặt lại mật khẩu** gửi link của Supabase Auth đến email khách; khách tự đặt mật khẩu mới theo luồng an toàn.
+`active` cho phép khách tạo đơn và thanh toán bằng số dư. `suspended`, `banned` hoặc `deletion_requested` chặn giao dịch mới; mọi thay đổi trạng thái tạo audit log. Admin không nhìn thấy hoặc đặt mật khẩu khách trực tiếp. Nút **email đặt lại mật khẩu** gửi link của Supabase Auth đến email khách; khách tự đặt mật khẩu mới theo luồng an toàn.
 
-Khách tự đổi email/mật khẩu trong Account Center. Nếu Supabase bật xác nhận email ở tương lai, hãy cấu hình URL redirect và SMTP production trước khi dùng luồng email.[1]
+Khách tự đổi email/mật khẩu trong Account Center và có thể gửi **Yêu cầu đóng tài khoản** tại tab Bảo mật. Hệ thống chỉ đóng/ẩn danh hóa khi số dư bằng 0, không còn đơn đang xử lý/giao nhận và admin ghi chú đối soát. Cách này giữ ledger/order cần thiết để đối soát, thay vì xóa cứng tài khoản Auth làm mất hoặc đứt quan hệ dữ liệu.
+
+Nếu Supabase bật xác nhận email ở tương lai, hãy cấu hình URL redirect và SMTP production trước khi dùng luồng email. Xem quy trình chi tiết tại [Hướng dẫn A–Z: Email, domain và SMTP](HUONG_DAN_A_Z.md#54-khắc-phục-link-email-trỏ-về-localhost).[1]
 
 ## Schema và migration
 

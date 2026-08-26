@@ -11,7 +11,7 @@ NEXORA sử dụng một schema canonical duy nhất: [`supabase-unified.sql`](.
 | Bước | Thao tác | Kết quả mong đợi |
 | --- | --- | --- |
 | 1 | Tạo/kết nối Supabase project trống. | Project ở trạng thái hoạt động. |
-| 2 | Áp dụng toàn bộ `supabase-unified.sql` như **một migration DDL**. | Tạo 25 bảng public, function/RPC, index, RLS policy, Account Center, role/capability tùy chỉnh, moderation/affiliate/refund và seed. |
+| 2 | Áp dụng toàn bộ `supabase-unified.sql` như **một migration DDL**. | Tạo schema, function/RPC, index, RLS policy, Account Center, email/domain metadata không chứa secret, role/capability, moderation/affiliate/refund và seed. |
 | 3 | Bật Email/Password trong Authentication. | Storefront có thể tạo tài khoản/đăng nhập. |
 | 4 | Lấy Project URL và anon/publishable key, điền vào `client/supabase-config.js`. | Storefront và `/admin.html` cùng dùng một project. |
 | 5 | Tạo user rồi cấp quyền trong `admin_users`. | User mở được Command Deck. |
@@ -62,4 +62,4 @@ select id from auth.users where email = 'admin@yourdomain.com'
 on conflict (user_id) do nothing;
 ```
 
-Không thêm mật khẩu admin cố định, `service_role key`, số tài khoản thanh toán thật hoặc bí mật khác vào GitHub/frontend.
+Không thêm mật khẩu admin cố định, mật khẩu SMTP/API key, `service_role key`, số tài khoản thanh toán thật hoặc bí mật khác vào GitHub/frontend. Để custom SMTP hoạt động, cấu hình secret trong Supabase Dashboard/Edge Function và đặt **Site URL/Redirect URLs** theo [Hướng dẫn A–Z](HUONG_DAN_A_Z.md#54-khắc-phục-link-email-trỏ-về-localhost).

@@ -1,5 +1,6 @@
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 import { canWriteArticles } from "./role-permissions.js";
+import { getAuthRedirectUrl } from "./public-url.js";
 
 const configured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const db = window.nexoraDb || (configured && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null);
@@ -73,6 +74,7 @@ function mountAccountCenter() {
         <section class="account-tab" data-account-panel="security">
           <form id="accountEmailForm" class="account-form compact"><div class="account-form-head"><h3>Đổi email</h3><p>Email hiện tại: <strong id="accountCurrentEmail">—</strong></p></div><label>Email mới<input id="accountNewEmail" type="email" autocomplete="email" placeholder="email-moi@example.com" required /></label><button class="button button-quiet" type="submit">Gửi yêu cầu đổi email</button></form>
           <form id="accountPasswordForm" class="account-form compact"><div class="account-form-head"><h3>Đổi mật khẩu</h3><p>Dùng ít nhất 8 ký tự và không sử dụng lại mật khẩu cũ.</p></div><label>Mật khẩu mới<input id="accountNewPassword" type="password" autocomplete="new-password" minlength="8" required /></label><button class="button button-quiet" type="submit">Cập nhật mật khẩu</button></form>
+          <div class="account-danger-zone"><h3>Đóng tài khoản</h3><p>Yêu cầu này sẽ khóa mua hàng ngay. Admin chỉ đóng/ẩn danh hóa tài khoản sau khi đơn, số dư và các khoản đối soát đã được xử lý; mật khẩu không bao giờ được hiển thị.</p><button class="button button-quiet" id="requestAccountDeletion" type="button"><i class="fa-solid fa-user-xmark"></i> Yêu cầu đóng tài khoản</button></div>
           <button class="button account-signout" id="accountSignOut" type="button"><i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất khỏi thiết bị này</button>
         </section>
       </div>
@@ -83,6 +85,7 @@ function mountAccountCenter() {
   $("#accountTopupForm").addEventListener("submit", requestTopup);
   $("#accountEmailForm").addEventListener("submit", updateEmail);
   $("#accountPasswordForm").addEventListener("submit", updatePassword);
+  $("#requestAccountDeletion").addEventListener("click", requestAccountDeletion);
   $("#accountSignOut").addEventListener("click", signOutAccount);
   $("#accountSignOutQuick").addEventListener("click", signOutAccount);
   $("#affiliateProfileCard").addEventListener("click", handleAffiliateAction);
@@ -116,7 +119,7 @@ async function loadAccount() {
     db.from("wallet_ledger").select("*").eq("user_id", state.user.id).order("created_at", { ascending: false }).limit(10),
     db.from("wallet_topup_requests").select("*").eq("user_id", state.user.id).order("created_at", { ascending: false }).limit(10),
     db.from("account_warnings").select("*").eq("user_id", state.user.id).order("created_at", { ascending: false }).limit(10),
-    db.from("site_settings").select("zalo_phone,zalo_label").eq("singleton", true).maybeSingle(),
+    db.from("site_settings").select("zalo_phone,zalo_label,public_site_url").eq("singleton", true).maybeSingle(),
     db.from("user_roles").select("role").eq("user_id", state.user.id).maybeSingle(),
     db.from("affiliate_profiles").select("*").eq("user_id", state.user.id).maybeSingle(),
     db.from("affiliate_commissions").select("*").eq("affiliate_user_id", state.user.id).order("created_at", { ascending: false }).limit(10),
@@ -153,6 +156,7 @@ function syncRefundMaximum() { const option = $("#refundOrderId").selectedOption
 async function requestRefund(event) { event.preventDefault(); const orderId = $("#refundOrderId").value; if (!orderId) return notify("Hãy chọn đơn hàng cần hỗ trợ.", "error"); const { error } = await db.rpc("request_order_refund", { p_order_id: orderId, p_amount: Number($("#refundAmount").value), p_reason: $("#refundReason").value.trim() }); if (error) return notify(error.message, "error"); event.currentTarget.reset(); notify("Đã gửi yêu cầu hoàn tiền để bộ phận đơn hàng xét duyệt.", "success"); loadAccount(); }
 async function saveArticle(event) { event.preventDefault(); const submit = event.submitter?.dataset.articleSubmit === "true"; const { error } = await db.rpc("save_my_article", { p_id: $("#articleId").value || null, p_title: $("#articleTitle").value.trim(), p_slug: $("#articleSlug").value.trim().toLowerCase(), p_excerpt: $("#articleExcerpt").value.trim(), p_content: $("#articleContent").value.trim(), p_cover_image_url: $("#articleCoverUrl").value.trim() || null, p_submit: submit }); if (error) return notify(error.message, "error"); event.currentTarget.reset(); $("#articleId").value = ""; notify(submit ? "Bài viết đã gửi moderator duyệt." : "Đã lưu bản nháp bài viết.", "success"); loadAccount(); }
 function editArticle(event) { const button = event.target.closest("[data-edit-article]"); if (!button) return; const article = state.articles.find((item) => item.id === button.dataset.editArticle); if (!article) return; activateTab("articles"); $("#articleId").value = article.id; $("#articleTitle").value = article.title; $("#articleSlug").value = article.slug; $("#articleExcerpt").value = article.excerpt || ""; $("#articleCoverUrl").value = article.cover_image_url || ""; $("#articleContent").value = article.content; }
-async function updateEmail(event) { event.preventDefault(); const { error } = await db.auth.updateUser({ email: $("#accountNewEmail").value.trim() }); if (error) return notify(error.message, "error"); $("#accountEmailForm").reset(); notify("Đã gửi yêu cầu đổi email. Hãy làm theo hướng dẫn của Supabase nếu được yêu cầu.", "success"); }
+async function updateEmail(event) { event.preventDefault(); const { error } = await db.auth.updateUser({ email: $("#accountNewEmail").value.trim() }, { emailRedirectTo: getAuthRedirectUrl(state.settings?.public_site_url) }); if (error) return notify(error.message, "error"); $("#accountEmailForm").reset(); notify("Đã gửi yêu cầu đổi email bằng URL production. Hãy làm theo hướng dẫn trong email.", "success"); }
 async function updatePassword(event) { event.preventDefault(); const { error } = await db.auth.updateUser({ password: $("#accountNewPassword").value }); if (error) return notify(error.message, "error"); $("#accountPasswordForm").reset(); notify("Đã cập nhật mật khẩu. Hãy đăng nhập lại nếu hệ thống yêu cầu.", "success"); }
+async function requestAccountDeletion() { const confirmed = window.confirm("Gửi yêu cầu đóng tài khoản? Tài khoản sẽ bị khóa mua hàng trong khi shop đối soát đơn và số dư còn lại."); if (!confirmed) return; const reason = window.prompt("Lý do (không bắt buộc, tối đa 400 ký tự):") ?? ""; const { error } = await db.rpc("request_my_account_deletion", { p_reason: reason.trim() || null }); if (error) return notify(error.message, "error"); notify("Đã gửi yêu cầu. Tài khoản đã bị khóa giao dịch trong lúc được đối soát.", "success"); await signOutAccount(); }
 async function signOutAccount() { const { error } = await db.auth.signOut(); if (error) return notify(error.message, "error"); closeAccountCenter(); notify("Đã đăng xuất.", "success"); }
