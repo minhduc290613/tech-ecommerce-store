@@ -79,3 +79,11 @@ Fixture transition đã được chuyển sang `hidden` và queue được làm 
 Sau khi cập nhật fixture về `pending`, badge Role & kiểm duyệt tăng lại thành `1` ngay trên màn hình tổng quan không cần reload. Khi ẩn fixture qua UI moderation, badge/panel quay về ẩn và queue rỗng. Đây là xác minh E2E cho cơ chế `UPDATE → pending`; cùng guard unit áp dụng cho payload review upsert mà không tạo review/rating giả.
 
 Fixture transition và audit moderation của nó đã được xóa thành công sau kiểm tra.
+
+## Menu mobile, CMS và role tùy chỉnh — 26/08/2026
+
+Menu ba gạch storefront đã được thay bằng luồng mở/đóng có `aria-expanded`, `aria-hidden`, backdrop chạm để đóng, phím Escape, khôi phục focus về nút menu và khóa scroll nền khi đang mở. Snapshot mobile **390 × 844** xác nhận storefront vẫn responsive sau thay đổi; console/runtime phiên khởi động sạch không có lỗi JavaScript hoặc import mới.
+
+Schema canonical đã thêm `role_definitions`, capability động và metadata SEO/icon CMS; Supabase production đã áp dụng migration tương ứng. Probe admin tạo role kỹ thuật `support_editor_e2e` với capability mở Command Deck/tạo bài viết, xác nhận capability được lưu, rồi xóa role và kiểm tra còn `0` bản ghi. Không thay đổi role người dùng hay dữ liệu tài chính. Command Deck cho admin hiện có form tạo, đổi tên hiển thị, chỉnh capability và xóa role tùy chỉnh; CMS Thương hiệu quản lý tên website, logo, favicon, title/mô tả SEO, ảnh chia sẻ và banner.
+
+Toàn bộ migration SQL rời trong repository đã được hợp nhất/xóa theo yêu cầu; chỉ còn `supabase-unified.sql`. Test unit (**12**), kiểm tra TypeScript và build production đã hoàn tất thành công trước xác minh giao diện.

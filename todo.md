@@ -142,3 +142,9 @@
 - [x] Cho phép mở thẳng workspace kiểm duyệt từ thông báo và kiểm thử cập nhật số lượng chờ xử lý.
 - [x] Mở rộng Realtime moderation để bắt cả UPDATE chuyển review/bình luận sang `pending`, không chỉ INSERT.
 - [x] Kiểm thử E2E notification với comment kỹ thuật `UPDATE → pending`, xác nhận badge/notice tăng rồi giảm sau moderation; unit test xác nhận cùng payload review upsert mà không tạo review/rating giả.
+- [x] Sửa menu ba gạch mobile để mở/đóng điều hướng storefront rõ ràng, có thể dùng bàn phím và không che nội dung.
+- [x] Mở rộng Command Deck để admin chỉnh nhanh nhận diện và CMS: tên website, mô tả SEO, logo, favicon/icon, banner, nội dung giới thiệu/liên hệ/cấu hình có thể vận hành.
+- [x] Thêm quản trị role chỉ dành cho admin: tạo role tùy chỉnh, đổi tên, xóa role an toàn và chỉnh capability; moderator chỉ dùng quyền đã được cấp.
+- [x] Chuẩn hóa nhãn khu vực CSV thành “Xuất CSV”.
+- [x] Hợp nhất toàn bộ SQL dự án về một file canonical duy nhất, cập nhật tài liệu và cưỡng chế không tạo migration SQL rời trong các thay đổi sau.
+- [x] Thêm script kiểm tra repository chỉ cho phép `supabase-unified.sql` trong nhóm schema Supabase trước khi `pnpm check` và `pnpm build`.

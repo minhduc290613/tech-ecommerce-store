@@ -15,7 +15,20 @@ NEXORA mở rộng Command Deck bằng một **ma trận quyền kiểm soát t�
 | `moderator` | Có | Gán role không phải `admin`, duyệt affiliate, review, bình luận và bài viết. | Không đổi role `admin`, không điều chỉnh số dư hoặc CMS. |
 | `admin` | Có, cao nhất | Toàn bộ quyền trên, cộng/trừ số dư, CMS, payment config, favicon, hiệu ứng và CSV. | Vẫn phải dùng quy trình audit, đối soát và legal review. |
 
-Admin là cấp cao nhất. Moderator có thể quản lý các role vận hành nhưng không thể cấp, hạ hoặc thay đổi `admin`.
+Admin là cấp cao nhất. Moderator có thể quản lý các role vận hành mà admin cho phép nhưng không thể cấp, hạ hoặc thay đổi `admin`.
+
+### Role tùy chỉnh và capability
+
+Admin có thể dùng **Command Deck → Role & kiểm duyệt → Tạo & chỉnh quyền role** để tạo role mới, đổi tên hiển thị, thêm/bớt capability hoặc xóa role tùy chỉnh chưa được gán cho ai. Mã role là định danh kỹ thuật cố định sau khi tạo, còn tên hiển thị có thể đổi. Role hệ thống không thể bị xóa; admin vẫn có thể điều chỉnh tên/capability, riêng `admin` luôn giữ toàn bộ capability và không được moderator gán.
+
+| Capability | Tác dụng |
+| --- | --- |
+| `commandDeck` | Cho phép vào Command Deck. |
+| `articles` | Cho phép tạo và gửi bài viết. |
+| `moderation` | Duyệt/ẩn review, bình luận và bài viết. |
+| `orders` | Quản lý đơn hàng và yêu cầu hoàn tiền. |
+| `roles` | Phân role người dùng theo giới hạn `assignable_by_moderator`. |
+| `siteSettings` | Chỉnh nhận diện/CMS storefront. |
 
 ## Role & kiểm duyệt
 
@@ -62,7 +75,7 @@ Mỗi `products.shop_id` liên kết trực tiếp tới `shops.id`. Trong **Com
 
 ## CMS nâng cao dành cho admin
 
-Workspace **Cấu hình nâng cao** chỉ dành cho admin. Tại đây có thể cập nhật mã ngân hàng/số tài khoản/tên người nhận, số MoMo, URL favicon, hiệu ứng storefront và chương trình affiliate.
+Mục **Thương hiệu, icon & SEO** cho phép admin hoặc role có `siteSettings` cập nhật tên website, logo, favicon, tiêu đề/mô tả SEO, ảnh chia sẻ Open Graph, banner, liên hệ và nội dung storefront mà không cần sửa file. Workspace **Cấu hình nâng cao** chỉ dành cho admin để cập nhật mã ngân hàng/số tài khoản/tên người nhận, số MoMo, hiệu ứng storefront và chương trình affiliate.
 
 Admin có thể bật/tắt affiliate, đặt **tỷ lệ hoa hồng từ 0–100%**, số đơn `delivered` tối thiểu, tổng giá trị `delivered` tối thiểu và yêu cầu duyệt. Lưu cấu hình gọi RPC `admin_update_affiliate_program`, được kiểm tra quyền admin tại database và ghi `affiliate_program_updated` vào audit log. Tỷ lệ được dùng khi trigger tạo commission cho đơn đủ điều kiện về sau; không hồi tố chứng từ đã tồn tại.
 

@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#0f172a" />
     <meta property="og:title" content="NEXORA Tech Store | Thiết bị đúng chuẩn" />
     <meta property="og:description" content="Khám phá điện thoại, laptop và phụ kiện với mức giá đúng thời điểm." />
+    <meta property="og:image" content="/manus-storage/nexora-hero-tech_47c6b78f.jpg" />
     <title>NEXORA Tech Store | Thiết bị đúng chuẩn</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -73,16 +74,18 @@
             <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>
             <span class="cart-badge" id="cartBadge">0</span>
           </button>
-          <button class="icon-button mobile-menu-button" id="mobileMenuButton" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="Mở menu">
+          <button class="icon-button mobile-menu-button" id="mobileMenuButton" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="Mở menu điều hướng">
             <i class="fa-solid fa-bars" aria-hidden="true"></i>
+            <span class="sr-only">Mở menu điều hướng</span>
           </button>
         </div>
       </div>
-      <nav class="mobile-nav" id="mobileNav" aria-label="Điều hướng di động">
+      <nav class="mobile-nav" id="mobileNav" aria-label="Điều hướng di động" aria-hidden="true">
         <a href="#products">Khám phá sản phẩm</a>
         <a href="#flash-sale">Flash Sale</a>
         <a href="#categories">Danh mục</a><a href="#shops">Gian hàng</a><a href="#journal">Bài viết</a><a href="#help">Trợ giúp</a>
       </nav>
+      <button class="mobile-nav-scrim" id="mobileNavScrim" type="button" aria-label="Đóng menu điều hướng" tabindex="-1"></button>
       <form class="mobile-search" id="mobileSearchForm" role="search">
         <label class="sr-only" for="mobileSearchInput">Tìm kiếm thiết bị</label>
         <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>

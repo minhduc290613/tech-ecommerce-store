@@ -1,6 +1,6 @@
 /* Circuit Atelier Command Deck — RLS-bound marketplace operations and CMS. */
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
-import { canAccessCommandDeck, isAdminRole } from "./role-permissions.js";
+import { isAdminRole, resolveRoleCapabilities } from "./role-permissions.js";
 import "./admin-accounts.js";
 import "./admin-roles-content.js";
 
@@ -11,7 +11,7 @@ const $ = (selector, parent = document) => parent.querySelector(selector);
 const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
 const state = {
-  user: null, role: "customer", products: [], orders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
+  user: null, role: "customer", roleDefinitions: [], capabilities: {}, products: [], orders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
   fulfillmentFilter: "all", paymentFilter: "all", activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null, editingSaleCampaignId: null,
 };
 
@@ -106,27 +106,31 @@ async function login(event) {
 }
 
 async function verifyAdmin(user) {
-  const [{ data: allowed, error }, { data: roleData }, { data: isAdmin }] = await Promise.all([db.rpc("can_access_command_deck"), db.from("user_roles").select("role").eq("user_id", user.id).maybeSingle(), db.rpc("is_admin")]);
+  const [{ data: allowed, error }, { data: roleData }, { data: isAdmin }, roleDefinitionsResult] = await Promise.all([db.rpc("can_access_command_deck"), db.from("user_roles").select("role").eq("user_id", user.id).maybeSingle(), db.rpc("is_admin"), db.from("role_definitions").select("role_key,display_name,capabilities").order("role_key")]);
   const resolvedRole = roleData?.role || (isAdmin ? "admin" : "customer");
-  if (error || !allowed || !canAccessCommandDeck(resolvedRole)) { await db.auth.signOut(); return showGate("Tài khoản này chưa có role vận hành. Cần một trong các role: admin, moderator, order_manager hoặc marketing."); }
+  if (error || !allowed) { await db.auth.signOut(); return showGate("Tài khoản này chưa có capability mở Command Deck. Hãy nhờ admin cấp quyền commandDeck."); }
   state.user = user;
   state.role = resolvedRole;
-  els.operatorName.textContent = `${user.email || "Operator"} · ${state.role}`;
+  state.roleDefinitions = roleDefinitionsResult.data || [];
+  state.capabilities = Boolean(isAdmin) ? { commandDeck: true, articles: true, moderation: true, orders: true, roles: true, siteSettings: true } : resolveRoleCapabilities(resolvedRole, state.roleDefinitions);
+  const displayRole = state.roleDefinitions.find((item) => item.role_key === resolvedRole)?.display_name || resolvedRole;
+  els.operatorName.textContent = `${user.email || "Operator"} · ${displayRole}`;
   els.operatorInitial.textContent = (user.email || "A")[0].toUpperCase();
   els.gate.hidden = true; els.app.hidden = false;
   applyRoleVisibility();
-  window.dispatchEvent(new CustomEvent("nexora:operator-ready", { detail: { user, role: state.role, isAdmin: Boolean(isAdmin) } }));
+  window.dispatchEvent(new CustomEvent("nexora:operator-ready", { detail: { user, role: state.role, isAdmin: Boolean(isAdmin), capabilities: state.capabilities, roleDefinitions: state.roleDefinitions } }));
   if (isAdmin) window.dispatchEvent(new Event("nexora:admin-ready"));
   await loadData();
 }
 
 function applyRoleVisibility() {
-  const isAdmin = isAdminRole(state.role); const canOrders = isAdmin || state.role === "order_manager";
-  const canModerate = isAdmin || state.role === "moderator";
-  const canMarketing = isAdmin || state.role === "marketing" || state.role === "moderator";
+  const isAdmin = isAdminRole(state.role); const canOrders = isAdmin || Boolean(state.capabilities.orders);
+  const canModerate = isAdmin || Boolean(state.capabilities.moderation) || Boolean(state.capabilities.roles);
+  const canMarketing = isAdmin || Boolean(state.capabilities.articles);
+  const canSettings = isAdmin || Boolean(state.capabilities.siteSettings);
   const hide = (view, hidden) => { const nav = $(`.admin-nav [data-view="${view}"]`); const section = $(`[data-admin-view="${view}"]`); if (nav) nav.hidden = hidden; if (section) section.hidden = hidden; };
-  hide("products", !isAdmin); hide("brand", !isAdmin); hide("shops", !isAdmin); hide("sale-campaigns", !isAdmin); hide("orders", !canOrders); hide("content", !(isAdmin || canMarketing));
-  if (!isAdmin && !canOrders && !canModerate && !canMarketing) hide("overview", true);
+  hide("products", !isAdmin); hide("brand", !canSettings); hide("shops", !isAdmin); hide("sale-campaigns", !isAdmin); hide("orders", !canOrders); hide("content", !canMarketing);
+  if (!isAdmin && !canOrders && !canModerate && !canMarketing && !canSettings) hide("overview", true);
 }
 
 async function signOut() { if (db) await db.auth.signOut(); showGate("Bạn đã đăng xuất khỏi Command Deck."); }
@@ -191,7 +195,7 @@ function renderProducts() {
 
 function renderSettings() {
   if (!state.settings) return;
-  const map = { "#settingSiteName": "site_name", "#settingTagline": "site_tagline", "#settingLogoUrl": "logo_url", "#settingAnnouncement": "announcement_text", "#settingEmail": "support_email", "#settingSupportPhone": "support_phone", "#settingHours": "support_hours", "#settingAddress": "address_text", "#settingZaloPhone": "zalo_phone", "#settingZaloLabel": "zalo_label", "#settingZaloMessage": "zalo_confirmation_message", "#settingSellerZaloPhone": "seller_zalo_phone", "#settingSellerContactLabel": "seller_contact_label", "#settingSellerContactMessage": "seller_contact_message", "#settingHeroKicker": "hero_kicker", "#settingHeroTitle": "hero_title", "#settingHeroEmphasis": "hero_emphasis", "#settingHeroDescription": "hero_description", "#settingHeroImage": "hero_image_url" };
+  const map = { "#settingSiteName": "site_name", "#settingTagline": "site_tagline", "#settingLogoUrl": "logo_url", "#settingFaviconUrl": "favicon_url", "#settingSeoTitle": "seo_title", "#settingSeoDescription": "seo_description", "#settingSeoOgImage": "seo_og_image_url", "#settingAnnouncement": "announcement_text", "#settingEmail": "support_email", "#settingSupportPhone": "support_phone", "#settingHours": "support_hours", "#settingAddress": "address_text", "#settingZaloPhone": "zalo_phone", "#settingZaloLabel": "zalo_label", "#settingZaloMessage": "zalo_confirmation_message", "#settingSellerZaloPhone": "seller_zalo_phone", "#settingSellerContactLabel": "seller_contact_label", "#settingSellerContactMessage": "seller_contact_message", "#settingHeroKicker": "hero_kicker", "#settingHeroTitle": "hero_title", "#settingHeroEmphasis": "hero_emphasis", "#settingHeroDescription": "hero_description", "#settingHeroImage": "hero_image_url" };
   Object.entries(map).forEach(([selector, key]) => { $(selector).value = state.settings[key] || ""; });
 }
 function fillPageForm() { const page = state.pages.find((item) => item.slug === els.pageSelect.value); $("#pageTitle").value = page?.title || ""; $("#pageSubtitle").value = page?.subtitle || ""; $("#pageContent").value = page?.content || ""; }
@@ -272,7 +276,7 @@ async function updatePaymentStatus(orderId, status) {
   Object.assign(order, payload); renderMetrics(); renderOperationsMetrics(); renderRevenueChart(); renderOrders(); renderRecentOrders(); toast(status === "paid" ? "Đã xác nhận thanh toán." : "Đã chuyển đơn về trạng thái chưa thanh toán.", "success");
 }
 
-async function saveSettings(event) { event.preventDefault(); const fields = { site_name: "#settingSiteName", site_tagline: "#settingTagline", logo_url: "#settingLogoUrl", announcement_text: "#settingAnnouncement", support_email: "#settingEmail", support_phone: "#settingSupportPhone", support_hours: "#settingHours", address_text: "#settingAddress", zalo_phone: "#settingZaloPhone", zalo_label: "#settingZaloLabel", zalo_confirmation_message: "#settingZaloMessage", seller_zalo_phone: "#settingSellerZaloPhone", seller_contact_label: "#settingSellerContactLabel", seller_contact_message: "#settingSellerContactMessage", hero_kicker: "#settingHeroKicker", hero_title: "#settingHeroTitle", hero_emphasis: "#settingHeroEmphasis", hero_description: "#settingHeroDescription", hero_image_url: "#settingHeroImage" }; const payload = { singleton: true, updated_at: new Date().toISOString() }; Object.entries(fields).forEach(([key, selector]) => { payload[key] = $(selector).value.trim(); }); const { error } = await db.from("site_settings").upsert(payload, { onConflict: "singleton" }); if (error) return toast(error.message, "error"); state.settings = payload; toast("Đã lưu nhận diện storefront.", "success"); }
+async function saveSettings(event) { event.preventDefault(); const fields = { site_name: "#settingSiteName", site_tagline: "#settingTagline", logo_url: "#settingLogoUrl", favicon_url: "#settingFaviconUrl", seo_title: "#settingSeoTitle", seo_description: "#settingSeoDescription", seo_og_image_url: "#settingSeoOgImage", announcement_text: "#settingAnnouncement", support_email: "#settingEmail", support_phone: "#settingSupportPhone", support_hours: "#settingHours", address_text: "#settingAddress", zalo_phone: "#settingZaloPhone", zalo_label: "#settingZaloLabel", zalo_confirmation_message: "#settingZaloMessage", seller_zalo_phone: "#settingSellerZaloPhone", seller_contact_label: "#settingSellerContactLabel", seller_contact_message: "#settingSellerContactMessage", hero_kicker: "#settingHeroKicker", hero_title: "#settingHeroTitle", hero_emphasis: "#settingHeroEmphasis", hero_description: "#settingHeroDescription", hero_image_url: "#settingHeroImage" }; const payload = { singleton: true, updated_at: new Date().toISOString() }; Object.entries(fields).forEach(([key, selector]) => { payload[key] = $(selector).value.trim() || null; }); const { error } = await db.from("site_settings").upsert(payload, { onConflict: "singleton" }); if (error) return toast(error.message, "error"); state.settings = payload; toast("Đã lưu thương hiệu, icon và CMS storefront.", "success"); }
 async function savePage(event) { event.preventDefault(); const payload = { slug: els.pageSelect.value, title: $("#pageTitle").value.trim(), subtitle: $("#pageSubtitle").value.trim(), content: $("#pageContent").value.trim(), updated_at: new Date().toISOString() }; const { error } = await db.from("site_pages").upsert(payload, { onConflict: "slug" }); if (error) return toast(error.message, "error"); const index = state.pages.findIndex((item) => item.slug === payload.slug); if (index >= 0) state.pages[index] = payload; else state.pages.push(payload); toast("Đã lưu trang thông tin.", "success"); }
 async function saveFaq(event) { event.preventDefault(); const payload = { question: $("#faqQuestion").value.trim(), answer: $("#faqAnswer").value.trim(), sort_order: Number($("#faqSortOrder").value), is_published: $("#faqPublished").checked, updated_at: new Date().toISOString() }; const result = state.editingFaqId ? await db.from("faqs").update(payload).eq("id", state.editingFaqId) : await db.from("faqs").insert(payload); if (result.error) return toast(result.error.message, "error"); closeModal("faq"); toast("Đã lưu FAQ.", "success"); loadData(); }
 async function deleteFaq() { if (!state.editingFaqId || !window.confirm("Xóa FAQ này?")) return; const { error } = await db.from("faqs").delete().eq("id", state.editingFaqId); if (error) return toast(error.message, "error"); closeModal("faq"); toast("Đã xóa FAQ.", "success"); loadData(); }

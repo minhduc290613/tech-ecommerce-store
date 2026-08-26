@@ -7,7 +7,11 @@ export const ROLE_CAPABILITIES = {
   admin: { commandDeck: true, articles: true, moderation: true, orders: true, roles: true, siteSettings: true },
 };
 
-export function capability(role, name) { return Boolean(ROLE_CAPABILITIES[role]?.[name]); }
-export function canAccessCommandDeck(role) { return capability(role, "commandDeck"); }
-export function canWriteArticles(role) { return capability(role, "articles"); }
+export function resolveRoleCapabilities(role, roleDefinitions = []) {
+  const custom = Array.isArray(roleDefinitions) ? roleDefinitions.find((item) => item.role_key === role)?.capabilities : null;
+  return { ...(ROLE_CAPABILITIES[role] || {}), ...(custom || {}) };
+}
+export function capability(role, name, roleDefinitions = []) { return Boolean(resolveRoleCapabilities(role, roleDefinitions)[name]); }
+export function canAccessCommandDeck(role, roleDefinitions = []) { return capability(role, "commandDeck", roleDefinitions); }
+export function canWriteArticles(role, roleDefinitions = []) { return capability(role, "articles", roleDefinitions); }
 export function isAdminRole(role) { return role === "admin"; }

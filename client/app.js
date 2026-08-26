@@ -25,7 +25,7 @@ const LOCAL_DEMO_PRODUCTS = [
   { id: "demo-5", name: "Apex Station 16", category: "Laptop", description: "Laptop hiệu năng sáng tạo với màn hình 16 inch, RAM 32GB, SSD 1TB và card đồ họa rời.", image_url: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=85", price: 32990000, original_price: 32990000, stock: 8, is_sale: false, featured: false },
   { id: "demo-6", name: "NEXORA Flux 65 Mechanical", category: "Phụ kiện", description: "Bàn phím cơ 65% kết nối ba chế độ, switch tuyến tính và đèn nền RGB tùy biến.", image_url: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=900&q=85", price: 1690000, original_price: 2490000, stock: 32, is_sale: true, featured: false },
 ];
-const DEFAULT_SETTINGS = { site_name: "NEXORA", site_tagline: "Thiết bị đúng chuẩn.\nMức giá đúng thời điểm.", announcement_text: "Freeship toàn quốc cho đơn từ 1.500.000đ", support_email: "support@nexora.vn", support_hours: "Thứ 2 — Thứ 7 / 09:00–18:00", address_text: "Việt Nam", zalo_phone: "", zalo_confirmation_message: "Tôi đã chuyển khoản đơn {order_number} với số tiền {total}. Nhờ shop xác nhận giúp tôi.", logo_url: "/manus-storage/nexora-logo_3c03446b.png", hero_kicker: "CURATED TECH / 2026", hero_title: "Thiết bị đúng chuẩn.", hero_emphasis: "Mức giá đúng thời điểm.", hero_description: "Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.", hero_image_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg" };
+const DEFAULT_SETTINGS = { site_name: "NEXORA", site_tagline: "Thiết bị đúng chuẩn.\nMức giá đúng thời điểm.", announcement_text: "Freeship toàn quốc cho đơn từ 1.500.000đ", support_email: "support@nexora.vn", support_hours: "Thứ 2 — Thứ 7 / 09:00–18:00", address_text: "Việt Nam", zalo_phone: "", zalo_confirmation_message: "Tôi đã chuyển khoản đơn {order_number} với số tiền {total}. Nhờ shop xác nhận giúp tôi.", logo_url: "/manus-storage/nexora-logo_3c03446b.png", favicon_url: "/manus-storage/nexora-logo_3c03446b.png", hero_kicker: "CURATED TECH / 2026", hero_title: "Thiết bị đúng chuẩn.", hero_emphasis: "Mức giá đúng thời điểm.", hero_description: "Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.", hero_image_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg", seo_title: "NEXORA Tech Store | Thiết bị đúng chuẩn", seo_description: "Khám phá điện thoại, laptop và phụ kiện với mức giá đúng thời điểm.", seo_og_image_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg" };
 const DEFAULT_FAQS = [{ question: "Tôi có cần tạo tài khoản để đặt hàng không?", answer: "Bạn có thể xem catalog mà không cần đăng nhập. Để tạo đơn hàng và đồng bộ thanh toán, bạn cần đăng nhập bằng email." }, { question: "Giá sản phẩm có thể thay đổi không?", answer: "Giá và ưu đãi có thể thay đổi khi chương trình kết thúc hoặc tồn kho được cập nhật." }, { question: "Làm thế nào để thanh toán đơn hàng?", answer: "Sau khi tạo đơn, hãy quét VietQR hoặc MoMo và kiểm tra đúng mã đơn, số tiền trước khi xác nhận." }, { question: "Tôi muốn đổi trả hoặc bảo hành thì làm gì?", answer: "Gửi mã đơn, mô tả và hình ảnh liên quan đến kênh hỗ trợ để được hướng dẫn theo chính sách công bố." }];
 const DEFAULT_SHOPS = [{ name: "NEXORA Select", category: "Công nghệ tuyển chọn", description: "Thiết bị chính hãng, phụ kiện thiết yếu và các ưu đãi theo mùa.", banner_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg", is_verified: true }, { name: "Nova Mobile", category: "Điện thoại", description: "Thiết bị di động, phụ kiện bảo vệ và tư vấn lựa chọn theo nhu cầu.", banner_url: "/manus-storage/nexora-phone-category_b50b5ab7.jpg", is_verified: true }, { name: "Orion Compute", category: "Laptop", description: "Laptop và giải pháp làm việc di động cho học tập, sáng tạo và doanh nghiệp nhỏ.", banner_url: "/manus-storage/nexora-laptop-category_9690fafd.jpg", is_verified: true }];
 const DEFAULT_SALE_CAMPAIGNS = [{ id: "demo-hunt-cyan", code: "HUNTCYAN10", title: "Săn Sale Cyan 10%", description: "Giảm 10% cho đơn từ 3.000.000đ, tối đa 1.000.000đ.", badge_text: "SĂN SALE 10%", discount_type: "percent", discount_value: 10, minimum_order_amount: 3000000, maximum_discount_amount: 1000000, starts_at: new Date(Date.now() - 86400000).toISOString(), ends_at: new Date(Date.now() + 7 * 86400000).toISOString(), is_active: true, is_hunt_featured: true }];
@@ -50,7 +50,7 @@ const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector
 const els = {
   productsGrid: $("#productsGrid"), emptyState: $("#emptyState"), productCount: $("#productCount"), activeFilters: $("#activeFilters"),
   priceRange: $("#priceRange"), priceOutput: $("#priceOutput"), saleOnly: $("#saleOnly"), clearFilters: $("#clearFilters"), emptyReset: $("#emptyReset"),
-  searchInput: $("#searchInput"), mobileSearchInput: $("#mobileSearchInput"), headerSearch: $("#headerSearch"), mobileSearchForm: $("#mobileSearchForm"), mobileSearchButton: $("#mobileSearchButton"), mobileMenuButton: $("#mobileMenuButton"), mobileNav: $("#mobileNav"),
+  searchInput: $("#searchInput"), mobileSearchInput: $("#mobileSearchInput"), headerSearch: $("#headerSearch"), mobileSearchForm: $("#mobileSearchForm"), mobileSearchButton: $("#mobileSearchButton"), mobileMenuButton: $("#mobileMenuButton"), mobileNav: $("#mobileNav"), mobileNavScrim: $("#mobileNavScrim"),
   cartButton: $("#cartButton"), cartDrawer: $("#cartDrawer"), cartBadge: $("#cartBadge"), cartItemLabel: $("#cartItemLabel"), cartItems: $("#cartItems"), cartTotal: $("#cartTotal"), checkoutButton: $("#checkoutButton"),
   overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authPassword: $("#authPassword"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authHelper: $("#authHelper"),
   quickViewModal: $("#quickViewModal"), quickViewImage: $("#quickViewImage"), quickViewCategory: $("#quickViewCategory"), quickViewTitle: $("#quickViewTitle"), quickViewDescription: $("#quickViewDescription"), quickViewPrice: $("#quickViewPrice"), quickViewAdd: $("#quickViewAdd"),
@@ -82,17 +82,13 @@ function bindEvents() {
 
   els.mobileSearchButton.addEventListener("click", () => {
     const isOpen = els.mobileSearchForm.classList.toggle("open");
-    els.mobileMenuButton.setAttribute("aria-expanded", "false");
-    els.mobileNav.classList.remove("open");
+    closeMobileNav();
     if (isOpen) els.mobileSearchInput.focus();
   });
-  els.mobileMenuButton.addEventListener("click", () => {
-    const isOpen = els.mobileNav.classList.toggle("open");
-    els.mobileMenuButton.setAttribute("aria-expanded", String(isOpen));
-    els.mobileSearchForm.classList.remove("open");
-  });
+  els.mobileMenuButton.addEventListener("click", toggleMobileNav);
+  els.mobileNavScrim.addEventListener("click", () => closeMobileNav({ restoreFocus: true }));
   $$("#mobileNav a").forEach((link) => link.addEventListener("click", () => {
-    els.mobileNav.classList.remove("open"); els.mobileMenuButton.setAttribute("aria-expanded", "false");
+    closeMobileNav();
   }));
 
   $$("input[name='category']").forEach((input) => input.addEventListener("change", (event) => {
@@ -137,8 +133,32 @@ function bindEvents() {
 
   document.addEventListener("keydown", (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); els.searchInput.focus(); }
-    if (event.key === "Escape") { closeCart(); ["auth", "quick-view", "qr"].forEach(closeModal); }
+    if (event.key === "Escape") { closeMobileNav({ restoreFocus: true }); els.mobileSearchForm.classList.remove("open"); closeCart(); ["auth", "quick-view", "qr"].forEach(closeModal); }
   });
+  window.addEventListener("resize", () => { if (window.innerWidth > 720) closeMobileNav(); });
+}
+
+function toggleMobileNav() {
+  const isOpen = !els.mobileNav.classList.contains("open");
+  els.mobileNav.classList.toggle("open", isOpen);
+  els.mobileNavScrim.classList.toggle("open", isOpen);
+  els.mobileNav.setAttribute("aria-hidden", String(!isOpen));
+  els.mobileMenuButton.setAttribute("aria-expanded", String(isOpen));
+  els.mobileMenuButton.setAttribute("aria-label", isOpen ? "Đóng menu điều hướng" : "Mở menu điều hướng");
+  document.body.classList.toggle("mobile-nav-open", isOpen);
+  els.mobileSearchForm.classList.remove("open");
+  if (isOpen) requestAnimationFrame(() => $("a", els.mobileNav)?.focus());
+}
+
+function closeMobileNav({ restoreFocus = false } = {}) {
+  const wasOpen = els.mobileNav.classList.contains("open");
+  els.mobileNav.classList.remove("open");
+  els.mobileNavScrim.classList.remove("open");
+  els.mobileNav.setAttribute("aria-hidden", "true");
+  els.mobileMenuButton.setAttribute("aria-expanded", "false");
+  els.mobileMenuButton.setAttribute("aria-label", "Mở menu điều hướng");
+  document.body.classList.remove("mobile-nav-open");
+  if (restoreFocus && wasOpen) els.mobileMenuButton.focus();
 }
 
 async function loadProducts() {
@@ -165,7 +185,7 @@ async function loadMarketplaceCMS() {
   }
   applySettings(); renderFAQs(); renderShops(); renderSaleHunt(); updateCartUI();
 }
-function applySettings() { const s = state.settings; document.title = `${s.site_name} Tech Store | ${s.hero_title}`; $("#announcementText").textContent = s.announcement_text; $("#heroKicker").textContent = s.hero_kicker; $("#heroTitlePlain").textContent = s.hero_title; $("#heroTitleEmphasis").textContent = s.hero_emphasis; $("#heroDescription").textContent = s.hero_description; $("#footerTagline").innerHTML = escapeHtml(s.site_tagline).replace(/\n/g, "<br />"); $("#footerSupportEmail").textContent = s.support_email; $("#footerSupportEmail").href = `mailto:${s.support_email}`; $("#footerSupportHours").textContent = s.support_hours; $("#footerAddress").textContent = s.address_text; if (s.hero_image_url) $("#heroImage").src = s.hero_image_url; if (s.favicon_url) { const favicon = document.querySelector("link[rel='icon']"); if (favicon) favicon.href = s.favicon_url; } PAYMENT_CONFIG = { bankId: s.payment_bank_id || PAYMENT_CONFIG.bankId, accountNumber: s.payment_account_number || PAYMENT_CONFIG.accountNumber, accountName: s.payment_account_name || PAYMENT_CONFIG.accountName, momoPhone: s.payment_momo_phone || PAYMENT_CONFIG.momoPhone }; $$("[data-site-logo]").forEach((img) => { if (s.logo_url) img.src = s.logo_url; }); $$("[data-site-name]").forEach((item) => item.textContent = s.site_name); renderFooterContacts(s); renderFooterSellerContact(s); renderZaloConfirmation(); window.dispatchEvent(new CustomEvent("nexora:settings", { detail: s })); }
+function applySettings() { const s = state.settings; const title = s.seo_title || `${s.site_name} Tech Store | ${s.hero_title}`; const description = s.seo_description || s.hero_description; const ogImage = s.seo_og_image_url || s.hero_image_url || s.logo_url; document.title = title; document.querySelector("meta[name='description']")?.setAttribute("content", description); document.querySelector("meta[property='og:title']")?.setAttribute("content", title); document.querySelector("meta[property='og:description']")?.setAttribute("content", description); if (ogImage) document.querySelector("meta[property='og:image']")?.setAttribute("content", ogImage); $("#announcementText").textContent = s.announcement_text; $("#heroKicker").textContent = s.hero_kicker; $("#heroTitlePlain").textContent = s.hero_title; $("#heroTitleEmphasis").textContent = s.hero_emphasis; $("#heroDescription").textContent = s.hero_description; $("#footerTagline").innerHTML = escapeHtml(s.site_tagline).replace(/\n/g, "<br />"); $("#footerSupportEmail").textContent = s.support_email; $("#footerSupportEmail").href = `mailto:${s.support_email}`; $("#footerSupportHours").textContent = s.support_hours; $("#footerAddress").textContent = s.address_text; if (s.hero_image_url) $("#heroImage").src = s.hero_image_url; if (s.favicon_url) { const favicon = document.querySelector("link[rel='icon']"); if (favicon) favicon.href = s.favicon_url; } PAYMENT_CONFIG = { bankId: s.payment_bank_id || PAYMENT_CONFIG.bankId, accountNumber: s.payment_account_number || PAYMENT_CONFIG.accountNumber, accountName: s.payment_account_name || PAYMENT_CONFIG.accountName, momoPhone: s.payment_momo_phone || PAYMENT_CONFIG.momoPhone }; $$("[data-site-logo]").forEach((img) => { if (s.logo_url) img.src = s.logo_url; }); $$("[data-site-name]").forEach((item) => item.textContent = s.site_name); renderFooterContacts(s); renderFooterSellerContact(s); renderZaloConfirmation(); window.dispatchEvent(new CustomEvent("nexora:settings", { detail: s })); }
 function renderFAQs() { els.faqList.innerHTML = state.faqs.map((faq, index) => `<details class="faq-item" ${index === 0 ? "open" : ""}><summary><span>${escapeHtml(faq.question)}</span><i class="fa-solid fa-plus" aria-hidden="true"></i></summary><p>${escapeHtml(faq.answer)}</p></details>`).join(""); }
 function renderShops() {
   els.shopsGrid.innerHTML = state.shops.map((shop) => {

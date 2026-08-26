@@ -31,7 +31,7 @@ Tài liệu này hướng dẫn triển khai **NEXORA Tech Store** từ reposito
 | Trang thông tin | `/info.html` → `client/info.html` | Điều khoản, bảo mật, giao hàng/đổi trả, giới thiệu và liên hệ. |
 | Trang bài viết | `/article.html?slug=<slug>` → `client/article.html` | Chỉ hiển thị bài đã `published`, có trạng thái không tìm thấy an toàn. |
 | Database/Auth | Supabase | PostgreSQL, Supabase Auth, RLS, RPC checkout và dữ liệu CMS. |
-| Schema chuẩn | `supabase-unified.sql` | Một file SQL canonical gồm 24 bảng public, policy, RPC, index, seed, Account Center, role, moderation, affiliate và refund. |
+| Schema chuẩn | `supabase-unified.sql` | Một file SQL canonical gồm 25 bảng public, policy, RPC, index, seed, Account Center, role/capability tùy chỉnh, moderation, affiliate và refund. |
 | Media source | GitHub `assets/media` + storage URL | Branch `assets` lưu backup binary; storefront dùng URL storage/CDN thay vì nhét media vào source build. |
 
 Luồng mua hàng tiêu chuẩn là: **khách xem sản phẩm → thêm giỏ localStorage → đăng nhập → tạo đơn qua RPC → nhận QR/chỉ dẫn thanh toán → nhắn Zalo xác nhận (nếu được cấu hình) → admin đối soát và cập nhật đơn**.
@@ -137,9 +137,9 @@ Schema tạo các thành phần sau:
 | Affiliate & hoàn tiền | Referral được duyệt, hoa hồng 15% cấu hình được, `refund_requests`, hoàn wallet/manual và CSV quản trị. |
 | Bảo mật | RLS, policy catalog công khai, quyền user-own-order, giới hạn RPC checkout và kiểm tra trạng thái account. |
 
-> **Không chạy 10 SQL migration legacy sau file canonical.** Nếu database đã chạy các migration cũ hoặc đang có đơn hàng thật, đừng chạy lại file unified. Hãy so sánh schema và viết migration nâng cấp riêng để bảo toàn dữ liệu. Xem [Ghi chú migration legacy](LEGACY_MIGRATIONS.md).
+> **Repository chỉ giữ một file SQL:** `supabase-unified.sql`. Nếu database đã có đơn hàng thật, không chạy lại toàn bộ file; hãy tạo thay đổi DDL có quản lý từ schema canonical sau khi sao lưu. Lệnh `pnpm check` và `pnpm build` tự chạy `scripts/check-single-sql.mjs` để dừng quy trình nếu repository xuất hiện thêm bất kỳ file `.sql` nào.
 
-Sau khi áp dụng thành công, nên thấy **24 bảng public**. Seed mặc định gồm 6 product, 2 campaign, 1 site setting, 6 trang nội dung, 3 FAQ và 3 shop; các sản phẩm seed được gán vào `shop_id` theo gian hàng. Hãy thay dữ liệu demo trước khi kinh doanh.
+Sau khi áp dụng thành công, nên thấy **25 bảng public**. Seed mặc định gồm 6 product, 2 campaign, 1 site setting, 6 trang nội dung, 3 FAQ, 3 shop và các role hệ thống; các sản phẩm seed được gán vào `shop_id` theo gian hàng. Hãy thay dữ liệu demo trước khi kinh doanh.
 
 ### 4.3 Kiểm tra RLS và checkout
 
@@ -351,7 +351,7 @@ RLS và quyền database cần được kiểm thử cùng nhau: policy quyết 
 
 ### 13.2 Bảo trì schema
 
-`supabase-unified.sql` là nguồn chuẩn cho **fresh install**. Với production có dữ liệu, mọi thay đổi nên là migration mới, nhỏ, có tên rõ ràng và được thử ở project/branch staging trước. Không sửa lịch sử migration để “đồng bộ” một database đã chạy.
+`supabase-unified.sql` là nguồn SQL chuẩn duy nhất cho **fresh install**. Với production có dữ liệu, tạo migration DDL có quản lý từ chênh lệch canonical và thử ở staging trước; không thêm file SQL rời vào repository.
 
 ### 13.3 Tài liệu liên quan
 

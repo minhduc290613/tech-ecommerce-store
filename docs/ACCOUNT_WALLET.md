@@ -46,7 +46,7 @@ Khách tự đổi email/mật khẩu trong Account Center. Nếu Supabase bật
 | Tình trạng database | File cần dùng |
 | --- | --- |
 | Project Supabase mới/trống | [`../supabase-unified.sql`](../supabase-unified.sql). |
-| Project NEXORA đã có schema canonical | `supabase-account-wallet.sql`, `supabase-wallet-account-guard.sql`, `supabase-account-profile-backfill.sql`, rồi `supabase-admin-account-profile.sql` theo lịch sử migration đã áp dụng. |
+| Project NEXORA đã có schema canonical | Dùng thay đổi DDL có quản lý được sinh từ `supabase-unified.sql`; repository không còn giữ migration SQL rời. |
 
 Các RPC `SECURITY DEFINER` trong module này được gọi bởi role `authenticated`, nhưng từng hàm kiểm tra `auth.uid()` hoặc `is_admin()` trước khi thao tác. Không cấp `service_role key` cho trình duyệt và không tắt RLS để xử lý lỗi nhanh.
 

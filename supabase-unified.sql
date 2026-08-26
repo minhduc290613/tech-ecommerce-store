@@ -601,11 +601,36 @@ on conflict (sku) do update set name = excluded.name, slug = excluded.slug, bran
 -- --------------------------------------------------------------------------
 create table if not exists public.user_roles (
   user_id uuid primary key references auth.users(id) on delete cascade,
-  role text not null default 'customer' check (role in ('customer', 'affiliate', 'marketing', 'order_manager', 'moderator', 'admin')),
+  role text not null default 'customer',
   assigned_by uuid references auth.users(id) on delete set null,
   assigned_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+create table if not exists public.role_definitions (
+  role_key text primary key check (role_key ~ '^[a-z][a-z0-9_]{2,48}$'),
+  display_name text not null check (length(trim(display_name)) between 2 and 80),
+  description text not null default '',
+  capabilities jsonb not null default '{}'::jsonb,
+  is_system boolean not null default false,
+  assignable_by_moderator boolean not null default true,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+insert into public.role_definitions (role_key, display_name, description, capabilities, is_system, assignable_by_moderator) values
+  ('customer', 'Khách hàng', 'Quyền mua hàng cơ bản.', '{"commandDeck":false,"articles":false,"moderation":false,"orders":false,"roles":false,"siteSettings":false}'::jsonb, true, true),
+  ('affiliate', 'Affiliate', 'Được tạo bài viết sau khi được duyệt affiliate.', '{"commandDeck":false,"articles":true,"moderation":false,"orders":false,"roles":false,"siteSettings":false}'::jsonb, true, true),
+  ('marketing', 'Marketing', 'Quản lý và tạo nội dung bài viết.', '{"commandDeck":true,"articles":true,"moderation":false,"orders":false,"roles":false,"siteSettings":false}'::jsonb, true, true),
+  ('order_manager', 'Quản lý đơn hàng', 'Quản lý đơn, hoàn tiền và vận hành giao nhận.', '{"commandDeck":true,"articles":false,"moderation":false,"orders":true,"roles":false,"siteSettings":false}'::jsonb, true, true),
+  ('moderator', 'Moderator', 'Kiểm duyệt nội dung và phân role không phải admin.', '{"commandDeck":true,"articles":true,"moderation":true,"orders":false,"roles":true,"siteSettings":false}'::jsonb, true, true),
+  ('admin', 'Quản trị viên', 'Toàn quyền vận hành và cấu hình hệ thống.', '{"commandDeck":true,"articles":true,"moderation":true,"orders":true,"roles":true,"siteSettings":true}'::jsonb, true, false)
+on conflict (role_key) do nothing;
+
+alter table public.user_roles drop constraint if exists user_roles_role_check;
+alter table public.user_roles drop constraint if exists user_roles_role_fkey;
+alter table public.user_roles add constraint user_roles_role_fkey foreign key (role) references public.role_definitions(role_key) on update cascade on delete restrict;
 
 insert into public.user_roles (user_id, role, assigned_by)
 select user_id, 'admin', user_id from public.admin_users
@@ -634,42 +659,61 @@ as $$
   select public.is_admin() or exists (select 1 from public.user_roles where user_id = auth.uid() and role = any(p_roles));
 $$;
 
+create or replace function public.has_role_capability(p_capability text)
+returns boolean language sql stable security definer set search_path = public, auth
+as $$
+  select public.is_admin() or exists (
+    select 1 from public.user_roles ur
+    join public.role_definitions rd on rd.role_key = ur.role
+    where ur.user_id = auth.uid()
+      and coalesce((rd.capabilities ->> p_capability)::boolean, false)
+  );
+$$;
+
 create or replace function public.can_manage_roles()
 returns boolean language sql stable security definer set search_path = public, auth
-as $$ select public.has_any_role(array['moderator']); $$;
+as $$ select public.has_role_capability('roles'); $$;
+
+create or replace function public.can_manage_role_definitions()
+returns boolean language sql stable security definer set search_path = public, auth
+as $$ select public.is_admin(); $$;
 
 create or replace function public.can_moderate_content()
 returns boolean language sql stable security definer set search_path = public, auth
-as $$ select public.has_any_role(array['moderator']); $$;
+as $$ select public.has_role_capability('moderation'); $$;
 
 create or replace function public.can_manage_orders()
 returns boolean language sql stable security definer set search_path = public, auth
-as $$ select public.has_any_role(array['order_manager']); $$;
+as $$ select public.has_role_capability('orders'); $$;
 
 create or replace function public.can_write_articles()
 returns boolean language sql stable security definer set search_path = public, auth
-as $$ select public.has_any_role(array['marketing', 'moderator', 'affiliate']); $$;
+as $$ select public.has_role_capability('articles'); $$;
 
 create or replace function public.can_access_command_deck()
 returns boolean language sql stable security definer set search_path = public, auth
-as $$ select public.has_any_role(array['moderator', 'order_manager', 'marketing']); $$;
+as $$ select public.has_role_capability('commandDeck'); $$;
 
 drop policy if exists "Users can read own special role" on public.user_roles;
 create policy "Users can read own special role" on public.user_roles for select to authenticated using (user_id = auth.uid());
 drop policy if exists "Role managers can read all roles" on public.user_roles;
 create policy "Role managers can read all roles" on public.user_roles for select to authenticated using (public.can_manage_roles());
+alter table public.role_definitions enable row level security;
+drop policy if exists "Authenticated users can read role definitions" on public.role_definitions;
+create policy "Authenticated users can read role definitions" on public.role_definitions for select to authenticated using (true);
 drop policy if exists "Role managers can read customer profiles" on public.customer_profiles;
 create policy "Role managers can read customer profiles" on public.customer_profiles for select to authenticated using (public.can_manage_roles());
 
 create or replace function public.assign_user_role(p_user_id uuid, p_role text, p_note text default null)
 returns public.user_roles language plpgsql security definer set search_path = public, auth
 as $$
-declare v_role public.user_roles; v_current text;
+declare v_role public.user_roles; v_current text; v_target public.role_definitions;
 begin
   if not public.can_manage_roles() then raise exception 'Bạn không có quyền quản lý role.'; end if;
-  if p_role not in ('customer', 'affiliate', 'marketing', 'order_manager', 'moderator', 'admin') then raise exception 'Role không hợp lệ.'; end if;
+  select * into v_target from public.role_definitions where role_key = p_role;
+  if not found then raise exception 'Role không hợp lệ.'; end if;
   select role into v_current from public.user_roles where user_id = p_user_id;
-  if not public.is_admin() and (p_role = 'admin' or v_current = 'admin') then raise exception 'Chỉ admin được thay đổi role admin.'; end if;
+  if not public.is_admin() and (p_role = 'admin' or v_current = 'admin' or not v_target.assignable_by_moderator) then raise exception 'Chỉ admin được gán hoặc thay đổi role này.'; end if;
   insert into public.user_roles (user_id, role, assigned_by) values (p_user_id, p_role, auth.uid())
   on conflict (user_id) do update set role = excluded.role, assigned_by = excluded.assigned_by, assigned_at = now(), updated_at = now()
   returning * into v_role;
@@ -681,6 +725,43 @@ begin
   insert into public.account_audit_log (target_user_id, actor_user_id, action, metadata)
   values (p_user_id, auth.uid(), 'role_assigned', jsonb_build_object('role', p_role, 'note', nullif(trim(p_note), '')));
   return v_role;
+end;
+$$;
+
+create or replace function public.admin_save_role_definition(p_role_key text, p_display_name text, p_description text, p_capabilities jsonb, p_assignable_by_moderator boolean default true)
+returns public.role_definitions language plpgsql security definer set search_path = public, auth
+as $$
+declare v_role public.role_definitions; v_existing public.role_definitions;
+begin
+  if not public.can_manage_role_definitions() then raise exception 'Chỉ admin được tạo hoặc chỉnh role.'; end if;
+  if p_role_key !~ '^[a-z][a-z0-9_]{2,48}$' then raise exception 'Mã role chỉ gồm chữ thường, số, gạch dưới và dài 3–49 ký tự.'; end if;
+  if length(trim(p_display_name)) < 2 then raise exception 'Tên hiển thị role phải có ít nhất 2 ký tự.'; end if;
+  select * into v_existing from public.role_definitions where role_key = p_role_key;
+  if p_role_key = 'admin' then
+    p_capabilities := '{"commandDeck":true,"articles":true,"moderation":true,"orders":true,"roles":true,"siteSettings":true}'::jsonb;
+    p_assignable_by_moderator := false;
+  end if;
+  insert into public.role_definitions (role_key, display_name, description, capabilities, is_system, assignable_by_moderator, created_by)
+  values (p_role_key, trim(p_display_name), coalesce(trim(p_description), ''), coalesce(p_capabilities, '{}'::jsonb), coalesce(v_existing.is_system, false), p_assignable_by_moderator, auth.uid())
+  on conflict (role_key) do update set display_name = excluded.display_name, description = excluded.description, capabilities = excluded.capabilities, assignable_by_moderator = excluded.assignable_by_moderator, updated_at = now()
+  returning * into v_role;
+  insert into public.account_audit_log (actor_user_id, action, metadata) values (auth.uid(), 'role_definition_saved', jsonb_build_object('role_key', v_role.role_key, 'display_name', v_role.display_name));
+  return v_role;
+end;
+$$;
+
+create or replace function public.admin_delete_role_definition(p_role_key text)
+returns void language plpgsql security definer set search_path = public, auth
+as $$
+declare v_role public.role_definitions;
+begin
+  if not public.can_manage_role_definitions() then raise exception 'Chỉ admin được xóa role.'; end if;
+  select * into v_role from public.role_definitions where role_key = p_role_key;
+  if not found then raise exception 'Không tìm thấy role.'; end if;
+  if v_role.is_system then raise exception 'Không thể xóa role hệ thống; bạn có thể đổi tên hiển thị hoặc chỉnh capability.'; end if;
+  if exists (select 1 from public.user_roles where role = p_role_key) then raise exception 'Hãy chuyển người dùng sang role khác trước khi xóa.'; end if;
+  delete from public.role_definitions where role_key = p_role_key;
+  insert into public.account_audit_log (actor_user_id, action, metadata) values (auth.uid(), 'role_definition_deleted', jsonb_build_object('role_key', p_role_key));
 end;
 $$;
 
@@ -990,9 +1071,13 @@ create policy "Order managers can manage all orders" on public.orders for all to
 drop policy if exists "Admins can read all order items" on public.order_items;
 create policy "Order managers can read all order items" on public.order_items for select to authenticated using (public.can_manage_orders());
 drop policy if exists "Admins can manage site settings" on public.site_settings;
-create policy "Admins can manage site settings" on public.site_settings for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "Site setting managers can manage site settings" on public.site_settings;
+create policy "Site setting managers can manage site settings" on public.site_settings for all to authenticated using (public.has_role_capability('siteSettings')) with check (public.has_role_capability('siteSettings'));
 
 alter table public.site_settings add column if not exists favicon_url text;
+alter table public.site_settings add column if not exists seo_title text;
+alter table public.site_settings add column if not exists seo_description text;
+alter table public.site_settings add column if not exists seo_og_image_url text;
 alter table public.site_settings add column if not exists payment_bank_id text;
 alter table public.site_settings add column if not exists payment_account_number text;
 alter table public.site_settings add column if not exists payment_account_name text;
@@ -1001,12 +1086,12 @@ alter table public.site_settings add column if not exists storefront_effect text
 alter table public.site_settings add column if not exists storefront_effect_color text not null default '#d8f3ff';
 alter table public.site_settings add column if not exists storefront_effect_density integer not null default 24 check (storefront_effect_density between 0 and 120);
 
-revoke all on table public.user_roles, public.affiliate_profiles, public.affiliate_referrals, public.affiliate_commissions, public.refund_requests from anon, authenticated;
-grant select on table public.user_roles, public.affiliate_profiles, public.affiliate_referrals, public.affiliate_commissions, public.refund_requests to authenticated;
+revoke all on table public.user_roles, public.role_definitions, public.affiliate_profiles, public.affiliate_referrals, public.affiliate_commissions, public.refund_requests from anon, authenticated;
+grant select on table public.user_roles, public.role_definitions, public.affiliate_profiles, public.affiliate_referrals, public.affiliate_commissions, public.refund_requests to authenticated;
 grant select on table public.product_reviews, public.product_comments, public.articles, public.affiliate_program_settings to anon, authenticated;
-revoke all on function public.has_role(text), public.has_any_role(text[]), public.can_manage_roles(), public.can_moderate_content(), public.can_manage_orders(), public.can_write_articles(), public.can_access_command_deck(), public.assign_user_role(uuid,text,text), public.submit_product_review(uuid,integer,text), public.submit_product_comment(uuid,text), public.moderate_content(text,uuid,text,text), public.save_my_article(uuid,text,text,text,text,text,boolean), public.request_affiliate_access(), public.review_affiliate(uuid,text,text), public.claim_affiliate_referral(text), public.create_affiliate_commission(), public.attach_affiliate_to_order(), public.request_order_refund(uuid,numeric,text), public.review_refund_request(uuid,text,text,text) from public, anon;
+revoke all on function public.has_role(text), public.has_any_role(text[]), public.has_role_capability(text), public.can_manage_roles(), public.can_manage_role_definitions(), public.can_moderate_content(), public.can_manage_orders(), public.can_write_articles(), public.can_access_command_deck(), public.assign_user_role(uuid,text,text), public.admin_save_role_definition(text,text,text,jsonb,boolean), public.admin_delete_role_definition(text), public.submit_product_review(uuid,integer,text), public.submit_product_comment(uuid,text), public.moderate_content(text,uuid,text,text), public.save_my_article(uuid,text,text,text,text,text,boolean), public.request_affiliate_access(), public.review_affiliate(uuid,text,text), public.claim_affiliate_referral(text), public.create_affiliate_commission(), public.attach_affiliate_to_order(), public.request_order_refund(uuid,numeric,text), public.review_refund_request(uuid,text,text,text) from public, anon;
 revoke execute on function public.create_affiliate_commission(), public.attach_affiliate_to_order() from authenticated;
-grant execute on function public.has_role(text), public.has_any_role(text[]), public.can_manage_roles(), public.can_moderate_content(), public.can_manage_orders(), public.can_write_articles(), public.can_access_command_deck(), public.assign_user_role(uuid,text,text), public.submit_product_review(uuid,integer,text), public.submit_product_comment(uuid,text), public.moderate_content(text,uuid,text,text), public.save_my_article(uuid,text,text,text,text,text,boolean), public.request_affiliate_access(), public.review_affiliate(uuid,text,text), public.claim_affiliate_referral(text), public.request_order_refund(uuid,numeric,text), public.review_refund_request(uuid,text,text,text) to authenticated;
+grant execute on function public.has_role(text), public.has_any_role(text[]), public.has_role_capability(text), public.can_manage_roles(), public.can_manage_role_definitions(), public.can_moderate_content(), public.can_manage_orders(), public.can_write_articles(), public.can_access_command_deck(), public.assign_user_role(uuid,text,text), public.admin_save_role_definition(text,text,text,jsonb,boolean), public.admin_delete_role_definition(text), public.submit_product_review(uuid,integer,text), public.submit_product_comment(uuid,text), public.moderate_content(text,uuid,text,text), public.save_my_article(uuid,text,text,text,text,text,boolean), public.request_affiliate_access(), public.review_affiliate(uuid,text,text), public.claim_affiliate_referral(text), public.request_order_refund(uuid,numeric,text), public.review_refund_request(uuid,text,text,text) to authenticated;
 
 insert into public.affiliate_program_settings (singleton) values (true) on conflict (singleton) do nothing;
 
