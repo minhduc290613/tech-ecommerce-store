@@ -262,7 +262,7 @@
         <div class="auth-tabs" role="tablist"><button class="active" data-auth-mode="login" type="button" role="tab" aria-selected="true" data-i18n="login">Đăng nhập</button><button data-auth-mode="signup" type="button" role="tab" aria-selected="false" data-i18n="signup">Đăng ký</button></div>
         <form id="authForm" novalidate>
           <label id="authEmailField">Email<input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
-          <label id="authPasswordField" data-i18n="passwordLabel">Mật khẩu<input id="authPassword" type="password" placeholder="Tối thiểu 6 ký tự" data-i18n-placeholder="passwordPlaceholder" autocomplete="current-password" minlength="6" required /></label>
+          <label id="authPasswordField"><span data-i18n="passwordLabel">Mật khẩu</span><input id="authPassword" type="password" placeholder="Tối thiểu 6 ký tự" data-i18n-placeholder="passwordPlaceholder" autocomplete="current-password" minlength="6" required /></label>
           <label id="authPasswordConfirmField" hidden>Nhập lại mật khẩu mới<input id="authPasswordConfirm" type="password" autocomplete="new-password" minlength="8" /></label>
           <button class="button button-primary auth-submit" id="authSubmit" type="submit"><span data-i18n="login">Đăng nhập</span> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
         </form>

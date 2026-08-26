@@ -22,3 +22,7 @@ Command Deck đã được kiểm tra trực tiếp bằng phiên admin: workspa
 Kiểm thử tương tác không lưu dữ liệu xác nhận chọn **Resend Hook** cập nhật checklist Edge Function/secret manager tức thì. Khi thay heading trong form mẫu email, preview cập nhật tức thì và không phát sinh ghi dữ liệu cho đến khi admin bấm nút lưu.
 
 Nút **Sao chép HTML Supabase** đã tạo HTML recovery và hiển thị phản hồi thành công; HTML giữ placeholder `{{ .ConfirmationURL }}`. Console sau các thao tác provider, preview và sao chép không có lỗi runtime.
+
+Sau bản sửa login, kiểm tra trực tiếp trong browser xác nhận `#authPassword` còn gắn trong DOM, có `type=password`, không bị disabled/hidden và nhận focus. Nguyên nhân trước đó là bộ dịch ghi đè `textContent` của nhãn chứa input.
+
+Kiểm thử modal đăng nhập bằng giá trị không nhạy cảm `demo-pass-123` xác nhận trường mật khẩu nhận và giữ được dữ liệu, không gửi form hoặc thực hiện đăng nhập thật.

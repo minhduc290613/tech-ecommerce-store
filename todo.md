@@ -184,3 +184,4 @@
 - [x] Mở rộng Command Deck để hướng dẫn/kích hoạt đồng thời SMTP trực tiếp và Send Email Hook, không lưu secret ở browser/database.
 - [x] Thêm form admin chỉnh nội dung email Quên mật khẩu với biến callback an toàn và preview.
 - [x] Bổ sung hướng dẫn SMTP nhanh dùng placeholder domain để người dùng tự thay domain production của họ.
+- [x] Chẩn đoán và sửa lỗi không thể nhập mật khẩu trong modal đăng nhập trên desktop/mobile.
