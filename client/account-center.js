@@ -29,7 +29,7 @@ function mountAccountCenter() {
           <span class="eyebrow"><span></span> NEXORA ACCOUNT</span>
           <h2 id="accountCenterTitle">Tài khoản &amp;<br /><em>số dư của bạn.</em></h2>
           <p id="accountStatusCaption">Đồng bộ hồ sơ, số dư và lịch sử giao dịch.</p>
-          <button class="account-head-signout" id="accountSignOutQuick" type="button"><i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất</button>
+          <div class="account-head-actions"><a class="account-head-orders" href="/orders.html"><i class="fa-solid fa-truck-fast"></i> Đơn hàng</a><button class="account-head-signout" id="accountSignOutQuick" type="button"><i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất</button></div>
         </div>
         <div class="account-balance-card"><span>SỐ DƯ KHẢ DỤNG</span><strong id="accountBalance">0đ</strong><small id="accountBalanceUpdated">Đang đồng bộ…</small></div>
         <div class="account-tabs" role="tablist">

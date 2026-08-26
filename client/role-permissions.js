@@ -1,10 +1,11 @@
 export const ROLE_CAPABILITIES = {
-  customer: { commandDeck: false, articles: false, moderation: false, orders: false, roles: false, siteSettings: false },
-  affiliate: { commandDeck: false, articles: true, moderation: false, orders: false, roles: false, siteSettings: false },
-  marketing: { commandDeck: true, articles: true, moderation: false, orders: false, roles: false, siteSettings: false },
-  order_manager: { commandDeck: true, articles: false, moderation: false, orders: true, roles: false, siteSettings: false },
-  moderator: { commandDeck: true, articles: true, moderation: true, orders: false, roles: true, siteSettings: false },
-  admin: { commandDeck: true, articles: true, moderation: true, orders: true, roles: true, siteSettings: true },
+  customer: { commandDeck: false, articles: false, moderation: false, orders: false, roles: false, siteSettings: false, logistics: false },
+  affiliate: { commandDeck: false, articles: true, moderation: false, orders: false, roles: false, siteSettings: false, logistics: false },
+  marketing: { commandDeck: true, articles: true, moderation: false, orders: false, roles: false, siteSettings: false, logistics: false },
+  order_manager: { commandDeck: true, articles: false, moderation: false, orders: true, roles: false, siteSettings: false, logistics: false },
+  inventory_staff: { commandDeck: true, articles: false, moderation: false, orders: false, roles: false, siteSettings: false, logistics: true },
+  moderator: { commandDeck: true, articles: true, moderation: true, orders: false, roles: true, siteSettings: false, logistics: true },
+  admin: { commandDeck: true, articles: true, moderation: true, orders: true, roles: true, siteSettings: true, logistics: true },
 };
 
 export function resolveRoleCapabilities(role, roleDefinitions = []) {

@@ -28,6 +28,12 @@ Việc chạy schema là thay đổi DDL: **không chạy lại tùy tiện trê
 
 Schema canonical hiện hành đã bao gồm RPC chỉnh tỷ lệ affiliate, Realtime moderation, role/capability và bucket công khai `nexora-brand-assets`. Chỉ role có capability `siteSettings` mới được upload vào thư mục `branding/`; storefront chỉ nhận URL ảnh sau khi admin lưu form Thương hiệu. Command Deck cũng hiển thị audit gán/lưu/xóa role, có thể giới hạn CSV sổ cái/yêu cầu nạp theo khoảng ngày, và quản lý bản tiếng Anh tùy chọn cho FAQ cùng nội dung hero/announcement. Với project đang hoạt động, áp dụng phần chênh lệch qua migration DDL có quản lý, không tạo file SQL rời trong repository.
 
+### Đồng bộ tài khoản và giao nhận
+
+`handle_auth_user_created` là trigger chạy sau khi người dùng đăng ký trong `auth.users`. Trigger này tạo hoặc cập nhật `customer_profiles`, `wallet_accounts` và `user_roles` với role `customer`, vì vậy tài khoản mới xuất hiện ngay trong **Tài khoản & số dư** của Command Deck. Nếu một project cũ từng thiếu trigger, chỉ backfill một lần các bảng trên từ `auth.users`; không chỉnh số dư hay trạng thái thanh toán trong thao tác đó.
+
+Vận chuyển dùng `shipping_carriers`, các cột shipment của `orders` và `order_shipment_events`. Role `inventory_staff` có capability `logistics`; moderator và admin cũng có capability này. Chỉ các role đó được tạo nhà vận chuyển hoặc cập nhật hành trình. RPC `request_order_payment_confirmation` chỉ ghi nhận yêu cầu khách liên hệ Zalo cho đơn đang `pending_payment`; nó **không** tự chuyển đơn sang đã thanh toán.
+
 ## Xác minh sau khi áp dụng
 
 | Bảng/module | Số bản ghi khởi tạo mong đợi |

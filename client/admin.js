@@ -3,6 +3,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 import { isAdminRole, resolveRoleCapabilities } from "./role-permissions.js";
 import "./admin-accounts.js";
 import "./admin-roles-content.js";
+import "./admin-logistics.js";
 
 const configured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const db = configured && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;

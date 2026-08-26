@@ -16,6 +16,9 @@ describe("ma trận role NEXORA", () => {
     expect(canWriteArticles("customer")).toBe(false);
     expect(capability("moderator", "moderation")).toBe(true);
     expect(capability("order_manager", "orders")).toBe(true);
+    expect(capability("inventory_staff", "logistics")).toBe(true);
+    expect(capability("moderator", "logistics")).toBe(true);
+    expect(capability("customer", "logistics")).toBe(false);
     expect(capability("moderator", "siteSettings")).toBe(false);
     expect(isAdminRole("admin")).toBe(true);
     expect(isAdminRole("moderator")).toBe(false);

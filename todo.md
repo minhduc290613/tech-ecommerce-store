@@ -159,3 +159,12 @@
 - [x] Kiểm thử chuyển ngôn ngữ end-to-end ở desktop/mobile để xác nhận mọi nhãn đồng bộ và không phát sinh lỗi runtime.
 - [x] Bổ sung trường CMS English tùy chọn cho FAQ, Brand và trang hướng dẫn; khi chưa có bản dịch đã lưu, sử dụng bản dịch mặc định thay vì thay đổi nội dung CMS đang công bố.
 - [x] Kiểm thử chuyển EN/VI qua toggle trên DOM desktop, responsive mobile bằng `?lang=en`, cùng các vùng header, filter, retry, sale, cart, help/trust/footer, FAQ và console sạch.
+- [x] Chẩn đoán và khôi phục đồng bộ tài khoản Auth mới vào Command Deck, gồm quyền đọc/tạo profile-role an toàn.
+- [x] Thêm luồng nút “Đã thanh toán” dẫn xác nhận Zalo với lời nhắn cấu hình được, không tự xác nhận giao dịch tài chính.
+- [x] Xây dựng trang Đơn hàng khách hàng: danh sách, chi tiết, trạng thái thanh toán/giao nhận, nhà vận chuyển, mã vận đơn và nơi hàng đã đến.
+- [x] Bổ sung quản trị nhà vận chuyển, logo, ghi chú, điểm đến và timeline/vòng tròn hành trình đơn hàng trong Command Deck.
+- [x] Thêm capability role nhân viên kiểm hàng và giới hạn thao tác vận chuyển cho nhân viên kiểm hàng, moderator và quản trị viên.
+- [x] Xác minh trigger signup, backfill 4/4 Auth-profile-role-wallet, role logistics, giao diện admin/khách, console, test, typecheck, build và tài liệu vận hành trước phát hành.
+- [x] Cấu hình build multipage để `orders.html` được xuất bản production và kiểm tra route sau build.
+- [x] Sửa chuyển workspace Command Deck để chỉ một view hiển thị tại một thời điểm, rồi kiểm thử Tài khoản/Role/Logistics.
+- [x] Kiểm thử an toàn RPC lưu/xóa nhà vận chuyển với bản ghi tạm tự dọn; form cập nhật hành trình không được dùng để ghi dữ liệu vận chuyển giả vào đơn khách thực.

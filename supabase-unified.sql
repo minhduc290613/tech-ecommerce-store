@@ -1129,3 +1129,132 @@ on conflict (id) do update set public = excluded.public, file_size_limit = exclu
 drop policy if exists "NEXORA branding asset upload" on storage.objects;
 create policy "NEXORA branding asset upload" on storage.objects for insert to authenticated
 with check (bucket_id = 'nexora-brand-assets' and (storage.foldername(name))[1] = 'branding' and public.has_role_capability('siteSettings'));
+
+-- 27. Đồng bộ Auth và vận chuyển: tài khoản mới phải xuất hiện ngay trong Command Deck.
+create or replace function public.handle_auth_user_created()
+returns trigger language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  insert into public.customer_profiles (user_id, email)
+  values (new.id, new.email)
+  on conflict (user_id) do update set email = excluded.email, updated_at = now();
+  insert into public.wallet_accounts (user_id) values (new.id) on conflict (user_id) do nothing;
+  insert into public.user_roles (user_id, role) values (new.id, 'customer') on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+drop trigger if exists on_auth_user_created_nexora on auth.users;
+create trigger on_auth_user_created_nexora after insert on auth.users for each row execute procedure public.handle_auth_user_created();
+
+create table if not exists public.shipping_carriers (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique check (length(trim(name)) between 2 and 100),
+  logo_url text,
+  tracking_url_template text,
+  note text not null default '',
+  is_active boolean not null default true,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.orders add column if not exists shipping_carrier_id uuid references public.shipping_carriers(id) on delete set null;
+alter table public.orders add column if not exists shipment_status text not null default 'not_ready' check (shipment_status in ('not_ready','packing','picked_up','in_transit','out_for_delivery','delivered','exception'));
+alter table public.orders add column if not exists shipment_location text;
+alter table public.orders add column if not exists shipment_location_at timestamptz;
+alter table public.orders add column if not exists shipment_progress integer not null default 0 check (shipment_progress between 0 and 100);
+alter table public.orders add column if not exists shipment_note text;
+alter table public.orders add column if not exists shipment_updated_by uuid references auth.users(id) on delete set null;
+
+create table if not exists public.order_shipment_events (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete cascade,
+  shipment_status text not null check (shipment_status in ('not_ready','packing','picked_up','in_transit','out_for_delivery','delivered','exception')),
+  location text,
+  progress integer not null default 0 check (progress between 0 and 100),
+  note text not null default '',
+  occurred_at timestamptz not null default now(),
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists orders_shipping_carrier_idx on public.orders(shipping_carrier_id);
+create index if not exists shipment_events_order_occurred_idx on public.order_shipment_events(order_id, occurred_at desc);
+
+update public.role_definitions set capabilities = capabilities || '{"logistics":false}'::jsonb where role_key in ('customer','affiliate','marketing','order_manager') and not capabilities ? 'logistics';
+update public.role_definitions set capabilities = capabilities || '{"logistics":true}'::jsonb where role_key in ('moderator','admin');
+insert into public.role_definitions (role_key, display_name, description, capabilities, is_system, assignable_by_moderator)
+values ('inventory_staff', 'Nhân viên kiểm hàng', 'Cập nhật nhà vận chuyển, vị trí và tiến trình giao nhận; không tự xác nhận thanh toán.', '{"commandDeck":true,"articles":false,"moderation":false,"orders":false,"roles":false,"siteSettings":false,"logistics":true}'::jsonb, true, true)
+on conflict (role_key) do update set display_name = excluded.display_name, description = excluded.description, capabilities = public.role_definitions.capabilities || '{"logistics":true,"commandDeck":true}'::jsonb, updated_at = now();
+
+create or replace function public.can_manage_shipments()
+returns boolean language sql stable security definer set search_path = public, auth
+as $$ select public.has_role_capability('logistics'); $$;
+
+alter table public.shipping_carriers enable row level security;
+alter table public.order_shipment_events enable row level security;
+drop policy if exists "Customers can read active shipping carriers" on public.shipping_carriers;
+create policy "Customers can read active shipping carriers" on public.shipping_carriers for select to anon, authenticated using (is_active or public.can_manage_shipments());
+drop policy if exists "Customers can read own shipment events" on public.order_shipment_events;
+create policy "Customers can read own shipment events" on public.order_shipment_events for select to authenticated using (exists (select 1 from public.orders o where o.id = order_id and o.user_id = auth.uid()) or public.can_manage_shipments());
+drop policy if exists "Shipment managers can insert events" on public.order_shipment_events;
+create policy "Shipment managers can insert events" on public.order_shipment_events for insert to authenticated with check (public.can_manage_shipments());
+
+create or replace function public.request_order_payment_confirmation(p_order_id uuid)
+returns public.orders language plpgsql security definer set search_path = public, auth
+as $$
+declare v_order public.orders;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập để xác nhận thanh toán.'; end if;
+  select * into v_order from public.orders where id = p_order_id and user_id = auth.uid() for update;
+  if not found then raise exception 'Không tìm thấy đơn hàng.'; end if;
+  if v_order.status <> 'pending_payment' then raise exception 'Đơn hàng không còn chờ xác nhận thanh toán.'; end if;
+  update public.orders set zalo_confirmation_requested_at = now(), updated_at = now() where id = v_order.id returning * into v_order;
+  return v_order;
+end;
+$$;
+
+create or replace function public.save_shipping_carrier(p_id uuid, p_name text, p_logo_url text, p_tracking_url_template text, p_note text, p_is_active boolean)
+returns public.shipping_carriers language plpgsql security definer set search_path = public, auth
+as $$
+declare v_carrier public.shipping_carriers;
+begin
+  if not public.can_manage_shipments() then raise exception 'Bạn không có quyền quản lý vận chuyển.'; end if;
+  if nullif(trim(p_name), '') is null then raise exception 'Tên nhà vận chuyển là bắt buộc.'; end if;
+  insert into public.shipping_carriers (id, name, logo_url, tracking_url_template, note, is_active, created_by)
+  values (coalesce(p_id, gen_random_uuid()), trim(p_name), nullif(trim(p_logo_url), ''), nullif(trim(p_tracking_url_template), ''), coalesce(trim(p_note), ''), coalesce(p_is_active, true), auth.uid())
+  on conflict (id) do update set name = excluded.name, logo_url = excluded.logo_url, tracking_url_template = excluded.tracking_url_template, note = excluded.note, is_active = excluded.is_active, updated_at = now()
+  returning * into v_carrier;
+  return v_carrier;
+end;
+$$;
+
+create or replace function public.save_order_shipment(p_order_id uuid, p_carrier_id uuid, p_tracking_code text, p_shipment_status text, p_location text, p_progress integer, p_note text, p_occurred_at timestamptz default now())
+returns public.orders language plpgsql security definer set search_path = public, auth
+as $$
+declare v_order public.orders; v_carrier_name text; v_fulfillment text;
+begin
+  if not public.can_manage_shipments() then raise exception 'Bạn không có quyền cập nhật giao nhận.'; end if;
+  if p_shipment_status not in ('not_ready','packing','picked_up','in_transit','out_for_delivery','delivered','exception') then raise exception 'Trạng thái giao nhận không hợp lệ.'; end if;
+  if coalesce(p_progress, 0) not between 0 and 100 then raise exception 'Tiến trình phải từ 0 đến 100.'; end if;
+  select * into v_order from public.orders where id = p_order_id for update;
+  if not found then raise exception 'Không tìm thấy đơn hàng.'; end if;
+  if p_carrier_id is not null then select name into v_carrier_name from public.shipping_carriers where id = p_carrier_id; if not found then raise exception 'Nhà vận chuyển không hợp lệ.'; end if; end if;
+  v_fulfillment := case p_shipment_status when 'not_ready' then 'unfulfilled' when 'packing' then 'preparing' when 'picked_up' then 'ready_to_ship' when 'in_transit' then 'shipped' when 'out_for_delivery' then 'shipped' when 'delivered' then 'delivered' else v_order.fulfillment_status end;
+  update public.orders set shipping_carrier_id = p_carrier_id, carrier = coalesce(v_carrier_name, carrier), tracking_code = nullif(trim(p_tracking_code), ''), shipment_status = p_shipment_status, shipment_location = nullif(trim(p_location), ''), shipment_location_at = coalesce(p_occurred_at, now()), shipment_progress = coalesce(p_progress, 0), shipment_note = nullif(trim(p_note), ''), shipment_updated_by = auth.uid(), fulfillment_status = v_fulfillment, fulfillment_updated_at = now(), delivered_at = case when p_shipment_status = 'delivered' then now() else delivered_at end, updated_at = now() where id = p_order_id returning * into v_order;
+  insert into public.order_shipment_events (order_id, shipment_status, location, progress, note, occurred_at, created_by) values (p_order_id, p_shipment_status, nullif(trim(p_location), ''), coalesce(p_progress, 0), coalesce(trim(p_note), ''), coalesce(p_occurred_at, now()), auth.uid());
+  return v_order;
+end;
+$$;
+
+create or replace function public.delete_shipping_carrier(p_id uuid)
+returns void language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  if not public.can_manage_shipments() then raise exception 'Bạn không có quyền xóa nhà vận chuyển.'; end if;
+  if exists (select 1 from public.orders where shipping_carrier_id = p_id) then raise exception 'Không thể xóa nhà vận chuyển đang được gắn với đơn hàng.'; end if;
+  delete from public.shipping_carriers where id = p_id;
+end;
+$$;
+
+revoke all on function public.can_manage_shipments(), public.request_order_payment_confirmation(uuid), public.save_shipping_carrier(uuid,text,text,text,text,boolean), public.save_order_shipment(uuid,uuid,text,text,text,integer,text,timestamptz), public.delete_shipping_carrier(uuid) from public, anon;
+grant execute on function public.can_manage_shipments(), public.request_order_payment_confirmation(uuid), public.save_shipping_carrier(uuid,text,text,text,text,boolean), public.save_order_shipment(uuid,uuid,text,text,text,integer,text,timestamptz), public.delete_shipping_carrier(uuid) to authenticated;

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#08111f" />
+    <title>NEXORA | Đơn hàng của bạn</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/orders.css" />
+  </head>
+  <body>
+    <main class="orders-shell">
+      <header class="orders-header"><a class="orders-brand" href="/"><img src="/manus-storage/nexora-logo_3c03446b.png" alt="NEXORA" /><span>NEXORA</span></a><div class="orders-header-actions"><a class="orders-back" href="/"><i class="fa-solid fa-arrow-left"></i> Về storefront</a><button id="refreshOrders" type="button"><i class="fa-solid fa-rotate"></i> Làm mới</button></div></header>
+      <section class="orders-hero"><div><span class="orders-kicker"><i class="fa-solid fa-location-dot"></i> ORDER SIGNAL</span><h1>Đơn hàng &amp;<br /><em>hành trình giao nhận.</em></h1><p>Theo dõi trạng thái thanh toán, mã vận đơn, nơi hàng đã đến và cập nhật mới nhất từ đơn vị vận chuyển.</p></div><div class="orders-summary" id="ordersSummary"><span>ĐANG ĐỒNG BỘ</span><strong>—</strong><small>đơn hàng của bạn</small></div></section>
+      <section id="ordersAuthRequired" class="orders-empty" hidden><i class="fa-solid fa-lock"></i><h2>Đăng nhập để xem đơn hàng</h2><p>Thông tin giao nhận chỉ hiển thị cho đúng tài khoản đã đặt đơn.</p><a href="/">Về storefront để đăng nhập</a></section>
+      <section id="ordersLoading" class="orders-loading" aria-live="polite"><i class="fa-solid fa-circle-notch fa-spin"></i><span>Đang đồng bộ đơn hàng…</span></section>
+      <section id="ordersList" class="orders-list" aria-live="polite"></section>
+    </main>
+    <div id="ordersToast" class="orders-toast" aria-live="polite"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="/orders.js"></script>
+  </body>
+</html>
