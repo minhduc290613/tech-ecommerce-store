@@ -206,6 +206,19 @@ Quy trình triển khai an toàn là: gắn domain → chờ HTTPS → nhập do
 
 Với mọi provider, hoàn thành bản ghi DNS **SPF** và **DKIM** do provider cấp; cân nhắc thêm **DMARC** sau khi đã xác minh luồng gửi. Workspace hiển thị trạng thái “Chờ cấu hình secret/Dashboard” cho đến khi người vận hành hoàn tất thao tác này ngoài frontend. Không được tự đánh dấu đã gửi thành công khi chưa có một email test thực tế.[5]
 
+#### Kích hoạt SMTP nhanh với domain của bạn
+
+Người dùng khác chỉ cần thay mọi chỗ có `<YOUR_DOMAIN>` bằng domain HTTPS đã xác minh của họ, ví dụ `shop.example.vn`. Không dùng `localhost`, URL preview hoặc thêm đường dẫn vào biến domain.
+
+| Vị trí | Giá trị cần nhập |
+| --- | --- |
+| Command Deck → **Email & Domain** → URL website công khai | `https://<YOUR_DOMAIN>` |
+| Supabase → Authentication → URL Configuration → **Site URL** | `https://<YOUR_DOMAIN>` |
+| Supabase → Authentication → URL Configuration → **Redirect URLs** | `https://<YOUR_DOMAIN>/**` |
+| Supabase → Authentication → SMTP Settings → Sender email | `support@<YOUR_DOMAIN>` hoặc sender đã xác minh bởi provider |
+
+Sau đó bật **Enable Custom SMTP** trong **Authentication → SMTP Settings**, rồi nhập host, port (thường `587`), username và password/app password do provider cấp. Password chỉ nhập tại Supabase Dashboard; không nhập vào Command Deck hoặc commit vào GitHub. Cuối cùng, vào **Authentication → Email Templates → Reset Password**, dán HTML đã sao chép từ Command Deck rồi dùng **Quên mật khẩu** để gửi một email test. Nếu link vẫn sai domain, rà soát lại đúng ba giá trị `https://<YOUR_DOMAIN>` ở bảng trên.[4] [5]
+
 ### 5.7 Chỉnh mẫu email Quên mật khẩu
 
 Admin mở **Command Deck → Email & Domain → Chỉnh form email Quên mật khẩu** để sửa subject, preheader, heading, nội dung, nhãn CTA và footer. Form có preview và nút **Sao chép HTML Supabase**. Sau khi lưu mẫu, sao chép HTML, mở **Supabase Dashboard → Authentication → Email Templates → Reset Password**, dán HTML và lưu.
