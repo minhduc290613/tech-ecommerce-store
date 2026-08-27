@@ -211,3 +211,4 @@
 - [x] Tạo trang thống kê affiliate: lượt referral/click, đơn hàng thành công, hoa hồng theo trạng thái và tổng nhận được.
 - [x] Bảo đảm dashboard chỉ hiển thị dữ liệu của affiliate đang đăng nhập, có kiểm thử phân quyền và responsive.
 - [x] Thêm lối vào Đơn hàng cạnh Tài khoản trên desktop, trong menu mobile và ở chân trang storefront.
+- [x] Tách Địa chỉ nhận hàng thành mục riêng và chuyển Số điện thoại vào mục Bảo mật trong Account Center.
