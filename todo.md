@@ -231,3 +231,4 @@
 - [x] Cho phép Admin chỉnh credit và trạng thái website hoạt động hiển thị ở chân trang.
 - [x] Tách rõ liên kết Đơn hàng của tôi và Quản trị cửa hàng thành các mục riêng ở chân trang.
 - [x] Khắc phục mã ưu đãi không hiển thị hoặc không thể áp dụng nhất quán trên storefront.
+- [x] Thêm thống kê và lịch sử sử dụng theo từng mã giảm giá trong Command Deck.
