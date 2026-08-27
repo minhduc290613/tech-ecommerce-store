@@ -214,3 +214,6 @@
 - [x] Tách Địa chỉ nhận hàng thành mục riêng và chuyển Số điện thoại vào mục Bảo mật trong Account Center.
 - [x] Cho phép cập nhật độc lập Số điện thoại hoặc Địa chỉ trong Account Center, vẫn yêu cầu đủ dữ liệu khi checkout.
 - [x] Thêm sổ nhiều địa chỉ giao hàng, chọn địa chỉ mặc định và hiển thị trạng thái đã cập nhật của số điện thoại/địa chỉ trong Account Center.
+- [x] Bắt buộc username hợp lệ khi đăng ký tài khoản, không ràng buộc username khi cập nhật số điện thoại hoặc địa chỉ.
+- [x] Thêm hủy đơn có kiểm soát cho khách và quản trị viên, bảo toàn trạng thái thanh toán/giao nhận hợp lệ.
+- [x] Chuẩn hóa các trường ảnh trong Command Deck để chọn tải ảnh lên hoặc nhập URL HTTPS công khai.

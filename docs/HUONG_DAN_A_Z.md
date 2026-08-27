@@ -171,13 +171,19 @@ Thiết lập NEXORA hiện tại chọn **tắt Confirm email**, nên user mớ
 
 ### 5.3 Luồng frontend
 
-Storefront dùng `supabase.auth.signUp()` để đăng ký, `supabase.auth.signInWithPassword()` để đăng nhập và `resetPasswordForEmail()` cho **Quên mật khẩu**. Khi không yêu cầu xác nhận email, session có thể được cấp ngay sau đăng ký nếu thông tin hợp lệ. Không lưu mật khẩu, JWT hay service role key vào local file ngoài cơ chế session của Supabase Auth.
+Storefront dùng `supabase.auth.signUp()` để đăng ký, `supabase.auth.signInWithPassword()` để đăng nhập và `resetPasswordForEmail()` cho **Quên mật khẩu**. Khi không yêu cầu xác nhận email, session có thể được cấp ngay sau đăng ký nếu thông tin hợp lệ. Tài khoản mới phải chọn **username** dài 3–40 ký tự; chỉ dùng chữ thường/hoa, số, dấu chấm, gạch ngang hoặc gạch dưới, và username không được trùng. Không lưu mật khẩu, JWT hay service role key vào local file ngoài cơ chế session của Supabase Auth.
 
 ### 5.3.1 Hồ sơ giao nhận, chia sẻ sản phẩm và affiliate
 
 Từ phiên bản hiện tại, khách tạo tài khoản phải nhập **số điện thoại nhận hàng** và **địa chỉ nhận hàng**. Trong **Tài khoản**, số điện thoại nằm ở tab **Bảo mật**; tab **Địa chỉ** là sổ địa chỉ riêng, cho phép thêm, sửa, xóa và đặt một địa chỉ làm **mặc định**. Địa chỉ mặc định được đồng bộ về `customer_profiles` để tự điền vào giỏ hàng. Mỗi tab hiển thị rõ trạng thái đã lưu hoặc chưa cập nhật cùng thời điểm cập nhật gần nhất.
 
 Người dùng có thể lưu số điện thoại hoặc địa chỉ độc lập. Tuy nhiên, khi tạo đơn, checkout vẫn kiểm tra lại và bắt buộc có **cả số điện thoại lẫn địa chỉ hợp lệ**, sau đó lưu bản sao vào đơn để lịch sử giao nhận không bị thay đổi khi khách chỉnh sổ địa chỉ về sau. Sổ địa chỉ không mở quyền đọc bảng trực tiếp; các RPC chỉ trả dữ liệu của người đang đăng nhập.
+
+### 5.3.2 Hủy đơn và tải ảnh trong Command Deck
+
+Khách chỉ thấy nút **Hủy đơn** khi đơn còn `pending_payment` và chưa vào giao nhận (`unfulfilled`). Người có quyền quản lý đơn cũng chỉ hủy được cùng điều kiện, phải nhập lý do và xác nhận thao tác. Hệ thống giữ lịch sử đơn, người thực hiện, thời điểm và lý do hủy; không xóa cứng đơn đã phát sinh để tránh mất đối soát. Đơn đã thanh toán hoặc đang chuẩn bị/giao cần được xử lý bằng quy trình hoàn tiền hoặc hỗ trợ đơn hàng phù hợp.
+
+Trong Command Deck, các trường logo, favicon, ảnh Open Graph, hero/banner, ảnh sản phẩm, banner gian hàng và logo đối tác giao nhận đều hỗ trợ **tải ảnh lên hoặc dán URL HTTPS công khai**. Nút tải ảnh chỉ nhận PNG, JPG, WEBP hoặc SVG tối đa 5 MB. Sau khi tải, URL được điền tự động; cần bấm nút **Lưu** của biểu mẫu tương ứng mới áp dụng thay đổi. Quyền upload được giới hạn theo capability quản trị thương hiệu hoặc giao nhận.
 
 Mỗi thẻ sản phẩm có nút chia sẻ. Với khách thường, hệ thống chia sẻ link sản phẩm; với affiliate đã được duyệt, link tự kèm `?ref=<mã>` để dùng luồng referral hiện có. Không tự tạo hoa hồng chỉ vì nhấn chia sẻ; hoa hồng vẫn phụ thuộc quy tắc affiliate và trạng thái đơn đã cấu hình.
 

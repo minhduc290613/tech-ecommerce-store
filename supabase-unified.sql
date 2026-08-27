@@ -1818,3 +1818,128 @@ $$;
 
 revoke all on function public.list_my_shipping_addresses(), public.save_my_shipping_address(uuid,text,text,boolean), public.set_my_default_shipping_address(uuid), public.delete_my_shipping_address(uuid) from public, anon;
 grant execute on function public.list_my_shipping_addresses(), public.save_my_shipping_address(uuid,text,text,boolean), public.set_my_default_shipping_address(uuid), public.delete_my_shipping_address(uuid) to authenticated;
+
+-- 34. Username bắt buộc khi đăng ký, hủy đơn có kiểm soát và upload ảnh giao nhận.
+create or replace function public.handle_auth_user_created()
+returns trigger language plpgsql security definer set search_path = public, auth
+as $$
+declare
+  v_delivery_phone text := nullif(trim(new.raw_user_meta_data ->> 'delivery_phone'), '');
+  v_default_shipping_address text := nullif(trim(new.raw_user_meta_data ->> 'default_shipping_address'), '');
+  v_username text := nullif(lower(trim(new.raw_user_meta_data ->> 'username')), '');
+begin
+  if v_username is null or length(v_username) not between 3 and 40 or v_username !~ '^[a-z0-9_.-]+$' then raise exception 'Username cần từ 3 đến 40 ký tự và chỉ gồm chữ, số, dấu chấm, gạch ngang hoặc gạch dưới.'; end if;
+  if exists (select 1 from public.customer_profiles where lower(username) = v_username) then raise exception 'Username này đã được sử dụng.'; end if;
+  if v_delivery_phone is null or length(v_delivery_phone) not between 8 and 20 then raise exception 'Số điện thoại nhận hàng là bắt buộc.'; end if;
+  if v_default_shipping_address is null or length(v_default_shipping_address) not between 8 and 500 then raise exception 'Địa chỉ nhận hàng là bắt buộc.'; end if;
+  insert into public.customer_profiles (user_id, username, email, delivery_phone, default_shipping_address)
+  values (new.id, v_username, new.email, v_delivery_phone, v_default_shipping_address)
+  on conflict (user_id) do update set username = excluded.username, email = excluded.email, updated_at = now();
+  insert into public.wallet_accounts (user_id) values (new.id) on conflict (user_id) do nothing;
+  insert into public.user_roles (user_id, role) values (new.id, 'customer') on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+
+create or replace function public.update_my_account(p_display_name text, p_username text, p_delivery_phone text, p_default_shipping_address text)
+returns public.customer_profiles language plpgsql security definer set search_path = public, auth
+as $$
+declare v_profile public.customer_profiles; v_phone text := nullif(trim(p_delivery_phone), ''); v_address text := nullif(trim(p_default_shipping_address), '');
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status <> 'active') then raise exception 'Tài khoản hiện không thể cập nhật hồ sơ.'; end if;
+  if p_delivery_phone is not null and (v_phone is null or length(v_phone) not between 8 and 20) then raise exception 'Số điện thoại nhận hàng cần từ 8 đến 20 ký tự.'; end if;
+  if p_default_shipping_address is not null and (v_address is null or length(v_address) not between 8 and 500) then raise exception 'Địa chỉ nhận hàng cần từ 8 đến 500 ký tự.'; end if;
+  if p_username is not null and (length(trim(p_username)) not between 3 and 40 or lower(trim(p_username)) !~ '^[a-z0-9_.-]+$') then raise exception 'Username cần từ 3 đến 40 ký tự và chỉ gồm chữ, số, dấu chấm, gạch ngang hoặc gạch dưới.'; end if;
+  perform public.ensure_my_account(null, null, null, null);
+  update public.customer_profiles set display_name = case when p_display_name is null then display_name else nullif(trim(p_display_name), '') end, username = case when p_username is null then username else nullif(lower(trim(p_username)), '') end, delivery_phone = case when p_delivery_phone is null then delivery_phone else v_phone end, default_shipping_address = case when p_default_shipping_address is null then default_shipping_address else v_address end, email = auth.jwt() ->> 'email', updated_at = now() where user_id = auth.uid() returning * into v_profile;
+  return v_profile;
+end;
+$$;
+revoke all on function public.update_my_account(text, text, text, text) from public, anon;
+grant execute on function public.update_my_account(text, text, text, text) to authenticated;
+
+alter table public.orders add column if not exists cancelled_at timestamptz;
+alter table public.orders add column if not exists cancelled_by uuid references auth.users(id) on delete set null;
+alter table public.orders add column if not exists cancellation_reason text;
+alter table public.orders drop constraint if exists orders_cancellation_reason_check;
+alter table public.orders add constraint orders_cancellation_reason_check check (cancellation_reason is null or length(trim(cancellation_reason)) between 1 and 400);
+
+create or replace function public.guard_order_cancellation()
+returns trigger language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  if old.status = 'cancelled' and new.status <> 'cancelled' then raise exception 'Đơn đã hủy không thể khôi phục.'; end if;
+  if old.status <> 'cancelled' and new.status = 'cancelled' then
+    if current_setting('app.nexora_cancellation', true) <> 'allowed' then raise exception 'Hãy dùng quy trình hủy đơn được kiểm soát.'; end if;
+    if old.status <> 'pending_payment' or coalesce(old.fulfillment_status, 'unfulfilled') <> 'unfulfilled' then raise exception 'Chỉ hủy được đơn chưa thanh toán và chưa vào giao nhận.'; end if;
+    if new.cancelled_at is null or new.cancelled_by is null or nullif(trim(new.cancellation_reason), '') is null then raise exception 'Hủy đơn cần người thực hiện, thời gian và lý do.'; end if;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists guard_order_cancellation_trigger on public.orders;
+create trigger guard_order_cancellation_trigger before update on public.orders for each row execute procedure public.guard_order_cancellation();
+
+create or replace function public.cancel_my_order(p_order_id uuid, p_reason text default null)
+returns public.orders language plpgsql security definer set search_path = public, auth
+as $$
+declare v_order public.orders; v_reason text := coalesce(nullif(trim(p_reason), ''), 'Khách hàng hủy đơn trước khi thanh toán.');
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if length(v_reason) > 400 then raise exception 'Lý do hủy đơn tối đa 400 ký tự.'; end if;
+  select * into v_order from public.orders where id = p_order_id and user_id = auth.uid() for update;
+  if not found then raise exception 'Không tìm thấy đơn hàng của bạn.'; end if;
+  if v_order.status <> 'pending_payment' or coalesce(v_order.fulfillment_status, 'unfulfilled') <> 'unfulfilled' then raise exception 'Chỉ hủy được đơn chưa thanh toán và chưa vào giao nhận.'; end if;
+  perform set_config('app.nexora_cancellation', 'allowed', true);
+  update public.orders set status = 'cancelled', cancelled_at = now(), cancelled_by = auth.uid(), cancellation_reason = v_reason, updated_at = now() where id = v_order.id returning * into v_order;
+  return v_order;
+end;
+$$;
+
+create or replace function public.cancel_order_as_manager(p_order_id uuid, p_reason text default null)
+returns public.orders language plpgsql security definer set search_path = public, auth
+as $$
+declare v_order public.orders; v_reason text := coalesce(nullif(trim(p_reason), ''), 'Đơn được hủy bởi bộ phận vận hành.');
+begin
+  if auth.uid() is null or not public.can_manage_orders() then raise exception 'Bạn không có quyền hủy đơn.'; end if;
+  if length(v_reason) > 400 then raise exception 'Lý do hủy đơn tối đa 400 ký tự.'; end if;
+  select * into v_order from public.orders where id = p_order_id for update;
+  if not found then raise exception 'Không tìm thấy đơn hàng.'; end if;
+  if v_order.status <> 'pending_payment' or coalesce(v_order.fulfillment_status, 'unfulfilled') <> 'unfulfilled' then raise exception 'Chỉ hủy được đơn chưa thanh toán và chưa vào giao nhận.'; end if;
+  perform set_config('app.nexora_cancellation', 'allowed', true);
+  update public.orders set status = 'cancelled', cancelled_at = now(), cancelled_by = auth.uid(), cancellation_reason = v_reason, updated_at = now() where id = v_order.id returning * into v_order;
+  return v_order;
+end;
+$$;
+revoke all on function public.cancel_my_order(uuid,text), public.cancel_order_as_manager(uuid,text) from public, anon;
+grant execute on function public.cancel_my_order(uuid,text), public.cancel_order_as_manager(uuid,text) to authenticated;
+
+drop policy if exists "NEXORA carrier asset upload" on storage.objects;
+create policy "NEXORA carrier asset upload" on storage.objects for insert to authenticated
+with check (bucket_id = 'nexora-brand-assets' and (storage.foldername(name))[1] = 'carriers' and public.can_manage_shipments());
+
+-- 35. Tài khoản mới ghi cả hồ sơ checkout và mục đầu tiên trong sổ địa chỉ.
+create or replace function public.handle_auth_user_created()
+returns trigger language plpgsql security definer set search_path = public, auth
+as $$
+declare
+  v_delivery_phone text := nullif(trim(new.raw_user_meta_data ->> 'delivery_phone'), '');
+  v_default_shipping_address text := nullif(trim(new.raw_user_meta_data ->> 'default_shipping_address'), '');
+  v_username text := nullif(lower(trim(new.raw_user_meta_data ->> 'username')), '');
+begin
+  if v_username is null or length(v_username) not between 3 and 40 or v_username !~ '^[a-z0-9_.-]+$' then raise exception 'Username cần từ 3 đến 40 ký tự và chỉ gồm chữ, số, dấu chấm, gạch ngang hoặc gạch dưới.'; end if;
+  if exists (select 1 from public.customer_profiles where lower(username) = v_username) then raise exception 'Username này đã được sử dụng.'; end if;
+  if v_delivery_phone is null or length(v_delivery_phone) not between 8 and 20 then raise exception 'Số điện thoại nhận hàng là bắt buộc.'; end if;
+  if v_default_shipping_address is null or length(v_default_shipping_address) not between 8 and 500 then raise exception 'Địa chỉ nhận hàng là bắt buộc.'; end if;
+  insert into public.customer_profiles (user_id, username, email, delivery_phone, default_shipping_address)
+  values (new.id, v_username, new.email, v_delivery_phone, v_default_shipping_address)
+  on conflict (user_id) do update set username = excluded.username, email = excluded.email, updated_at = now();
+  if not exists (select 1 from public.shipping_addresses where user_id = new.id) then
+    insert into public.shipping_addresses(user_id, label, address, is_default) values (new.id, 'Địa chỉ mặc định', v_default_shipping_address, true);
+  end if;
+  insert into public.wallet_accounts (user_id) values (new.id) on conflict (user_id) do nothing;
+  insert into public.user_roles (user_id, role) values (new.id, 'customer') on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
