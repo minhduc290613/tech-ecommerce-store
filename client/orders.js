@@ -1,5 +1,6 @@
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 import { canCancelPendingOrder, cancellationReason } from "./order-cancellation.js";
+import "./orders-post-payment-service.css";
 
 const configured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const db = configured && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
@@ -9,6 +10,7 @@ const money = (value) => new Intl.NumberFormat("vi-VN", { style: "currency", cur
 const dateTime = (value) => value ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Chưa cập nhật";
 const shipmentCopy = { not_ready: "Chờ chuẩn bị", packing: "Đang kiểm hàng", picked_up: "Đã bàn giao vận chuyển", in_transit: "Đang di chuyển", out_for_delivery: "Sắp giao tới bạn", delivered: "Đã giao", exception: "Cần hỗ trợ" };
 const paymentCopy = { pending_payment: "Chờ thanh toán", paid: "Đã thanh toán", processing: "Đang xử lý", completed: "Hoàn thành", cancelled: "Đã hủy" };
+const serviceCopy = { paid_cancellation: "Hủy đơn đã thanh toán", return: "Trả hàng" };
 let settings = null;
 
 document.addEventListener("DOMContentLoaded", init);
@@ -26,7 +28,7 @@ async function loadOrders() {
   const { data: sessionData } = await db.auth.getSession(); const user = sessionData.session?.user;
   if (!user) { $("#ordersLoading").hidden = true; $("#ordersAuthRequired").hidden = false; return; }
   const [ordersResult, settingsResult] = await Promise.all([
-    db.from("orders").select("id,order_number,total_amount,status,payment_method,auto_transfer_provider,payment_confirmation_note,zalo_confirmation_requested_at,created_at,fulfillment_status,shipping_carrier_id,carrier,tracking_code,shipment_status,shipment_location,shipment_location_at,shipment_progress,shipment_note,shipping_address,shipping_note,order_items(product_name,quantity,unit_price),shipping_carriers(name,logo_url,tracking_url_template,note),order_shipment_events(shipment_status,location,progress,note,occurred_at)").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
+    db.from("orders").select("id,order_number,total_amount,status,payment_method,auto_transfer_provider,payment_confirmation_note,zalo_confirmation_requested_at,created_at,fulfillment_status,shipping_carrier_id,carrier,tracking_code,shipment_status,shipment_location,shipment_location_at,shipment_progress,shipment_note,shipping_address,shipping_note,order_items(product_name,quantity,unit_price),shipping_carriers(name,logo_url,tracking_url_template,note),order_shipment_events(shipment_status,location,progress,note,occurred_at),order_service_requests(id,service_type,reason,status,review_note,reviewed_at,created_at)").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
     db.from("site_settings").select("zalo_phone,zalo_label,zalo_confirmation_message").eq("singleton", true).maybeSingle(),
   ]);
   $("#ordersLoading").hidden = true; settings = settingsResult.data || null;
@@ -39,6 +41,7 @@ function renderOrders(orders) {
   $("#ordersList").innerHTML = orders.length ? orders.map(renderOrder).join("") : '<article class="orders-empty"><i class="fa-solid fa-box-open"></i><h2>Bạn chưa có đơn hàng</h2><p>Hãy khám phá catalog để bắt đầu trải nghiệm NEXORA.</p><a href="/#products">Khám phá sản phẩm</a></article>';
   document.querySelectorAll("[data-payment-confirm]").forEach((button) => button.addEventListener("click", requestPaymentConfirmation));
   document.querySelectorAll("[data-order-cancel]").forEach((button) => button.addEventListener("click", cancelOrder));
+  document.querySelectorAll("[data-order-service]").forEach((button) => button.addEventListener("click", requestPostPaymentService));
 }
 
 function renderOrder(order) {
@@ -51,8 +54,17 @@ function renderOrder(order) {
   const providerLabel = { sepay: "SePay", casso: "Casso", vietqr: "VietQR Host2Host" }[order.auto_transfer_provider] || "nhà cung cấp đã chọn";
   const paymentAction = order.status === "pending_payment" && autoTransfer ? `<span class="payment-complete"><i class="fa-solid fa-bolt"></i> Đang tự đối soát qua ${escapeHtml(providerLabel)} — không cần nhắn shop</span>` : order.status === "pending_payment" ? `<button class="payment-confirm-button" data-payment-confirm="${escapeHtml(order.id)}" data-order-number="${escapeHtml(order.order_number)}" data-total="${Number(order.total_amount)}"><i class="fa-brands fa-zalo"></i> Đã thanh toán — liên hệ Zalo</button>` : `<span class="payment-complete"><i class="fa-solid fa-circle-check"></i> ${escapeHtml(paymentCopy[order.status] || order.status)}</span>`;
   const cancelAction = canCancelPendingOrder(order) ? `<button class="order-cancel-button" data-order-cancel="${escapeHtml(order.id)}" data-order-number="${escapeHtml(order.order_number)}" type="button"><i class="fa-solid fa-ban"></i> Hủy đơn</button>` : "";
-  return `<article class="order-card"><header><div><span class="order-chip">${escapeHtml(order.order_number)}</span><time>${dateTime(order.created_at)}</time></div><span class="order-payment ${escapeHtml(order.status)}">${escapeHtml(paymentCopy[order.status] || order.status)}</span></header><div class="order-main"><div class="shipment-progress"><div class="progress-ring" style="--progress:${progress}"><strong>${progress}%</strong><span>đã đi</span></div><div><span class="order-kicker">${escapeHtml(shipmentCopy[order.shipment_status] || "Chờ cập nhật")}</span><h2>${escapeHtml(order.shipment_location || "Đơn hàng đang được chuẩn bị")}</h2><p>${escapeHtml(order.shipment_note || order.shipping_note || "Nhà vận chuyển sẽ cập nhật vị trí sau khi nhận hàng.")}</p></div></div><aside class="carrier-card"><span>ĐƠN VỊ GIAO HÀNG</span><div class="carrier-name">${carrierMark}<b>${escapeHtml(carrier?.name || order.carrier || "Chưa phân công")}</b></div>${order.tracking_code ? `<code>${escapeHtml(order.tracking_code)}</code>${trackingUrl ? `<a href="${escapeHtml(trackingUrl)}" target="_blank" rel="noopener">Tra cứu vận đơn <i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ""}` : `<small>Chưa có mã vận đơn</small>`}</aside></div><div class="order-products">${(order.order_items || []).map((item) => `<span>${escapeHtml(item.product_name)} <b>×${item.quantity}</b></span>`).join("")}<strong>${money(order.total_amount)}</strong></div><div class="order-actions"><div class="order-action-buttons">${paymentAction}${cancelAction}</div>${order.zalo_confirmation_requested_at ? `<small><i class="fa-solid fa-clock"></i> Đã gửi yêu cầu xác nhận lúc ${dateTime(order.zalo_confirmation_requested_at)}</small>` : ""}</div><details class="order-details"><summary>Chi tiết hành trình &amp; nơi hàng đã đến <i class="fa-solid fa-chevron-down"></i></summary><div class="timeline">${events.length ? events.map((event, index) => `<article class="timeline-event ${index === 0 ? "latest" : ""}"><span></span><div><b>${escapeHtml(shipmentCopy[event.shipment_status] || event.shipment_status)}</b><time>${dateTime(event.occurred_at)}</time><p>${escapeHtml(event.location || "Chưa có vị trí")} ${event.note ? `· ${escapeHtml(event.note)}` : ""}</p></div><strong>${Number(event.progress || 0)}%</strong></article>`).join("") : '<p class="timeline-empty">Chưa có mốc hành trình. Vị trí và tiến trình sẽ hiển thị sau khi bộ phận giao nhận cập nhật.</p>'}</div><div class="delivery-address"><span>ĐỊA CHỈ NHẬN</span><p>${escapeHtml(order.shipping_address || "Chưa cập nhật địa chỉ")}</p></div></details></article>`;
+  const serviceAction = getServiceAction(order);
+  const serviceStatus = getServiceStatus(order);
+  return `<article class="order-card"><header><div><span class="order-chip">${escapeHtml(order.order_number)}</span><time>${dateTime(order.created_at)}</time></div><span class="order-payment ${escapeHtml(order.status)}">${escapeHtml(paymentCopy[order.status] || order.status)}</span></header><div class="order-main"><div class="shipment-progress"><div class="progress-ring" style="--progress:${progress}"><strong>${progress}%</strong><span>đã đi</span></div><div><span class="order-kicker">${escapeHtml(shipmentCopy[order.shipment_status] || "Chờ cập nhật")}</span><h2>${escapeHtml(order.shipment_location || "Đơn hàng đang được chuẩn bị")}</h2><p>${escapeHtml(order.shipment_note || order.shipping_note || "Nhà vận chuyển sẽ cập nhật vị trí sau khi nhận hàng.")}</p></div></div><aside class="carrier-card"><span>ĐƠN VỊ GIAO HÀNG</span><div class="carrier-name">${carrierMark}<b>${escapeHtml(carrier?.name || order.carrier || "Chưa phân công")}</b></div>${order.tracking_code ? `<code>${escapeHtml(order.tracking_code)}</code>${trackingUrl ? `<a href="${escapeHtml(trackingUrl)}" target="_blank" rel="noopener">Tra cứu vận đơn <i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ""}` : `<small>Chưa có mã vận đơn</small>`}</aside></div><div class="order-products">${(order.order_items || []).map((item) => `<span>${escapeHtml(item.product_name)} <b>×${item.quantity}</b></span>`).join("")}<strong>${money(order.total_amount)}</strong></div><div class="order-actions"><div class="order-action-buttons">${paymentAction}${cancelAction}${serviceAction}</div>${serviceStatus}${order.zalo_confirmation_requested_at ? `<small><i class="fa-solid fa-clock"></i> Đã gửi yêu cầu xác nhận lúc ${dateTime(order.zalo_confirmation_requested_at)}</small>` : ""}</div><details class="order-details"><summary>Chi tiết hành trình &amp; nơi hàng đã đến <i class="fa-solid fa-chevron-down"></i></summary><div class="timeline">${events.length ? events.map((event, index) => `<article class="timeline-event ${index === 0 ? "latest" : ""}"><span></span><div><b>${escapeHtml(shipmentCopy[event.shipment_status] || event.shipment_status)}</b><time>${dateTime(event.occurred_at)}</time><p>${escapeHtml(event.location || "Chưa có vị trí")} ${event.note ? `· ${escapeHtml(event.note)}` : ""}</p></div><strong>${Number(event.progress || 0)}%</strong></article>`).join("") : '<p class="timeline-empty">Chưa có mốc hành trình. Vị trí và tiến trình sẽ hiển thị sau khi bộ phận giao nhận cập nhật.</p>'}</div><div class="delivery-address"><span>ĐỊA CHỈ NHẬN</span><p>${escapeHtml(order.shipping_address || "Chưa cập nhật địa chỉ")}</p></div></details></article>`;
 }
+
+function serviceRequests(order) { return Array.isArray(order.order_service_requests) ? order.order_service_requests : []; }
+function hasOpenServiceRequest(order, type) { return serviceRequests(order).some((request) => request.service_type === type && ["pending", "approved"].includes(request.status)); }
+function canRequestPaidCancellation(order) { return ["paid", "processing", "completed"].includes(order.status) && ["unfulfilled", "preparing", "ready_to_ship"].includes(order.fulfillment_status || "unfulfilled") && !hasOpenServiceRequest(order, "paid_cancellation"); }
+function canRequestReturn(order) { return order.status !== "cancelled" && (order.fulfillment_status || "unfulfilled") === "delivered" && !hasOpenServiceRequest(order, "return"); }
+function getServiceAction(order) { if (canRequestPaidCancellation(order)) return `<button class="order-service-button" data-order-service="paid_cancellation" data-order-id="${escapeHtml(order.id)}" data-order-number="${escapeHtml(order.order_number)}" type="button"><i class="fa-solid fa-file-circle-xmark"></i> Yêu cầu hủy đã thanh toán</button>`; if (canRequestReturn(order)) return `<button class="order-service-button return" data-order-service="return" data-order-id="${escapeHtml(order.id)}" data-order-number="${escapeHtml(order.order_number)}" type="button"><i class="fa-solid fa-arrow-rotate-left"></i> Yêu cầu trả hàng</button>`; return ""; }
+function getServiceStatus(order) { const requests = serviceRequests(order); if (!requests.length) return ""; const latest = [...requests].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]; const label = { pending: "Đang chờ duyệt", approved: "Đã duyệt — chờ hoàn tất", completed: "Đã hoàn tất", rejected: "Đã từ chối" }[latest.status] || latest.status; return `<p class="order-service-status ${escapeHtml(latest.status)}"><i class="fa-solid fa-clipboard-check"></i><span>${escapeHtml(serviceCopy[latest.service_type] || "Yêu cầu hậu mãi")}: <b>${escapeHtml(label)}</b>${latest.review_note ? ` · ${escapeHtml(latest.review_note)}` : ""}</span></p>`; }
 
 async function requestPaymentConfirmation(event) {
   const button = event.currentTarget; button.disabled = true; const { data, error } = await db.rpc("request_order_payment_confirmation", { p_order_id: button.dataset.paymentConfirm }); button.disabled = false;
@@ -73,6 +85,20 @@ async function cancelOrder(event) {
   button.disabled = false;
   if (error) return toast(error.message, "error");
   toast("Đã hủy đơn hàng. Không có thanh toán hay giao nhận nào được xử lý.", "success");
+  await loadOrders();
+}
+
+async function requestPostPaymentService(event) {
+  const button = event.currentTarget; const type = button.dataset.orderService; const label = serviceCopy[type] || "Yêu cầu hậu mãi";
+  const reason = window.prompt(`${label} cho đơn ${button.dataset.orderNumber}. Hãy nêu lý do (5–400 ký tự):`);
+  if (reason === null) return;
+  if (reason.trim().length < 5 || reason.trim().length > 400) return toast("Lý do cần từ 5 đến 400 ký tự.", "error");
+  if (!window.confirm(`${label} sẽ được gửi để shop xét duyệt. Thao tác này không tự động hoàn tiền. Bạn muốn gửi yêu cầu?`)) return;
+  button.disabled = true;
+  const { error } = await db.rpc("request_post_payment_order_service", { p_order_id: button.dataset.orderId, p_service_type: type, p_reason: reason.trim() });
+  button.disabled = false;
+  if (error) return toast(error.message, "error");
+  toast("Đã gửi yêu cầu. Shop sẽ kiểm tra và phản hồi trong trang đơn hàng.", "success");
   await loadOrders();
 }
 

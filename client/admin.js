@@ -11,6 +11,7 @@ import "./admin-product-gallery.css";
 import "./admin-order-action-labels.css";
 import "./admin-order-archive.css";
 import "./admin-sale-usage-history.css";
+import "./admin-order-service.css";
 import "./admin-accounts.js";
 import "./admin-email-delivery.js";
 import "./admin-roles-content.js";
@@ -89,6 +90,8 @@ function bindEvents() {
   els.refreshOrders.addEventListener("click", loadData);
   $("#orderForm").addEventListener("submit", saveOrder);
   $("#cancelOrderButton")?.addEventListener("click", () => cancelOrderAsManager(state.activeOrderId));
+  $("#requestPaidCancellationButton")?.addEventListener("click", () => requestPostPaymentServiceAsManager("paid_cancellation"));
+  $("#requestReturnButton")?.addEventListener("click", () => requestPostPaymentServiceAsManager("return"));
   els.settingsForm.addEventListener("submit", saveSettings);
   els.pageSelect.addEventListener("change", fillPageForm);
   els.pageForm.addEventListener("submit", savePage);
@@ -121,7 +124,7 @@ async function uploadProductGalleryImage(event) { const input = event.currentTar
 function mountOrderCancellationControls() {
   $("#orderPaymentStatus option[value='cancelled']")?.remove();
   if ($("#cancelOrderButton")) return;
-  $("#saveOrderButton")?.insertAdjacentHTML("beforebegin", '<button class="action-button danger" id="cancelOrderButton" type="button" hidden><i class="fa-solid fa-ban"></i> Hủy đơn</button>');
+  $("#saveOrderButton")?.insertAdjacentHTML("beforebegin", '<button class="action-button service-request" id="requestPaidCancellationButton" type="button" hidden><i class="fa-solid fa-file-circle-xmark"></i> Yêu cầu hủy đã thanh toán</button><button class="action-button service-request return" id="requestReturnButton" type="button" hidden><i class="fa-solid fa-arrow-rotate-left"></i> Yêu cầu trả hàng</button><button class="action-button danger" id="cancelOrderButton" type="button" hidden><i class="fa-solid fa-ban"></i> Hủy đơn</button>');
 }
 
 function populateProductShopOptions(selectedId = "") {
@@ -181,7 +184,7 @@ async function loadData() {
   const [productsResult, productImagesResult, ordersResult, archivedOrdersResult, saleUsageOrdersResult, settingsResult, pagesResult, faqsResult, shopsResult, campaignsResult] = await Promise.all([
     db.from("products").select("*").order("created_at", { ascending: false }),
     db.from("product_images").select("product_id,image_url,sort_order").order("sort_order"),
-    db.from("orders").select("id,order_number,user_id,subtotal_amount,discount_amount,sale_campaign_id,sale_code,total_amount,status,payment_method,auto_transfer_provider,payment_note,payment_confirmed_at,payment_confirmation_note,zalo_confirmation_requested_at,customer_name,customer_phone,shipping_address,shipping_note,fulfillment_status,carrier,tracking_code,admin_note,fulfillment_updated_at,delivered_at,created_at,updated_at,order_items(product_name,unit_price,quantity,subtotal)").is("archived_at", null).order("created_at", { ascending: false }),
+    db.from("orders").select("id,order_number,user_id,subtotal_amount,discount_amount,sale_campaign_id,sale_code,total_amount,status,payment_method,auto_transfer_provider,payment_note,payment_confirmed_at,payment_confirmation_note,zalo_confirmation_requested_at,customer_name,customer_phone,shipping_address,shipping_note,fulfillment_status,carrier,tracking_code,admin_note,fulfillment_updated_at,delivered_at,created_at,updated_at,order_items(product_name,unit_price,quantity,subtotal),order_service_requests(id,service_type,status)").is("archived_at", null).order("created_at", { ascending: false }),
     state.isAdmin ? db.from("orders").select("id,order_number,total_amount,status,archived_at,archived_by,archive_reason,created_at,order_items(product_name,quantity)").not("archived_at", "is", null).order("archived_at", { ascending: false }) : Promise.resolve({ data: [], error: null }),
     state.isAdmin ? db.from("orders").select("id,order_number,sale_campaign_id,sale_code,subtotal_amount,discount_amount,total_amount,status,created_at,archived_at").or("sale_campaign_id.not.is.null,sale_code.not.is.null").order("created_at", { ascending: false }).limit(250) : Promise.resolve({ data: [], error: null }),
     db.from("site_settings").select("*").eq("singleton", true).maybeSingle(),
@@ -325,6 +328,8 @@ function openOrderModal(order) {
   $("#orderCustomerName").value = order.customer_name || ""; $("#orderCustomerPhone").value = order.customer_phone || ""; $("#orderShippingAddress").value = order.shipping_address || ""; $("#orderShippingNote").value = order.shipping_note || "";
   $("#orderPaymentConfirmationNote").value = order.payment_confirmation_note || ""; $("#orderFulfillmentStatus").value = order.fulfillment_status || "unfulfilled"; $("#orderCarrier").value = order.carrier || ""; $("#orderTrackingCode").value = order.tracking_code || ""; $("#orderAdminNote").value = order.admin_note || "";
   $("#cancelOrderButton").hidden = !canCancelPendingOrder(order);
+  $("#requestPaidCancellationButton").hidden = !canRequestPaidCancellationAsManager(order);
+  $("#requestReturnButton").hidden = !canRequestReturnAsManager(order);
   populateOrderSaleCampaigns(order); updateOrderDiscountPreview(order);
   $("#orderItemsPreview").innerHTML = order.order_items?.length ? order.order_items.map((item) => `<div class="order-item-line"><span>${escapeHtml(item.product_name)} × ${item.quantity}</span><strong>${currency(item.subtotal)}</strong></div>`).join("") : '<div class="order-item-line"><span>Chưa có chi tiết sản phẩm</span></div>';
   openModal("order");
@@ -412,6 +417,11 @@ function mountOrderActionConfirmation() {
 
 function cancelOrderAsManager(orderId) { openOrderActionConfirmation("cancel", orderId); }
 function archiveCancelledOrder(orderId) { openOrderActionConfirmation("archive", orderId); }
+function orderServiceRequests(order) { return Array.isArray(order?.order_service_requests) ? order.order_service_requests : []; }
+function hasOpenOrderServiceRequest(order, type) { return orderServiceRequests(order).some((request) => request.service_type === type && ["pending", "approved"].includes(request.status)); }
+function canRequestPaidCancellationAsManager(order) { return ["paid", "processing", "completed"].includes(order?.status) && ["unfulfilled", "preparing", "ready_to_ship"].includes(order?.fulfillment_status || "unfulfilled") && !hasOpenOrderServiceRequest(order, "paid_cancellation"); }
+function canRequestReturnAsManager(order) { return order?.status !== "cancelled" && (order?.fulfillment_status || "unfulfilled") === "delivered" && !hasOpenOrderServiceRequest(order, "return"); }
+async function requestPostPaymentServiceAsManager(type) { const order = getOrder(state.activeOrderId); const allowed = type === "return" ? canRequestReturnAsManager(order) : canRequestPaidCancellationAsManager(order); if (!order || !allowed) return toast("Đơn không còn đủ điều kiện tạo yêu cầu này.", "error"); const label = type === "return" ? "trả hàng" : "hủy đơn đã thanh toán"; const reason = window.prompt(`Lý do ${label} cho đơn ${order.order_number} (5–400 ký tự):`); if (reason === null) return; if (reason.trim().length < 5 || reason.trim().length > 400) return toast("Lý do cần từ 5 đến 400 ký tự.", "error"); if (!window.confirm(`Tạo yêu cầu ${label} để queue hậu mãi xét duyệt? Thao tác này không tự động hoàn tiền.`)) return; const button = type === "return" ? $("#requestReturnButton") : $("#requestPaidCancellationButton"); setLoading(button, true, "Đang gửi"); const { error } = await db.rpc("request_post_payment_order_service", { p_order_id: order.id, p_service_type: type, p_reason: reason.trim() }); setLoading(button, false); if (error) return toast(error.message, "error"); closeModal("order"); toast("Đã tạo yêu cầu hậu mãi. Hãy duyệt trong Hoàn tiền & CSV.", "success"); await loadData(); }
 
 function openOrderActionConfirmation(action, orderId) {
   const order = getOrder(orderId);

@@ -2052,3 +2052,107 @@ alter table public.site_settings drop constraint if exists site_settings_footer_
 alter table public.site_settings add constraint site_settings_footer_credit_text_check check (length(trim(footer_credit_text)) between 1 and 160);
 alter table public.site_settings drop constraint if exists site_settings_footer_status_text_check;
 alter table public.site_settings add constraint site_settings_footer_status_text_check check (length(trim(footer_status_text)) between 1 and 80);
+
+-- 41. Hủy sau thanh toán và trả hàng là yêu cầu hậu mãi có xét duyệt, không tự động hoàn tiền.
+create table if not exists public.order_service_requests (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete restrict,
+  user_id uuid not null references auth.users(id) on delete restrict,
+  requested_by uuid not null references auth.users(id) on delete restrict,
+  service_type text not null check (service_type in ('paid_cancellation','return')),
+  reason text not null check (length(trim(reason)) between 5 and 400),
+  status text not null default 'pending' check (status in ('pending','approved','completed','rejected')),
+  review_note text check (review_note is null or length(trim(review_note)) between 1 and 400),
+  reviewed_by uuid references auth.users(id) on delete set null,
+  reviewed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists order_service_requests_order_created_idx on public.order_service_requests(order_id, created_at desc);
+create unique index if not exists order_service_requests_one_open_idx on public.order_service_requests(order_id, service_type) where status in ('pending','approved');
+alter table public.order_service_requests enable row level security;
+drop policy if exists "Users read own order service requests" on public.order_service_requests;
+create policy "Users read own order service requests" on public.order_service_requests for select to authenticated using (user_id = auth.uid());
+drop policy if exists "Order managers read order service requests" on public.order_service_requests;
+create policy "Order managers read order service requests" on public.order_service_requests for select to authenticated using (public.can_manage_orders());
+
+create or replace function public.request_post_payment_order_service(p_order_id uuid, p_service_type text, p_reason text)
+returns public.order_service_requests language plpgsql security definer set search_path = public, auth
+as $$
+declare v_order public.orders; v_request public.order_service_requests; v_reason text := nullif(trim(p_reason), '');
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if p_service_type not in ('paid_cancellation','return') then raise exception 'Loại yêu cầu hậu mãi không hợp lệ.'; end if;
+  if v_reason is null or length(v_reason) not between 5 and 400 then raise exception 'Lý do cần từ 5 đến 400 ký tự.'; end if;
+  if public.can_manage_orders() then
+    select * into v_order from public.orders where id = p_order_id for update;
+  else
+    select * into v_order from public.orders where id = p_order_id and user_id = auth.uid() for update;
+  end if;
+  if not found then raise exception 'Không tìm thấy đơn hàng hoặc bạn không có quyền thao tác.'; end if;
+  if p_service_type = 'paid_cancellation' and (v_order.status not in ('paid','processing','completed') or coalesce(v_order.fulfillment_status, 'unfulfilled') not in ('unfulfilled','preparing','ready_to_ship')) then raise exception 'Chỉ yêu cầu hủy đơn đã thanh toán khi đơn chưa bàn giao vận chuyển.'; end if;
+  if p_service_type = 'return' and (coalesce(v_order.fulfillment_status, 'unfulfilled') <> 'delivered' or v_order.status = 'cancelled') then raise exception 'Chỉ yêu cầu trả hàng với đơn đã giao hợp lệ.'; end if;
+  if exists (select 1 from public.order_service_requests where order_id = v_order.id and service_type = p_service_type and status in ('pending','approved')) then raise exception 'Đơn đã có yêu cầu cùng loại đang được xử lý.'; end if;
+  insert into public.order_service_requests(order_id, user_id, requested_by, service_type, reason) values (v_order.id, v_order.user_id, auth.uid(), p_service_type, v_reason) returning * into v_request;
+  insert into public.account_audit_log(target_user_id, actor_user_id, action, metadata) values (v_order.user_id, auth.uid(), 'order_service_requested', jsonb_build_object('request_id', v_request.id, 'order_id', v_order.id, 'type', p_service_type));
+  return v_request;
+end;
+$$;
+
+create or replace function public.review_post_payment_order_service(p_request_id uuid, p_decision text, p_note text default null)
+returns public.order_service_requests language plpgsql security definer set search_path = public, auth
+as $$
+declare v_request public.order_service_requests; v_order public.orders; v_note text := nullif(trim(p_note), '');
+begin
+  if auth.uid() is null or not public.can_manage_orders() then raise exception 'Bạn không có quyền duyệt yêu cầu hậu mãi.'; end if;
+  if p_decision not in ('approved','completed','rejected') then raise exception 'Quyết định yêu cầu hậu mãi không hợp lệ.'; end if;
+  if p_decision in ('completed','rejected') and v_note is null then raise exception 'Cần ghi chú khi hoàn tất hoặc từ chối yêu cầu.'; end if;
+  if v_note is not null and length(v_note) > 400 then raise exception 'Ghi chú tối đa 400 ký tự.'; end if;
+  select * into v_request from public.order_service_requests where id = p_request_id for update;
+  if not found then raise exception 'Không tìm thấy yêu cầu hậu mãi.'; end if;
+  if p_decision = 'approved' and v_request.status <> 'pending' then raise exception 'Chỉ duyệt yêu cầu đang chờ.'; end if;
+  if p_decision = 'completed' and v_request.status <> 'approved' then raise exception 'Chỉ hoàn tất yêu cầu đã duyệt.'; end if;
+  if p_decision = 'rejected' and v_request.status not in ('pending','approved') then raise exception 'Yêu cầu này không thể từ chối.'; end if;
+  if p_decision = 'completed' then
+    select * into v_order from public.orders where id = v_request.order_id for update;
+    if v_request.service_type = 'paid_cancellation' then
+      if v_order.status not in ('paid','processing','completed') or coalesce(v_order.fulfillment_status, 'unfulfilled') not in ('unfulfilled','preparing','ready_to_ship') then raise exception 'Đơn không còn đủ điều kiện hủy sau thanh toán.'; end if;
+    else
+      if coalesce(v_order.fulfillment_status, 'unfulfilled') <> 'delivered' or v_order.status = 'cancelled' then raise exception 'Đơn không còn đủ điều kiện trả hàng.'; end if;
+    end if;
+  end if;
+  update public.order_service_requests set status = p_decision, review_note = v_note, reviewed_by = auth.uid(), reviewed_at = now(), updated_at = now() where id = v_request.id returning * into v_request;
+  if p_decision = 'completed' and v_request.service_type = 'paid_cancellation' then
+    perform set_config('app.nexora_cancellation', 'paid_request_allowed', true);
+    update public.orders set status = 'cancelled', cancelled_at = now(), cancelled_by = auth.uid(), cancellation_reason = v_request.reason, updated_at = now() where id = v_request.order_id;
+  elsif p_decision = 'completed' and v_request.service_type = 'return' then
+    update public.orders set fulfillment_status = 'returned', fulfillment_updated_at = now(), updated_at = now() where id = v_request.order_id;
+  end if;
+  insert into public.account_audit_log(target_user_id, actor_user_id, action, metadata) values (v_request.user_id, auth.uid(), 'order_service_reviewed', jsonb_build_object('request_id', v_request.id, 'order_id', v_request.order_id, 'type', v_request.service_type, 'decision', p_decision));
+  return v_request;
+end;
+$$;
+
+create or replace function public.guard_order_cancellation()
+returns trigger language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  if old.status = 'cancelled' and new.status <> 'cancelled' then raise exception 'Đơn đã hủy không thể khôi phục.'; end if;
+  if old.status <> 'cancelled' and new.status = 'cancelled' then
+    if current_setting('app.nexora_cancellation', true) = 'allowed' then
+      if old.status <> 'pending_payment' or coalesce(old.fulfillment_status, 'unfulfilled') <> 'unfulfilled' then raise exception 'Chỉ hủy được đơn chưa thanh toán và chưa vào giao nhận.'; end if;
+    elsif current_setting('app.nexora_cancellation', true) = 'paid_request_allowed' then
+      if old.status not in ('paid','processing','completed') or coalesce(old.fulfillment_status, 'unfulfilled') not in ('unfulfilled','preparing','ready_to_ship') or not exists (select 1 from public.order_service_requests where order_id = old.id and service_type = 'paid_cancellation' and status = 'completed') then raise exception 'Chỉ hoàn tất hủy sau thanh toán qua yêu cầu đã duyệt.'; end if;
+    else
+      raise exception 'Hãy dùng quy trình hủy đơn được kiểm soát.';
+    end if;
+    if new.cancelled_at is null or new.cancelled_by is null or nullif(trim(new.cancellation_reason), '') is null then raise exception 'Hủy đơn cần người thực hiện, thời gian và lý do.'; end if;
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on table public.order_service_requests from anon, authenticated;
+grant select on table public.order_service_requests to authenticated;
+revoke all on function public.request_post_payment_order_service(uuid,text,text), public.review_post_payment_order_service(uuid,text,text) from public, anon;
+grant execute on function public.request_post_payment_order_service(uuid,text,text), public.review_post_payment_order_service(uuid,text,text) to authenticated;

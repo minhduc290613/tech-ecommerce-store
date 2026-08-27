@@ -233,3 +233,4 @@
 - [x] Khắc phục mã ưu đãi không hiển thị hoặc không thể áp dụng nhất quán trên storefront.
 - [x] Thêm thống kê và lịch sử sử dụng theo từng mã giảm giá trong Command Deck.
 - [x] Thêm mục Liên kết nhanh ở chân trang gồm Dashboard Affiliate, Đơn hàng của tôi và Quản trị cửa hàng.
+- [x] Thêm yêu cầu hủy đơn đã thanh toán và yêu cầu trả hàng đơn đã giao cho khách lẫn Admin, không tự động hoàn tiền.

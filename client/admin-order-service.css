@@ -1,0 +1,11 @@
+.order-service-queue { margin-bottom: 1rem; }
+.order-service-queue .panel-top p { max-width: 50rem; color: #8ba8c0; font-size: .76rem; line-height: 1.55; }
+.action-button.service-request { border-color: rgba(125, 211, 252, .55); background: rgba(12, 74, 110, .28); color: #d6f2ff; }
+.action-button.service-request.return { border-color: rgba(196, 181, 253, .55); background: rgba(76, 29, 149, .22); color: #e6e0ff; }
+.service-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+.service-actions button { border: 1px solid rgba(125, 211, 252, .38); background: #0a1e32; color: #d9f4ff; padding: .42rem .56rem; font-size: .7rem; cursor: pointer; }
+.service-actions button + button { border-color: rgba(251, 113, 133, .4); color: #fecdd3; }
+.role-pill.service-approved { color: #ddd6fe; border-color: rgba(196, 181, 253, .45); }
+.role-pill.service-completed { color: #bbf7d0; border-color: rgba(134, 239, 172, .38); }
+.role-pill.service-rejected { color: #fecdd3; border-color: rgba(253, 164, 175, .38); }
+@media (max-width: 720px) { .order-modal-card .form-actions { align-items: stretch; } .action-button.service-request { width: 100%; } }

@@ -1,0 +1,10 @@
+.order-action-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; }
+.order-service-button { border: 1px solid rgba(125, 211, 252, .48); background: rgba(12, 74, 110, .22); color: #c7ecff; padding: .66rem .85rem; font: 700 .72rem var(--mono); cursor: pointer; }
+.order-service-button.return { border-color: rgba(196, 181, 253, .48); background: rgba(76, 29, 149, .18); color: #ded5ff; }
+.order-service-button:disabled { cursor: wait; opacity: .65; }
+.order-service-status { display: flex; align-items: flex-start; gap: .45rem; margin: .65rem 0 0; color: #b8d9e9; font-size: .78rem; line-height: 1.45; }
+.order-service-status i { margin-top: .16rem; color: #7dd3fc; }
+.order-service-status.approved i { color: #c4b5fd; }
+.order-service-status.completed i { color: #86efac; }
+.order-service-status.rejected i { color: #fda4af; }
+@media (max-width:720px) { .order-action-buttons { width: 100%; } .order-service-button { flex: 1 1 100%; text-align: left; } }
