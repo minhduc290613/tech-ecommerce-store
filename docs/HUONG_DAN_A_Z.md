@@ -265,7 +265,13 @@ const PAYMENT_CONFIG = {
 };
 ```
 
-Thay placeholder bằng thông tin nhận tiền của đơn vị vận hành trước khi mở bán. Mỗi đơn được tạo trước, sau đó UI hiển thị QR VietQR hoặc chỉ dẫn MoMo. Admin mới là người đối soát và chuyển payment status; website **không tự động xác minh giao dịch ngân hàng**.
+Thay placeholder bằng thông tin nhận tiền của đơn vị vận hành trước khi mở bán. Mỗi đơn được tạo trước, sau đó UI hiển thị QR VietQR, chỉ dẫn MoMo hoặc QR ZaloPay. Admin mới là người đối soát và chuyển payment status; website **không tự động xác minh giao dịch ngân hàng**.
+
+### 7.1.1 ZaloPay QR thủ công
+
+Vào **Command Deck → Cấu hình nâng cao → Nhận tiền & Zalo**, dán **URL HTTPS của ảnh QR ZaloPay** do shop sở hữu vào trường **URL ảnh QR ZaloPay**, rồi lưu. Khách chọn tab **ZaloPay**, quét mã, nhập đúng số tiền/mã đơn và nhắn Zalo để shop đối soát. Admin xác nhận đơn tại queue **Xác nhận chuyển khoản**; thao tác này mới chuyển đơn sang `paid`.
+
+> Đây là QR/chuyển khoản thủ công, không phải tích hợp cổng thanh toán ZaloPay Merchant API. Không đưa App ID, Key1, Key2, callback key hoặc secret vào Admin, frontend hay GitHub.
 
 > Nếu repository là public, không commit số tài khoản cá nhân hoặc dữ liệu thanh toán nhạy cảm nếu bạn không muốn nó hiển thị công khai. Với vận hành thật, nên chuyển thông tin này sang config riêng hoặc đọc từ CMS có RLS admin.
 

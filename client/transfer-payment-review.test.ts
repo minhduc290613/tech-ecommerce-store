@@ -15,5 +15,6 @@ describe("transfer payment review", () => {
   it("không cho xác nhận thủ công đơn ví hoặc đơn đã thanh toán", () => {
     expect(canAdminConfirmPayment({ status: "pending_payment", payment_method: "wallet" })).toBe(false);
     expect(canAdminConfirmPayment({ status: "paid", payment_method: "vietqr" })).toBe(false);
+    expect(canAdminConfirmPayment({ status: "pending_payment", payment_method: "zalopay" })).toBe(true);
   });
 });

@@ -128,7 +128,7 @@ create table if not exists public.orders (
   sale_campaign_id uuid references public.sale_campaigns(id) on delete set null,
   sale_code text,
   status text not null default 'pending_payment' check (status in ('pending_payment', 'paid', 'processing', 'completed', 'cancelled')),
-  payment_method text not null default 'vietqr' check (payment_method in ('vietqr', 'momo', 'wallet')),
+  payment_method text not null default 'vietqr' check (payment_method in ('vietqr', 'momo', 'zalopay', 'wallet')),
   payment_note text,
   payment_confirmed_at timestamptz,
   payment_confirmation_note text,
@@ -1229,6 +1229,7 @@ alter table public.site_settings add column if not exists payment_bank_id text;
 alter table public.site_settings add column if not exists payment_account_number text;
 alter table public.site_settings add column if not exists payment_account_name text;
 alter table public.site_settings add column if not exists payment_momo_phone text;
+alter table public.site_settings add column if not exists payment_zalopay_qr_url text;
 alter table public.site_settings add column if not exists storefront_effect text not null default 'none' check (storefront_effect in ('none','snow','cherry_blossom'));
 alter table public.site_settings add column if not exists storefront_effect_color text not null default '#d8f3ff';
 alter table public.site_settings add column if not exists storefront_effect_density integer not null default 24 check (storefront_effect_density between 0 and 120);

@@ -1,4 +1,4 @@
-const MANUAL_TRANSFER_METHODS = new Set(["vietqr", "momo"]);
+const MANUAL_TRANSFER_METHODS = new Set(["vietqr", "momo", "zalopay"]);
 
 export function isManualTransferAwaitingConfirmation(order) {
   return Boolean(order && order.status === "pending_payment" && MANUAL_TRANSFER_METHODS.has(order.payment_method));

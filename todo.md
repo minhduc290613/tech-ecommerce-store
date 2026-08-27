@@ -191,3 +191,4 @@
 - [x] Bảo toàn quy tắc chuyển khoản chỉ đổi sang đã thanh toán sau thao tác xác nhận của shop.
 - [x] Cải thiện Command Deck để ưu tiên hiển thị đơn chuyển khoản đang chờ và giúp admin xác nhận Đã thanh toán có kiểm soát.
 - [x] Chẩn đoán và khắc phục lỗi không truy cập được Command Deck/máy chủ hoặc không đăng nhập được phiên quản trị.
+- [x] Bổ sung thanh toán ZaloPay qua QR/chuyển khoản thủ công, cấu hình được từ Admin và chỉ xác nhận sau đối soát.

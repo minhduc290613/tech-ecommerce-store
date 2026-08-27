@@ -193,7 +193,7 @@ function renderRevenueChart() {
   $("#revenueWindowTotal").textContent = currency(total); $("#revenueWindowCaption").textContent = total ? `Ghi nhận từ ${state.orders.filter((order) => ["paid", "processing", "completed"].includes(order.status)).length} đơn đã xác nhận trong cửa sổ 7 ngày.` : "Chưa có đơn thanh toán trong 7 ngày gần nhất.";
 }
 function renderRecentOrders() { els.recentOrders.innerHTML = state.orders.slice(0, 5).map(compactOrderRow).join("") || emptyRow("Chưa có đơn hàng nào.", 5); }
-function compactOrderRow(order) { return `<tr><td><b>${escapeHtml(order.order_number)}</b></td><td>${formatDate(order.created_at)}</td><td>${order.payment_method === "momo" ? "MoMo" : "VietQR"}</td><td><b>${currency(order.total_amount)}</b></td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td></tr>`; }
+function compactOrderRow(order) { const label = order.payment_method === "momo" ? "MoMo" : order.payment_method === "zalopay" ? "ZaloPay" : order.payment_method === "wallet" ? "Số dư" : "VietQR"; return `<tr><td><b>${escapeHtml(order.order_number)}</b></td><td>${formatDate(order.created_at)}</td><td>${label}</td><td><b>${currency(order.total_amount)}</b></td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td></tr>`; }
 function renderOrders() {
   const rows = filterOrders(state.orders, { query: state.orderQuery, carrier: state.carrierFilter, fulfillment: state.fulfillmentFilter, payment: state.paymentFilter });
   $("#orderFilterCount").textContent = `${rows.length}/${state.orders.length} đơn`;
@@ -211,7 +211,7 @@ function renderTransferPaymentQueue() {
   const host = $("#transferPaymentQueue"); const count = $("#transferPaymentCount"); if (!host || !count) return;
   const queue = getManualTransferReviewQueue(state.orders); count.textContent = `${queue.length} CHỜ ĐỐI SOÁT`;
   host.innerHTML = queue.length ? queue.map((order) => {
-    const customer = order.customer_name || shortId(order.user_id); const method = order.payment_method === "momo" ? "MoMo" : "VietQR";
+    const customer = order.customer_name || shortId(order.user_id); const method = order.payment_method === "momo" ? "MoMo" : order.payment_method === "zalopay" ? "ZaloPay" : "VietQR";
     const requested = order.zalo_confirmation_requested_at ? `<span class="requested">KHÁCH ĐÃ GỬI YÊU CẦU · ${escapeHtml(formatDate(order.zalo_confirmation_requested_at))}</span>` : "<span>CHƯA CÓ YÊU CẦU ZALO</span>";
     return `<article class="transfer-queue-card"><div><h4>${escapeHtml(order.order_number)} · ${currency(order.total_amount)}</h4><p>${escapeHtml(customer)} · ${escapeHtml(order.customer_phone || "Chưa có số liên hệ")}</p><div class="transfer-queue-meta"><span>${method}</span>${requested}<span>TẠO ${escapeHtml(formatDate(order.created_at))}</span></div></div><button class="transfer-confirm-button" data-transfer-confirm="${escapeHtml(order.id)}" type="button"><i class="fa-solid fa-circle-check"></i> Xác nhận đã nhận CK</button></article>`;
   }).join("") : '<p class="transfer-queue-empty">Không có đơn chuyển khoản nào đang chờ đối soát.</p>';

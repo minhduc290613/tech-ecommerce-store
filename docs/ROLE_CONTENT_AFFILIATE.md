@@ -75,7 +75,7 @@ Mỗi `products.shop_id` liên kết trực tiếp tới `shops.id`. Trong **Com
 
 ## CMS nâng cao dành cho admin
 
-Mục **Thương hiệu, icon & SEO** cho phép admin hoặc role có `siteSettings` cập nhật tên website, logo, favicon, tiêu đề/mô tả SEO, ảnh chia sẻ Open Graph, banner, liên hệ và nội dung storefront mà không cần sửa file. Workspace **Cấu hình nâng cao** chỉ dành cho admin để cập nhật mã ngân hàng/số tài khoản/tên người nhận, số MoMo, hiệu ứng storefront và chương trình affiliate.
+Mục **Thương hiệu, icon & SEO** cho phép admin hoặc role có `siteSettings` cập nhật tên website, logo, favicon, tiêu đề/mô tả SEO, ảnh chia sẻ Open Graph, banner, liên hệ và nội dung storefront mà không cần sửa file. Workspace **Cấu hình nâng cao** chỉ dành cho admin để cập nhật mã ngân hàng/số tài khoản/tên người nhận, số MoMo, URL ảnh QR ZaloPay HTTPS, hiệu ứng storefront và chương trình affiliate. URL QR ZaloPay chỉ phục vụ đối soát thủ công; không lưu merchant secret trong CMS.
 
 Admin có thể bật/tắt affiliate, đặt **tỷ lệ hoa hồng từ 0–100%**, số đơn `delivered` tối thiểu, tổng giá trị `delivered` tối thiểu và yêu cầu duyệt. Lưu cấu hình gọi RPC `admin_update_affiliate_program`, được kiểm tra quyền admin tại database và ghi `affiliate_program_updated` vào audit log. Tỷ lệ được dùng khi trigger tạo commission cho đơn đủ điều kiện về sau; không hồi tố chứng từ đã tồn tại.
 

@@ -40,3 +40,5 @@ Luồng thanh toán số dư chỉ tạo URL `/orders.html?paid=wallet&order=…
 Rà soát truy cập Command Deck ghi nhận backend/preview vẫn phục vụ trang; lỗi browser là `refresh_token_not_found` từ Supabase Auth. Luồng admin đã được cập nhật để dọn phiên cũ cục bộ trước khi đăng nhập lại và hiển thị thông báo phục hồi rõ hơn.
 
 Đã xử lý thêm thứ tự sự kiện sign-out: thông báo “phiên cũ không còn hợp lệ” không còn bị callback Supabase ghi đè thành thông báo chung sau khi local session được dọn.
+
+ZaloPay được thêm ở chế độ QR/chuyển khoản thủ công: tab checkout và nhãn VietQR/MoMo/ZaloPay hiển thị đúng trên storefront. Kiểm thử chỉ xác nhận sự hiện diện giao diện/URL HTTPS, không tạo đơn hoặc xác nhận giao dịch tiền thật.
