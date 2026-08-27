@@ -210,3 +210,4 @@
 - [x] Bổ sung chỉnh sửa và xóa đối tác giao hàng trong Command Deck, có phân quyền phù hợp.
 - [x] Tạo trang thống kê affiliate: lượt referral/click, đơn hàng thành công, hoa hồng theo trạng thái và tổng nhận được.
 - [x] Bảo đảm dashboard chỉ hiển thị dữ liệu của affiliate đang đăng nhập, có kiểm thử phân quyền và responsive.
+- [x] Thêm lối vào Đơn hàng cạnh Tài khoản trên desktop, trong menu mobile và ở chân trang storefront.
