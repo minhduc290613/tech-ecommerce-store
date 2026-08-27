@@ -394,6 +394,53 @@ revoke all on function public.create_order_with_items(text, text, text, jsonb) f
 revoke execute on function public.create_order_with_items(text, text, text, jsonb) from anon;
 grant execute on function public.create_order_with_items(text, text, text, jsonb) to authenticated;
 
+create or replace function public.create_order_with_delivery(
+  p_order_number text, p_payment_method text, p_payment_note text, p_sale_code text, p_items jsonb,
+  p_customer_name text, p_customer_phone text, p_shipping_address text
+)
+returns public.orders language plpgsql security definer set search_path = public
+as $$
+declare
+  v_order public.orders; v_product public.products; v_campaign public.sale_campaigns; v_item jsonb;
+  v_quantity integer; v_subtotal numeric(12,0) := 0; v_discount numeric(12,0) := 0; v_total numeric(12,0) := 0;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập để tạo đơn hàng.'; end if;
+  if nullif(trim(p_shipping_address), '') is null then raise exception 'Vui lòng nhập địa chỉ nhận hàng.'; end if;
+  if length(trim(p_shipping_address)) > 500 then raise exception 'Địa chỉ nhận hàng tối đa 500 ký tự.'; end if;
+  if length(coalesce(trim(p_customer_name), '')) > 140 or length(coalesce(trim(p_customer_phone), '')) > 40 then raise exception 'Thông tin người nhận quá dài.'; end if;
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then raise exception 'Giỏ hàng không có sản phẩm hợp lệ.'; end if;
+  for v_item in select * from jsonb_array_elements(p_items) loop
+    v_quantity := (v_item ->> 'quantity')::integer;
+    select * into v_product from public.products where id = (v_item ->> 'product_id')::uuid and is_active = true;
+    if not found then raise exception 'Không tìm thấy hoặc sản phẩm đang ngừng bán.'; end if;
+    if v_quantity is null or v_quantity <= 0 then raise exception 'Số lượng sản phẩm không hợp lệ.'; end if;
+    if v_product.stock < v_quantity then raise exception 'Sản phẩm % không còn đủ tồn kho.', v_product.name; end if;
+    v_subtotal := v_subtotal + (v_product.price * v_quantity);
+  end loop;
+  if nullif(trim(p_sale_code), '') is not null then
+    select * into v_campaign from public.sale_campaigns where code = upper(trim(p_sale_code)) and is_active = true and starts_at <= now() and ends_at >= now() for update;
+    if not found then raise exception 'Mã săn sale không hợp lệ hoặc đã hết hạn.'; end if;
+    if v_campaign.usage_limit is not null and v_campaign.usage_count >= v_campaign.usage_limit then raise exception 'Mã săn sale đã hết lượt sử dụng.'; end if;
+    if v_subtotal < v_campaign.minimum_order_amount then raise exception 'Đơn cần tối thiểu % để áp dụng mã này.', v_campaign.minimum_order_amount; end if;
+    v_discount := case when v_campaign.discount_type = 'percent' then floor(v_subtotal * v_campaign.discount_value / 100) else v_campaign.discount_value end;
+    if v_campaign.maximum_discount_amount is not null then v_discount := least(v_discount, v_campaign.maximum_discount_amount); end if;
+    v_discount := least(v_discount, v_subtotal);
+    update public.sale_campaigns set usage_count = usage_count + 1, updated_at = now() where id = v_campaign.id;
+  end if;
+  v_total := v_subtotal - v_discount;
+  insert into public.orders (user_id, order_number, subtotal_amount, discount_amount, total_amount, sale_campaign_id, sale_code, status, payment_method, payment_note, customer_name, customer_phone, shipping_address)
+  values (auth.uid(), p_order_number, v_subtotal, v_discount, v_total, v_campaign.id, nullif(upper(trim(p_sale_code)), ''), 'pending_payment', p_payment_method, p_payment_note, nullif(trim(p_customer_name), ''), nullif(trim(p_customer_phone), ''), trim(p_shipping_address)) returning * into v_order;
+  for v_item in select * from jsonb_array_elements(p_items) loop
+    v_quantity := (v_item ->> 'quantity')::integer;
+    select * into v_product from public.products where id = (v_item ->> 'product_id')::uuid;
+    insert into public.order_items (order_id, product_id, product_name, unit_price, quantity, subtotal) values (v_order.id, v_product.id, v_product.name, v_product.price, v_quantity, v_product.price * v_quantity);
+  end loop;
+  return v_order;
+end;
+$$;
+revoke all on function public.create_order_with_delivery(text, text, text, text, jsonb, text, text, text) from public, anon;
+grant execute on function public.create_order_with_delivery(text, text, text, text, jsonb, text, text, text) to authenticated;
+
 -- --------------------------------------------------------------------------
 -- 5. ACCOUNT CENTER, SỔ CÁI SỐ DƯ VÀ KIỂM SOÁT TÀI KHOẢN
 -- --------------------------------------------------------------------------

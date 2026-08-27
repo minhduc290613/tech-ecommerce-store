@@ -246,6 +246,12 @@
     <aside class="cart-drawer" id="cartDrawer" aria-labelledby="cartTitle" aria-hidden="true">
       <div class="drawer-header"><div><span class="panel-label">YOUR SIGNAL CART</span><h2 id="cartTitle"><span data-i18n="cartTitle">Giỏ hàng</span> <span id="cartItemLabel">(0)</span></h2></div><button class="close-button" data-close="cart" type="button" aria-label="Đóng giỏ hàng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
       <div class="cart-items" id="cartItems"></div>
+      <div class="cart-delivery" id="checkoutDelivery" aria-labelledby="checkoutDeliveryTitle">
+        <div class="cart-delivery-head"><i class="fa-solid fa-location-dot" aria-hidden="true"></i><div><span class="panel-label">DELIVERY DETAILS</span><h3 id="checkoutDeliveryTitle">Địa chỉ nhận hàng</h3></div></div>
+        <div class="cart-delivery-grid"><label>Người nhận <input id="checkoutCustomerName" type="text" maxlength="140" autocomplete="name" placeholder="Họ và tên" /></label><label>Số điện thoại <input id="checkoutCustomerPhone" type="tel" maxlength="40" inputmode="tel" autocomplete="tel" placeholder="Số điện thoại" /></label></div>
+        <label>Địa chỉ nhận hàng <textarea id="checkoutShippingAddress" maxlength="500" autocomplete="street-address" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" required></textarea></label>
+        <small>Địa chỉ được lưu cùng đơn hàng để shop sắp xếp giao nhận.</small>
+      </div>
       <div class="drawer-footer">
         <div class="cart-total"><span data-i18n="subtotal">Tạm tính</span><strong id="cartTotal">0đ</strong></div>
         <p><i class="fa-solid fa-lock" aria-hidden="true"></i> <span data-i18n="securePayment">Thanh toán an toàn qua VietQR, MoMo hoặc ZaloPay.</span></p>

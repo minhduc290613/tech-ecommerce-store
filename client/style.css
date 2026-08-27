@@ -221,6 +221,10 @@ h1 em, h2 em { color: var(--cyan); font-style: normal; }
 #authEmailField[hidden], #authPasswordField[hidden], #authPasswordConfirmField[hidden] { display: none !important; }
 [hidden] { display: none !important; }
 
+.cart-delivery { padding: .95rem 1.4rem 1rem; border-top: 1px solid var(--line); background: rgba(9, 22, 38, .55); }.cart-delivery-head { display: flex; align-items: center; gap: .55rem; margin-bottom: .75rem; }.cart-delivery-head > i { color: var(--cyan); font-size: .95rem; }.cart-delivery-head .panel-label { display: block; font-size: .52rem; }.cart-delivery h3 { margin: .12rem 0 0; color: #e7f4ff; font: 700 .86rem var(--font-display); }.cart-delivery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }.cart-delivery label { display: grid; gap: .3rem; margin-bottom: .55rem; color: #c5d9ec; font-size: .65rem; font-weight: 700; }.cart-delivery input, .cart-delivery textarea { width: 100%; min-height: 38px; border: 1px solid var(--line); padding: .5rem .55rem; color: var(--text); background: rgba(3, 8, 18, .52); font: inherit; font-size: .72rem; }.cart-delivery textarea { min-height: 64px; resize: vertical; }.cart-delivery input:focus, .cart-delivery textarea:focus { outline: 2px solid rgba(56, 189, 248, .58); outline-offset: 1px; border-color: var(--cyan); }.cart-delivery small { display: block; color: #7893ad; font-size: .6rem; line-height: 1.45; }
+
+@media (max-width: 720px) { .cart-delivery-grid { grid-template-columns: 1fr; gap: 0; } }
+
 @media (max-width: 720px) {
   .site-header { isolation: isolate; }
   .mobile-nav { position: absolute; z-index: 4; inset: 100% 0 auto; max-height: 0; padding-top: 0; padding-bottom: 0; border-top: 0 solid var(--line); box-shadow: 0 18px 28px rgba(0, 0, 0, .28); }
