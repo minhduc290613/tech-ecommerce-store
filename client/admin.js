@@ -9,6 +9,7 @@ import { normalizeProductGallery, productGalleryUrls } from "./product-gallery.j
 import "./admin-transfer-payments.css";
 import "./admin-product-gallery.css";
 import "./admin-order-action-labels.css";
+import "./admin-order-archive.css";
 import "./admin-accounts.js";
 import "./admin-email-delivery.js";
 import "./admin-roles-content.js";
@@ -21,8 +22,8 @@ const $ = (selector, parent = document) => parent.querySelector(selector);
 const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
 const state = {
-  user: null, role: "customer", roleDefinitions: [], capabilities: {}, products: [], productImages: [], editingProductGallery: [], orders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
-  fulfillmentFilter: "all", paymentFilter: "all", orderQuery: "", carrierFilter: "all", activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null, editingSaleCampaignId: null,
+  user: null, role: "customer", isAdmin: false, roleDefinitions: [], capabilities: {}, products: [], productImages: [], editingProductGallery: [], orders: [], archivedOrders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
+  fulfillmentFilter: "all", paymentFilter: "all", orderQuery: "", carrierFilter: "all", archivedOrderQuery: "", pendingOrderAction: null, activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null, editingSaleCampaignId: null,
 };
 let clearingExpiredAdminSession = false;
 
@@ -58,7 +59,7 @@ async function init() {
 function bindEvents() {
   els.loginForm.addEventListener("submit", login);
   els.signOut.addEventListener("click", signOut);
-  mountTechnicalSpecsEditor(); mountContactSettingsFields(); mountEnglishBrandContentFields(); mountEnglishPageContentFields(); mountBrandAssetUploads(); mountContentImageUploads(); mountProductGalleryEditor(); mountOrderCancellationControls(); mountSaleAdminUI(); mountProductShopSelector();
+  mountTechnicalSpecsEditor(); mountContactSettingsFields(); mountEnglishBrandContentFields(); mountEnglishPageContentFields(); mountBrandAssetUploads(); mountContentImageUploads(); mountProductGalleryEditor(); mountOrderCancellationControls(); mountOrderActionConfirmation(); mountArchivedOrderHistory(); mountSaleAdminUI(); mountProductShopSelector();
   $$(".admin-nav button[data-view]").forEach((button) => button.addEventListener("click", () => activateView(button.dataset.view)));
   $$('[data-view-jump]').forEach((button) => button.addEventListener("click", () => activateView(button.dataset.viewJump)));
   els.newProduct.addEventListener("click", () => openProductModal());
@@ -146,6 +147,7 @@ async function verifyAdmin(user) {
   const resolvedRole = roleData?.role || (isAdmin ? "admin" : "customer");
   if (error || !allowed) { await db.auth.signOut({ scope: "local" }); return showGate(getAdminAccessMessage({ authorizationError: error?.message, allowed })); }
   state.user = user;
+  state.isAdmin = Boolean(isAdmin);
   state.role = resolvedRole;
   state.roleDefinitions = roleDefinitionsResult.data || [];
   state.capabilities = Boolean(isAdmin) ? { commandDeck: true, articles: true, moderation: true, orders: true, roles: true, siteSettings: true } : resolveRoleCapabilities(resolvedRole, state.roleDefinitions);
@@ -160,35 +162,37 @@ async function verifyAdmin(user) {
 }
 
 function applyRoleVisibility() {
-  const isAdmin = isAdminRole(state.role); const canOrders = isAdmin || Boolean(state.capabilities.orders);
+  const isAdmin = state.isAdmin || isAdminRole(state.role); const canOrders = isAdmin || Boolean(state.capabilities.orders);
   const canModerate = isAdmin || Boolean(state.capabilities.moderation) || Boolean(state.capabilities.roles);
   const canMarketing = isAdmin || Boolean(state.capabilities.articles);
   const canSettings = isAdmin || Boolean(state.capabilities.siteSettings);
   const hide = (view, hidden) => { const nav = $(`.admin-nav [data-view="${view}"]`); const section = $(`[data-admin-view="${view}"]`); if (nav) nav.hidden = hidden; if (section) section.hidden = hidden; };
   hide("products", !isAdmin); hide("brand", !canSettings); hide("shops", !isAdmin); hide("sale-campaigns", !isAdmin); hide("orders", !canOrders); hide("content", !canMarketing);
+  $("#archivedOrderHistory")?.toggleAttribute("hidden", !state.isAdmin);
   if (!isAdmin && !canOrders && !canModerate && !canMarketing && !canSettings) hide("overview", true);
 }
 
 async function signOut() { if (db) await db.auth.signOut(); showGate("Bạn đã đăng xuất khỏi Command Deck."); }
-function showGate(message) { state.user = null; els.app.hidden = true; els.gate.hidden = false; els.gateMessage.textContent = message; els.loginPassword.value = ""; }
+function showGate(message) { state.user = null; state.isAdmin = false; state.archivedOrders = []; state.pendingOrderAction = null; els.app.hidden = true; els.gate.hidden = false; els.gateMessage.textContent = message; els.loginPassword.value = ""; }
 
 async function loadData() {
   setTableLoading();
-  const [productsResult, productImagesResult, ordersResult, settingsResult, pagesResult, faqsResult, shopsResult, campaignsResult] = await Promise.all([
+  const [productsResult, productImagesResult, ordersResult, archivedOrdersResult, settingsResult, pagesResult, faqsResult, shopsResult, campaignsResult] = await Promise.all([
     db.from("products").select("*").order("created_at", { ascending: false }),
     db.from("product_images").select("product_id,image_url,sort_order").order("sort_order"),
     db.from("orders").select("id,order_number,user_id,subtotal_amount,discount_amount,sale_campaign_id,sale_code,total_amount,status,payment_method,auto_transfer_provider,payment_note,payment_confirmed_at,payment_confirmation_note,zalo_confirmation_requested_at,customer_name,customer_phone,shipping_address,shipping_note,fulfillment_status,carrier,tracking_code,admin_note,fulfillment_updated_at,delivered_at,created_at,updated_at,order_items(product_name,unit_price,quantity,subtotal)").is("archived_at", null).order("created_at", { ascending: false }),
+    state.isAdmin ? db.from("orders").select("id,order_number,total_amount,status,archived_at,archived_by,archive_reason,created_at,order_items(product_name,quantity)").not("archived_at", "is", null).order("archived_at", { ascending: false }) : Promise.resolve({ data: [], error: null }),
     db.from("site_settings").select("*").eq("singleton", true).maybeSingle(),
     db.from("site_pages").select("*").order("slug"),
     db.from("faqs").select("*").order("sort_order"),
     db.from("shops").select("*").order("created_at", { ascending: false }),
     db.from("sale_campaigns").select("*").order("created_at", { ascending: false }),
   ]);
-  if (productsResult.error || ordersResult.error || productImagesResult.error) return toast(productsResult.error?.message || productImagesResult.error?.message || ordersResult.error?.message || "Không tải được dữ liệu quản trị.", "error");
-  state.productImages = productImagesResult.data || []; state.products = (productsResult.data || []).map((product) => ({ ...product, product_images: state.productImages.filter((image) => image.product_id === product.id) })); state.orders = ordersResult.data || []; refreshCarrierFilterOptions();
+  if (productsResult.error || ordersResult.error || productImagesResult.error || archivedOrdersResult.error) return toast(productsResult.error?.message || productImagesResult.error?.message || ordersResult.error?.message || archivedOrdersResult.error?.message || "Không tải được dữ liệu quản trị.", "error");
+  state.productImages = productImagesResult.data || []; state.products = (productsResult.data || []).map((product) => ({ ...product, product_images: state.productImages.filter((image) => image.product_id === product.id) })); state.orders = ordersResult.data || []; state.archivedOrders = archivedOrdersResult.data || []; refreshCarrierFilterOptions();
   if (settingsResult.error || pagesResult.error || faqsResult.error || shopsResult.error || campaignsResult.error) toast("CMS/sale chưa sẵn sàng. Hãy chạy các migration Supabase mới nhất.", "error");
   state.settings = settingsResult.data || null; state.pages = pagesResult.data || []; state.faqs = faqsResult.data || []; state.shops = shopsResult.data || []; state.saleCampaigns = campaignsResult.data || []; populateProductShopOptions($("#productShopId")?.value || "");
-  renderMetrics(); renderOperationsMetrics(); renderRevenueChart(); renderProducts(); renderOrders(); renderRecentOrders(); renderSettings(); renderFaqs(); renderShops(); renderSaleCampaigns(); fillPageForm();
+  renderMetrics(); renderOperationsMetrics(); renderRevenueChart(); renderProducts(); renderOrders(); renderArchivedOrderHistory(); renderRecentOrders(); renderSettings(); renderFaqs(); renderShops(); renderSaleCampaigns(); fillPageForm();
 }
 
 function renderMetrics() {
@@ -220,6 +224,25 @@ function renderOrders() {
   renderTransferPaymentQueue();
 }
 
+function mountArchivedOrderHistory() {
+  if ($("#archivedOrderHistory")) return;
+  const ordersPanel = els.ordersBody?.closest(".orders-panel"); if (!ordersPanel) return;
+  ordersPanel.insertAdjacentHTML("afterend", '<section class="admin-panel archived-order-history" id="archivedOrderHistory" hidden><div class="panel-top archived-order-head"><div><span class="panel-label">ARCHIVE LEDGER</span><h3>Lịch sử đơn đã lưu trữ</h3><p>Chỉ Admin xem được. Các đơn ở đây đã được loại khỏi danh sách vận hành, nhưng vẫn giữ bản ghi đối soát và không thể khôi phục từ giao diện.</p></div><span class="archive-count" id="archivedOrderCount">0 ĐƠN LƯU TRỮ</span></div><div class="archive-filter-row"><label class="table-search"><i class="fa-solid fa-magnifying-glass"></i><input id="archivedOrderSearch" type="search" placeholder="Tìm theo mã đơn hoặc ghi chú lưu trữ..." /></label><span class="archive-filter-count" id="archivedOrderFilterCount">0/0 đơn</span></div><div class="table-wrap"><table><thead><tr><th>Mã đơn</th><th>Giá trị</th><th>Sản phẩm</th><th>Lưu trữ lúc</th><th>Người lưu</th><th>Ghi chú</th></tr></thead><tbody id="archivedOrdersTableBody"></tbody></table></div></section>');
+  $("#archivedOrderSearch")?.addEventListener("input", (event) => { state.archivedOrderQuery = event.target.value; renderArchivedOrderHistory(); });
+}
+
+function renderArchivedOrderHistory() {
+  const panel = $("#archivedOrderHistory"); const body = $("#archivedOrdersTableBody"); const count = $("#archivedOrderCount"); const filteredCount = $("#archivedOrderFilterCount");
+  if (!panel || !body || !count || !filteredCount) return;
+  panel.hidden = !state.isAdmin;
+  if (!state.isAdmin) return;
+  const query = normalize(state.archivedOrderQuery);
+  const rows = state.archivedOrders.filter((order) => !query || normalize(`${order.order_number || ""} ${order.archive_reason || ""}`).includes(query));
+  count.textContent = `${state.archivedOrders.length} ĐƠN LƯU TRỮ`;
+  filteredCount.textContent = `${rows.length}/${state.archivedOrders.length} đơn`;
+  body.innerHTML = rows.map((order) => `<tr><td><b>${escapeHtml(order.order_number)}</b><br /><small class="archive-status"><i class="fa-solid fa-box-archive"></i> Đã lưu trữ</small></td><td><b>${currency(order.total_amount)}</b></td><td>${order.order_items?.reduce((sum, item) => sum + Number(item.quantity || 0), 0) || 0} SP</td><td>${escapeHtml(formatDate(order.archived_at))}</td><td>${order.archived_by === state.user?.id ? "Bạn" : "Quản trị viên"}</td><td><span class="archive-reason">${escapeHtml(order.archive_reason || "Không có ghi chú")}</span></td></tr>`).join("") || emptyRow("Chưa có đơn nào được lưu trữ.", 6);
+}
+
 function mountTransferPaymentReview() {
   if ($("#transferPaymentReview")) return;
   const ordersPanel = els.ordersBody?.closest(".admin-panel"); if (!ordersPanel) return;
@@ -239,10 +262,11 @@ function renderTransferPaymentQueue() {
 function mountAdvancedOrderFilters() {
   if ($("#orderSearch")) return;
   const host = els.fulfillmentFilters?.closest(".fulfillment-filter-row"); if (!host) return;
-  host.insertAdjacentHTML("afterend", '<div class="order-advanced-filters"><label class="table-search order-search"><i class="fa-solid fa-magnifying-glass"></i><input id="orderSearch" type="search" placeholder="Mã đơn, mã vận đơn, khách hàng, SĐT hoặc nhà vận chuyển..." /></label><select class="payment-filter" id="orderCarrierFilter" aria-label="Lọc nhà vận chuyển"><option value="all">Tất cả nhà vận chuyển</option></select><button class="quiet-button" id="clearOrderFilters" type="button"><i class="fa-solid fa-filter-circle-xmark"></i> Xóa lọc</button><span id="orderFilterCount" class="order-filter-count">0/0 đơn</span></div>');
+  host.insertAdjacentHTML("afterend", '<div class="order-advanced-filters"><label class="table-search order-search"><i class="fa-solid fa-magnifying-glass"></i><input id="orderSearch" type="search" placeholder="Mã đơn, mã vận đơn, khách hàng, SĐT hoặc nhà vận chuyển..." /></label><select class="payment-filter" id="orderCarrierFilter" aria-label="Lọc nhà vận chuyển"><option value="all">Tất cả nhà vận chuyển</option></select><button class="quiet-button" id="focusCancelledOrders" type="button"><i class="fa-solid fa-ban"></i> Đơn đã hủy</button><button class="quiet-button" id="clearOrderFilters" type="button"><i class="fa-solid fa-filter-circle-xmark"></i> Xóa lọc</button><span id="orderFilterCount" class="order-filter-count">0/0 đơn</span></div>');
   document.head.insertAdjacentHTML("beforeend", '<style>.order-advanced-filters{display:flex;align-items:center;gap:.6rem;margin:0 0 1rem}.order-advanced-filters .order-search{flex:1;min-width:15rem}.order-filter-count{margin-left:auto;color:#91afc9;font:600 .65rem var(--font-mono);white-space:nowrap}@media(max-width:720px){.order-advanced-filters{align-items:stretch;flex-wrap:wrap}.order-advanced-filters .order-search{flex:1 0 100%}.order-advanced-filters select,.order-advanced-filters button{flex:1}.order-filter-count{width:100%;margin-left:0}}</style>');
   $("#orderSearch").addEventListener("input", (event) => { state.orderQuery = event.target.value; renderOrders(); });
   $("#orderCarrierFilter").addEventListener("change", (event) => { state.carrierFilter = event.target.value; renderOrders(); });
+  $("#focusCancelledOrders").addEventListener("click", () => { state.paymentFilter = "cancelled"; els.paymentFilter.value = "cancelled"; renderOrders(); });
   $("#clearOrderFilters").addEventListener("click", () => { state.orderQuery = ""; state.carrierFilter = "all"; state.fulfillmentFilter = "all"; state.paymentFilter = "all"; $("#orderSearch").value = ""; $("#orderCarrierFilter").value = "all"; els.paymentFilter.value = "all"; $$("button", els.fulfillmentFilters).forEach((button) => button.classList.toggle("active", button.dataset.fulfillmentFilter === "all")); renderOrders(); });
 }
 function refreshCarrierFilterOptions() { const select = $("#orderCarrierFilter"); if (!select) return; const current = state.carrierFilter; const carriers = [...new Set(state.orders.map((order) => String(order.carrier || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi")); select.innerHTML = `<option value="all">Tất cả nhà vận chuyển</option>${carriers.map((carrier) => `<option value="${escapeHtml(carrier)}">${escapeHtml(carrier)}</option>`).join("")}`; state.carrierFilter = carriers.some((carrier) => carrier === current) ? current : "all"; select.value = state.carrierFilter; }
@@ -374,16 +398,45 @@ async function saveOrder(event) {
   if (error) return toast(error.message, "error"); closeModal("order"); toast("Đã cập nhật đơn hàng.", "success"); await loadData();
 }
 
-async function cancelOrderAsManager(orderId) {
-  const order = getOrder(orderId); if (!order || !canCancelPendingOrder(order)) return toast("Chỉ hủy được đơn chưa thanh toán và chưa vào giao nhận.", "error");
-  const reason = window.prompt(`Lý do hủy đơn ${order.order_number}:`, cancellationReason("manager"));
-  if (reason === null) return;
-  if (!window.confirm(`Xác nhận hủy đơn ${order.order_number}? Thao tác này không xóa lịch sử đơn.`)) return;
-  const { error } = await db.rpc("cancel_order_as_manager", { p_order_id: order.id, p_reason: reason.trim() || cancellationReason("manager") });
-  if (error) return toast(error.message, "error");
-  closeModal("order"); toast("Đã hủy đơn và lưu lịch sử vận hành.", "success"); await loadData();
+function mountOrderActionConfirmation() {
+  if ($("#orderActionConfirmModal")) return;
+  document.body.insertAdjacentHTML("beforeend", '<section class="admin-modal" id="orderActionConfirmModal" role="dialog" aria-modal="true" aria-labelledby="orderActionConfirmTitle" hidden><div class="product-modal-card order-action-confirm-card"><button class="close-modal" id="closeOrderActionConfirm" type="button" aria-label="Đóng xác nhận thao tác đơn"><i class="fa-solid fa-xmark"></i></button><span class="signal-label"><span></span> ORDER SAFEGUARD</span><h2 id="orderActionConfirmTitle">Xác nhận thao tác</h2><p id="orderActionConfirmDescription"></p><div class="order-action-summary"><span>Mã đơn</span><strong id="orderActionConfirmNumber">—</strong><span>Giá trị</span><strong id="orderActionConfirmAmount">—</strong></div><form class="product-form" id="orderActionConfirmForm"><label id="orderActionReasonLabel">Ghi chú<textarea id="orderActionConfirmReason" maxlength="400" required></textarea></label><p class="order-action-warning" id="orderActionConfirmWarning"></p><div class="form-actions"><button class="quiet-button" id="cancelOrderActionConfirm" type="button">Quay lại</button><button class="action-button danger" id="submitOrderActionConfirm" type="submit">Xác nhận</button></div></form></div></section>');
+  const close = () => { state.pendingOrderAction = null; closeModal("orderActionConfirm"); };
+  $("#closeOrderActionConfirm").addEventListener("click", close); $("#cancelOrderActionConfirm").addEventListener("click", close);
+  $("#orderActionConfirmModal").addEventListener("click", (event) => { if (event.target === $("#orderActionConfirmModal")) close(); });
+  $("#orderActionConfirmForm").addEventListener("submit", submitOrderActionConfirmation);
 }
-async function archiveCancelledOrder(orderId) { const order = getOrder(orderId); if (!order || order.status !== "cancelled") return toast("Chỉ xóa khỏi danh sách được đơn đã hủy.", "error"); const reason = window.prompt(`Ghi chú lưu trữ đơn ${order.order_number}:`, "Đơn hủy được lưu trữ khỏi danh sách vận hành."); if (reason === null) return; if (!window.confirm(`Xóa đơn ${order.order_number} khỏi danh sách? Dữ liệu sẽ được lưu trữ để đối soát, không xóa vĩnh viễn.`)) return; const { error } = await db.rpc("archive_cancelled_order", { p_order_id: order.id, p_reason: reason.trim() || null }); if (error) return toast(error.message, "error"); toast("Đã xóa khỏi danh sách và lưu trữ lịch sử đơn.", "success"); await loadData(); }
+
+function cancelOrderAsManager(orderId) { openOrderActionConfirmation("cancel", orderId); }
+function archiveCancelledOrder(orderId) { openOrderActionConfirmation("archive", orderId); }
+
+function openOrderActionConfirmation(action, orderId) {
+  const order = getOrder(orderId);
+  if (action === "cancel" && (!order || !canCancelPendingOrder(order))) return toast("Chỉ hủy được đơn chưa thanh toán và chưa vào giao nhận.", "error");
+  if (action === "archive" && (!order || order.status !== "cancelled")) return toast("Chỉ xóa khỏi danh sách được đơn đã hủy.", "error");
+  state.pendingOrderAction = { action, orderId: order.id };
+  const isArchive = action === "archive";
+  $("#orderActionConfirmTitle").textContent = isArchive ? "Xác nhận lưu trữ đơn" : "Xác nhận hủy đơn";
+  $("#orderActionConfirmDescription").textContent = isArchive ? "Đơn sẽ không còn ở danh sách vận hành, nhưng dữ liệu đối soát vẫn được giữ lại trong lịch sử dành cho Admin." : "Chỉ đơn chưa thanh toán và chưa vào giao nhận mới có thể bị hủy. Lịch sử đơn sẽ được giữ lại.";
+  $("#orderActionConfirmNumber").textContent = order.order_number; $("#orderActionConfirmAmount").textContent = currency(order.total_amount);
+  $("#orderActionReasonLabel").firstChild.textContent = isArchive ? "Ghi chú lưu trữ" : "Lý do hủy đơn";
+  $("#orderActionConfirmReason").value = isArchive ? "Đơn hủy được lưu trữ khỏi danh sách vận hành." : cancellationReason("manager");
+  $("#orderActionConfirmWarning").textContent = isArchive ? "Không có thao tác xóa vĩnh viễn hoặc khôi phục từ màn hình này." : "Sau khi hủy, đơn không thể chuyển lại trạng thái thanh toán hoặc giao nhận.";
+  $("#submitOrderActionConfirm").innerHTML = isArchive ? '<i class="fa-solid fa-box-archive"></i> Lưu trữ đơn' : '<i class="fa-solid fa-ban"></i> Hủy đơn';
+  $("#submitOrderActionConfirm").classList.toggle("archive-confirm", isArchive);
+  openModal("orderActionConfirm");
+}
+
+async function submitOrderActionConfirmation(event) {
+  event.preventDefault(); const pending = state.pendingOrderAction; const order = pending && getOrder(pending.orderId); if (!pending || !order) return;
+  const reason = $("#orderActionConfirmReason").value.trim(); const submit = $("#submitOrderActionConfirm"); const isArchive = pending.action === "archive";
+  if (!reason) return toast(isArchive ? "Nhập ghi chú lưu trữ." : "Nhập lý do hủy đơn.", "error");
+  setLoading(submit, true, isArchive ? "Đang lưu trữ" : "Đang hủy");
+  const result = isArchive ? await db.rpc("archive_cancelled_order", { p_order_id: order.id, p_reason: reason }) : await db.rpc("cancel_order_as_manager", { p_order_id: order.id, p_reason: reason });
+  setLoading(submit, false);
+  if (result.error) return toast(result.error.message, "error");
+  state.pendingOrderAction = null; closeModal("orderActionConfirm"); closeModal("order"); toast(isArchive ? "Đã chuyển đơn khỏi danh sách vận hành và lưu trữ lịch sử." : "Đã hủy đơn và lưu lịch sử vận hành.", "success"); await loadData();
+}
 
 function activateView(view) { $$(".admin-nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === view)); $$("[data-admin-view]").forEach((section) => section.classList.toggle("active", section.dataset.adminView === view)); els.viewTitle.textContent = ({ overview: "Tổng quan vận hành", products: "Quản lý sản phẩm", orders: "Quản lý đơn hàng", brand: "Thương hiệu & banner", content: "Nội dung & FAQ", shops: "Gian hàng & đối tác", "sale-campaigns": "Săn sale & ưu đãi" })[view] || "Command Deck"; }
 function getProduct(id) { return state.products.find((product) => product.id === id); }

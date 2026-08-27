@@ -1,0 +1,74 @@
+.archived-order-history {
+  margin-top: 1.25rem;
+  border-color: rgba(139, 92, 246, 0.32);
+  background: linear-gradient(135deg, rgba(20, 16, 40, 0.88), rgba(9, 20, 36, 0.88));
+}
+
+.archived-order-head { gap: 1.25rem; }
+
+.archive-count,
+.archive-status {
+  color: #c4b5fd;
+  font: 700 0.64rem var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.archive-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(167, 139, 250, 0.34);
+  border-radius: 999px;
+  background: rgba(76, 29, 149, 0.2);
+  white-space: nowrap;
+}
+
+.archive-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.archive-filter-row .table-search { flex: 1; min-width: 16rem; }
+.archive-filter-count { color: #91afc9; font: 600 0.65rem var(--font-mono); white-space: nowrap; }
+.archive-reason { display: block; max-width: 26rem; color: #b8c8d9; line-height: 1.45; }
+
+.order-action-confirm-card { max-width: 34rem; }
+.order-action-confirm-card > p { color: #afc2d5; line-height: 1.6; }
+
+.order-action-summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem 1.5rem;
+  margin: 1.25rem 0;
+  padding: 1rem;
+  border: 1px solid rgba(106, 142, 176, 0.25);
+  background: rgba(4, 12, 25, 0.62);
+}
+
+.order-action-summary span { color: #8299af; font: 600 0.65rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.order-action-summary strong { color: #e6f7ff; text-align: right; }
+
+.order-action-warning {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-left: 2px solid #fb7185;
+  background: rgba(190, 24, 93, 0.11);
+  color: #fecdd3;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.archive-confirm { background: #6d28d9; border-color: #8b5cf6; }
+.archive-confirm:hover { background: #7c3aed; }
+
+@media (max-width: 720px) {
+  .archived-order-head,
+  .archive-filter-row { align-items: stretch; flex-direction: column; }
+  .archive-filter-row .table-search { min-width: 0; }
+  .archive-filter-count { width: 100%; }
+  .archive-count { align-self: flex-start; }
+  .archive-reason { max-width: 16rem; }
+}

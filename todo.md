@@ -223,3 +223,6 @@
 - [x] Khắc phục lỗi database khiến Command Deck không cập nhật được thông tin quản trị.
 - [x] Kiểm tra trực tiếp tài khoản quản trị và xác minh vị trí/thao tác hủy, lưu trữ đơn trong Admin.
 - [x] Đổi thao tác hủy và xóa lưu trữ đơn trong Admin từ icon đơn lẻ thành nút có nhãn chữ rõ ràng.
+- [x] Thêm hộp xác nhận rõ ràng cho thao tác hủy và lưu trữ đơn trong Admin.
+- [x] Thêm bộ lọc đơn đã hủy trong khu vực quản lý đơn hàng.
+- [x] Thêm khu vực lịch sử đơn đã lưu trữ cho Admin.
