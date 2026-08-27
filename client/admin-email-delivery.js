@@ -1,15 +1,31 @@
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 import { renderPasswordRecoveryEmail, getDeliveryRoute } from "./email-template-preview.js";
 import { getPublicSiteUrl } from "./public-url.js";
+import { createMountGate } from "./admin-mount-guard.js";
 
 const configured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const DEFAULT_TEMPLATE = { subject: "Đặt lại mật khẩu NEXORA", preheader: "Dùng liên kết an toàn để đặt lại mật khẩu NEXORA của bạn.", heading: "Đặt lại mật khẩu của bạn", body_text: "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản NEXORA của bạn. Liên kết chỉ dùng một lần và có thể hết hạn theo cấu hình Supabase Auth.", cta_label: "Đặt lại mật khẩu", footer_text: "Nếu bạn không gửi yêu cầu này, bạn có thể bỏ qua email một cách an toàn." };
 let db = null;
+const mountGate = createMountGate();
 const $ = (selector, parent = document) => parent.querySelector(selector);
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char]));
 
 document.addEventListener("DOMContentLoaded", init); window.addEventListener("nexora:admin-ready", init);
-async function init() { db = window.nexoraAdminDb || (configured && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null); if (!db || $("#emailDeliveryAdminView")) return; const { data } = await db.auth.getSession(); if (!data.session?.user) return; const { data: allowed } = await db.rpc("is_admin"); if (!allowed) return; mount(); await load(); }
+async function init() {
+  if (!mountGate.tryStart(Boolean($("#emailDeliveryAdminView")))) return;
+  try {
+    db = window.nexoraAdminDb || (configured && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null);
+    if (!db) return;
+    const { data } = await db.auth.getSession();
+    if (!data.session?.user) return;
+    const { data: allowed } = await db.rpc("is_admin");
+    if (!allowed || $("#emailDeliveryAdminView")) return;
+    mount();
+    await load();
+  } finally {
+    mountGate.release();
+  }
+}
 
 function mount() {
   document.head.insertAdjacentHTML("beforeend", `<style>
