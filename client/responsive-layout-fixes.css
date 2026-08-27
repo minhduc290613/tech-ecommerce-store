@@ -1,0 +1,47 @@
+/* Final viewport-safe overrides: do not use the page frame as horizontal padding. */
+@media (max-width: 720px) {
+  .site-header { overflow: visible; }
+  .mobile-nav {
+    position: absolute;
+    z-index: 4;
+    top: 100%;
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border-top: 0 solid var(--line);
+    background: #101a2c;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: max-height 180ms var(--ease-out), opacity 180ms var(--ease-out), transform 180ms var(--ease-out), border-color 180ms var(--ease-out);
+  }
+  .mobile-nav.open {
+    max-height: 420px;
+    padding: 0;
+    border-top-width: 1px;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .mobile-nav-inner {
+    display: grid;
+    width: 100%;
+    gap: .18rem;
+    padding: .7rem 15px 1rem;
+  }
+  .mobile-nav a { min-width: 0; overflow-wrap: anywhere; }
+  .mobile-language-toggle { justify-self: start; }
+}
+
+@media (min-width: 721px) {
+  #accountCenterModal { padding: 24px; }
+  #accountCenterModal .account-center-card {
+    width: min(1280px, calc(100vw - 48px)) !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 48px) !important;
+  }
+}
