@@ -8,6 +8,7 @@ import { canReplaceTranslationText } from "./translation-safety.js";
 import { getWalletPaymentOrdersUrl } from "./payment-redirect.js";
 import { getTrustedZaloPayQrUrl } from "./zalopay-qr.js";
 import { getPaymentPresentation } from "./payment-presentation.js";
+import { getZaloPayCopyActions } from "./payment-copy-actions.js";
 
 const UI_TRANSLATIONS = {
   vi: { discover: "Khám phá", discoverProducts: "Khám phá sản phẩm", flashSale: "Flash Sale", categories: "Danh mục", shops: "Gian hàng", journal: "Bài viết", help: "Trợ giúp", exploreDeals: "Khám phá ưu đãi", viewFlashSale: "Xem Flash Sale", searchPlaceholder: "Tìm thiết bị, phụ kiện...", mobileSearchPlaceholder: "Tìm kiếm trong NEXORA", skipCatalog: "Đi tới danh sách sản phẩm", loaderTitle: "Đang đưa thiết bị lên màn hình", loaderDetail: "Chờ một nhịp để đồng bộ catalog và ưu đãi.", storeOnline: "Storefront online", curatedDevices: "Thiết bị tuyển chọn", orderResponse: "Phản hồi đơn hàng", productSupport: "Hỗ trợ sản phẩm", flashHeading: "Flash Sale<br /><em>đang truyền tín hiệu.</em>", flashDescription: "Giá ưu đãi chỉ mở trong khung giờ này. Hãy thêm sản phẩm trước khi đồng hồ quay về 00.", huntNow: "Săn giá ngay", saleHuntHeading: "Săn mã đúng nhịp.<br /><em>Giảm thẳng vào đơn.</em>", saleHuntDescription: "Chọn một mã đang mở, mã sẽ được đưa vào giỏ. Tổng ưu đãi cuối cùng luôn được kiểm tra lại khi tạo đơn.", catalogHeading: "Thiết bị<br /><em>đang bắt sóng.</em>", clearFilters: "Xóa lọc", categoryLabel: "Danh mục", allDevices: "Tất cả thiết bị", phones: "Điện thoại", accessories: "Phụ kiện", priceRange: "Khoảng giá", saleOnly: "Chỉ xem đang SALE", filterNote: "Giá đã hiển thị là giá hiện tại. Các ưu đãi Flash Sale có thể kết thúc sớm.", catalogUnavailable: "Không thể đồng bộ catalog mới nhất.", catalogFallback: "Đang hiển thị dữ liệu dự phòng để bạn tiếp tục xem sản phẩm.", retry: "Thử lại", emptyTitle: "Không tìm thấy tín hiệu phù hợp.", emptyDetail: "Điều chỉnh bộ lọc hoặc thử một từ khóa khác.", resetFilters: "Thiết lập lại bộ lọc", shopsHeading: "Gian hàng<br /><em>đang được xác minh.</em>", shopsDescription: "Khám phá các không gian công nghệ theo nhu cầu, có mô tả hoạt động và đầu mối hỗ trợ rõ ràng.", sellerStandard: "Tìm hiểu về tiêu chuẩn gian hàng", helpHeading: "Câu hỏi có<br /><em>tín hiệu rõ ràng.</em>", helpDescription: "Thông tin về tài khoản, thanh toán và hỗ trợ sau đơn được tập hợp ở một nơi.", helpCenter: "Đến trung tâm hỗ trợ", trustHeading: "Mua sắm với<br />thông tin rõ ràng.", trustDescription: "Các chính sách và hướng dẫn được công bố tập trung để bạn xem trước khi giao dịch.", shippingReturns: "Giao hàng & đổi trả", shippingReturnsDetail: "Quy trình và thông tin cần chuẩn bị", privacy: "Bảo mật dữ liệu", privacyDetail: "Nguyên tắc xử lý tài khoản và đơn hàng", terms: "Điều khoản sử dụng", termsDetail: "Các nguyên tắc vận hành nền tảng", about: "Về NEXORA", aboutDetail: "Cam kết về trải nghiệm và minh bạch", clearInfo: "Minh bạch thông tin", clearInfoDetail: "Mô tả, giá và ưu đãi hiển thị rõ ràng.", carefulPacking: "Đóng gói cẩn thận", carefulPackingDetail: "Kiểm tra thiết bị trước khi bàn giao.", afterOrderSupport: "Hỗ trợ sau đơn", afterOrderSupportDetail: "Đội ngũ NEXORA sẵn sàng phản hồi.", storeAdmin: "Quản trị cửa hàng", cartTitle: "Giỏ hàng", subtotal: "Tạm tính", securePayment: "Thanh toán an toàn qua VietQR hoặc MoMo.", continueCheckout: "Tiếp tục thanh toán", authHeading: "Đăng nhập để<br /><em>đồng bộ đơn hàng.</em>", authIntro: "Tạo tài khoản hoặc đăng nhập bằng email để tiếp tục với thanh toán và quản lý đơn hàng.", login: "Đăng nhập", signup: "Đăng ký", passwordLabel: "Mật khẩu", passwordPlaceholder: "Tối thiểu 6 ký tự", inStock: "Còn hàng", nationwideDelivery: "Giao hàng toàn quốc", addToCart: "Thêm vào giỏ", orderCreated: "ĐƠN HÀNG ĐÃ ĐƯỢC TẠO", qrHeading: "Quét mã để<br /><em>hoàn tất thanh toán.</em>", devicesShown: (count) => `${count.toString().padStart(2, "0")} thiết bị đang hiển thị`, catalogLoading: "Đang đồng bộ catalog...", searchLoading: "Đang tìm trong catalog...", searchHint: "Đang lọc thiết bị phù hợp…", addCart: "Thêm giỏ", soldOut: "Hết hàng", comments: "Bình luận", useCode: "Dùng mã", noActiveSale: "Chưa có mã săn sale đang mở. Hãy quay lại trong đợt tiếp theo.", verified: "Đã xác minh", updating: "Đang cập nhật", contactSupport: "Liên hệ hỗ trợ", standard: "Tiêu chuẩn", emptyCart: "Giỏ hàng đang trống. Chọn một thiết bị để bắt đầu phiên mua sắm." },
@@ -73,7 +74,7 @@ const els = {
   cartButton: $("#cartButton"), cartDrawer: $("#cartDrawer"), cartBadge: $("#cartBadge"), cartItemLabel: $("#cartItemLabel"), cartItems: $("#cartItems"), cartTotal: $("#cartTotal"), checkoutButton: $("#checkoutButton"),
   overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authEmailField: $("#authEmailField"), authPassword: $("#authPassword"), authPasswordField: $("#authPasswordField"), authPasswordConfirm: $("#authPasswordConfirm"), authPasswordConfirmField: $("#authPasswordConfirmField"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authIntro: $("#authIntro"), authHelper: $("#authHelper"),
   quickViewModal: $("#quickViewModal"), quickViewImage: $("#quickViewImage"), quickViewCategory: $("#quickViewCategory"), quickViewTitle: $("#quickViewTitle"), quickViewDescription: $("#quickViewDescription"), quickViewPrice: $("#quickViewPrice"), quickViewAdd: $("#quickViewAdd"),
-  qrModal: $("#qrModal"), qrCard: $("#qrModal .qr-card"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), zalopayScanGuide: $("#zalopayScanGuide"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), carrierSection: $("#shipping-partners"), carrierGrid: $("#carrierStorefrontGrid"), faqList: $("#faqList"), saleHuntGrid: $("#saleHuntGrid"), pageLoader: $("#pageLoader"),
+  qrModal: $("#qrModal"), qrCard: $("#qrModal .qr-card"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), zalopayScanGuide: $("#zalopayScanGuide"), zalopayCopyActions: $("#zalopayCopyActions"), copyZaloPayTransferContent: $("#copyZaloPayTransferContent"), copyZaloPayAccountNumber: $("#copyZaloPayAccountNumber"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), carrierSection: $("#shipping-partners"), carrierGrid: $("#carrierStorefrontGrid"), faqList: $("#faqList"), saleHuntGrid: $("#saleHuntGrid"), pageLoader: $("#pageLoader"),
 };
 
 document.addEventListener("DOMContentLoaded", initializeApp);
@@ -160,6 +161,8 @@ function bindEvents() {
   els.qrImage.addEventListener("load", hideQRState);
   els.zaloConfirmLink.addEventListener("click", markZaloConfirmationRequested);
   els.copyZaloMessage.addEventListener("click", copyZaloMessage);
+  els.copyZaloPayTransferContent.addEventListener("click", copyZaloPayTransferContent);
+  els.copyZaloPayAccountNumber.addEventListener("click", copyZaloPayAccountNumber);
   els.saleHuntGrid.addEventListener("click", (event) => { const button = event.target.closest("[data-sale-code]"); if (!button) return; applySaleCode(button.dataset.saleCode, true); openCart(); });
   window.addEventListener("nexora:advanced-filter", (event) => { state.filters.technical = event.detail || {}; renderProducts(); });
 
@@ -573,7 +576,7 @@ function updatePaymentQR() {
   if (els.zalopayScanGuide) els.zalopayScanGuide.hidden = !presentation.showZaloPayGuide;
   $$("[data-payment-method]").forEach((button) => button.classList.toggle("active", button.dataset.paymentMethod === state.activePaymentMethod));
   const { number, total } = state.lastOrder; const content = encodeURIComponent(number); const transferNote = `${number} thanh toan NEXORA`;
-  els.qrOrderNumber.textContent = number; els.qrTotal.textContent = formatCurrency(total); els.qrContent.textContent = number; renderZaloConfirmation();
+  els.qrOrderNumber.textContent = number; els.qrTotal.textContent = formatCurrency(total); els.qrContent.textContent = number; renderZaloPayCopyActions({ presentation, number }); renderZaloConfirmation();
   if (state.activePaymentMethod === "wallet") {
     els.qrImage.hidden = true; showQRState("Đơn đã được thanh toán bằng số dư NEXORA."); els.qrStateMessage.textContent = "Số dư đã được trừ và giao dịch được ghi vào Account Center."; els.paymentInstruction.textContent = "Bạn có thể xem số dư và sổ cái bằng nút tài khoản trên header."; return;
   }
@@ -611,6 +614,20 @@ function renderZaloConfirmation() {
   els.zaloConfirmationText.textContent = configured ? `Đã chuyển khoản? Nhắn Zalo cho shop kèm nội dung: “${message}”` : "Shop chưa cấu hình số Zalo. Vui lòng lưu mã đơn và liên hệ qua email hỗ trợ để xác nhận.";
   els.zaloConfirmLink.href = configured ? `https://zalo.me/${phone}` : "#"; els.zaloConfirmLink.setAttribute("aria-disabled", String(!configured)); els.copyZaloMessage.dataset.message = message;
 }
+function renderZaloPayCopyActions({ presentation, number }) {
+  const actions = getZaloPayCopyActions({
+    paymentMethod: state.activePaymentMethod,
+    hasReadyQr: presentation.showZaloPayGuide,
+    orderNumber: number,
+    accountNumber: isPaymentConfigured("vietqr") ? PAYMENT_CONFIG.accountNumber : "",
+  });
+  els.zalopayCopyActions.hidden = !actions.visible;
+  els.copyZaloPayTransferContent.dataset.copyValue = actions.transferContent;
+  els.copyZaloPayTransferContent.disabled = !actions.canCopyTransferContent;
+  els.copyZaloPayAccountNumber.dataset.copyValue = actions.accountNumber;
+  els.copyZaloPayAccountNumber.disabled = !actions.canCopyAccountNumber;
+  els.copyZaloPayAccountNumber.setAttribute("aria-label", actions.canCopyAccountNumber ? "Sao chép số tài khoản nhận tiền" : "Shop chưa cấu hình số tài khoản nhận tiền");
+}
 function normalizeZaloPhone(value) { const digits = String(value || "").replace(/\D/g, ""); if (!digits) return ""; return digits.startsWith("0") ? `84${digits.slice(1)}` : digits; }
 function renderFooterContacts(settings) { const container = $("#footerSupportEmail").parentElement; let phoneLink = $("#footerSupportPhone"); let zaloLink = $("#footerZaloLink"); if (!phoneLink) { phoneLink = document.createElement("a"); phoneLink.id = "footerSupportPhone"; $("#footerSupportEmail").after(phoneLink); } if (!zaloLink) { zaloLink = document.createElement("a"); zaloLink.id = "footerZaloLink"; zaloLink.target = "_blank"; zaloLink.rel = "noopener"; phoneLink.after(zaloLink); } const phone = String(settings.support_phone || "").trim(); phoneLink.hidden = !phone; phoneLink.href = phone ? `tel:${phone.replace(/\s/g, "")}` : "#"; phoneLink.textContent = phone ? `Hotline: ${phone}` : ""; const zaloPhone = normalizeZaloPhone(settings.zalo_phone); zaloLink.hidden = !zaloPhone; zaloLink.href = zaloPhone ? `https://zalo.me/${zaloPhone}` : "#"; zaloLink.innerHTML = zaloPhone ? `<i class="fa-solid fa-comment-dots" aria-hidden="true"></i> ${escapeHtml(settings.zalo_label || "Nhắn Zalo với NEXORA")}` : ""; }
 function getSellerContact(product) { const phone = normalizeZaloPhone(state.settings.seller_zalo_phone); if (!phone) return null; const label = state.settings.seller_contact_label || "Liên hệ người bán"; const message = (state.settings.seller_contact_message || "Xin chào, tôi muốn tư vấn về sản phẩm {product_name}.").replace("{product_name}", product.name); return { phone, label, message }; }
@@ -632,6 +649,14 @@ async function copyZaloMessage() {
   const message = els.copyZaloMessage.dataset.message || ""; if (!message) return;
   try { await navigator.clipboard.writeText(message); showToast("Đã sao chép nội dung. Hãy dán vào Zalo để nhắn shop.", "success"); }
   catch { showToast("Không thể sao chép tự động. Hãy dùng mã đơn hiển thị trong phần thanh toán.", "error"); }
+}
+async function copyZaloPayTransferContent() { await copyPaymentValue(els.copyZaloPayTransferContent, "Đã sao chép nội dung chuyển khoản.", "Chưa có nội dung chuyển khoản để sao chép."); }
+async function copyZaloPayAccountNumber() { await copyPaymentValue(els.copyZaloPayAccountNumber, "Đã sao chép số tài khoản.", "Shop chưa cấu hình số tài khoản nhận tiền."); }
+async function copyPaymentValue(button, successMessage, unavailableMessage) {
+  const value = button?.dataset.copyValue || "";
+  if (!value) { showToast(unavailableMessage, "error"); return; }
+  try { await navigator.clipboard.writeText(value); showToast(successMessage, "success"); }
+  catch { showToast("Không thể sao chép tự động. Hãy sao chép thông tin hiển thị trong modal.", "error"); }
 }
 function resetQRPreview() { showQRState("Cần cấu hình phương thức nhận tiền trong app.js."); }
 function showQRState(message) { els.qrImage.removeAttribute("src"); els.qrImage.hidden = true; els.qrImage.closest(".qr-image-wrap").classList.add("has-state"); els.qrStateMessage.textContent = message; els.qrState.hidden = false; }

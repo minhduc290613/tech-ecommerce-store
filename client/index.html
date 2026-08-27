@@ -286,6 +286,10 @@
         <p>Đơn <strong id="qrOrderNumber">NXR-000000</strong> đang chờ xác nhận thanh toán.</p>
         <div class="payment-tabs"><button class="active" data-payment-method="vietqr" type="button">VietQR</button><button data-payment-method="momo" type="button">MoMo</button><button data-payment-method="zalopay" type="button">ZaloPay</button><button data-payment-method="wallet" type="button">Số dư</button></div>
         <div class="qr-image-wrap"><img id="qrImage" src="" alt="Mã QR thanh toán" /><div class="qr-state" id="qrState" role="status" hidden><i class="fa-solid fa-qrcode" aria-hidden="true"></i><strong>Chưa thể tạo QR</strong><span id="qrStateMessage">Cần cấu hình phương thức nhận tiền trong app.js.</span></div><span class="qr-corner top-left"></span><span class="qr-corner top-right"></span><span class="qr-corner bottom-left"></span><span class="qr-corner bottom-right"></span></div>
+        <div class="zalopay-copy-actions" id="zalopayCopyActions" aria-label="Thao tác sao chép thanh toán ZaloPay" hidden>
+          <button id="copyZaloPayTransferContent" type="button"><i class="fa-regular fa-copy" aria-hidden="true"></i> Sao chép nội dung chuyển khoản</button>
+          <button id="copyZaloPayAccountNumber" type="button"><i class="fa-solid fa-building-columns" aria-hidden="true"></i> Sao chép số tài khoản</button>
+        </div>
         <div class="payment-info"><div><span>Số tiền</span><strong id="qrTotal">0đ</strong></div><div><span>Nội dung</span><strong id="qrContent">NXR-000000</strong></div></div>
         <p class="payment-instruction" id="paymentInstruction">Mở ứng dụng ngân hàng, quét VietQR và kiểm tra đúng số tiền trước khi xác nhận.</p>
         <section class="zalopay-scan-guide" id="zalopayScanGuide" aria-live="polite" hidden>

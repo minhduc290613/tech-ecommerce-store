@@ -48,3 +48,7 @@ Modal checkout ZaloPay đã được kiểm thử bằng dữ liệu hiển th�
 Kiểm tra trực quan modal QR ZaloPay xác nhận QR, số tiền, mã đơn, ba bước quét và cảnh báo bảo mật cùng hiển thị trong một luồng; console không ghi nhận lỗi runtime sau khi mở trạng thái này.
 
 Modal QR ZaloPay giữ trạng thái cuộn khi nội dung dài, khung QR hiển thị 270px ở desktop và hướng dẫn vẫn có thể truy cập; không phát hiện lỗi console trong kiểm thử giao diện.
+
+Kiểm thử hai nút sao chép trong modal ZaloPay bằng dữ liệu UI giả xác nhận nút **Sao chép nội dung chuyển khoản** ghi đúng mã đơn giả và nút **Sao chép số tài khoản** ghi đúng giá trị giả vào clipboard. Hai nút có nhãn rõ ràng, hiển thị khi QR ZaloPay hợp lệ và không tạo đơn hoặc giao dịch thật.
+
+Ở viewport 390px, hai nút tự xếp một cột, mỗi nút cao 44px và modal không tràn ngang.
