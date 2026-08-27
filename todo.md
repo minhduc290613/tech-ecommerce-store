@@ -213,3 +213,4 @@
 - [x] Thêm lối vào Đơn hàng cạnh Tài khoản trên desktop, trong menu mobile và ở chân trang storefront.
 - [x] Tách Địa chỉ nhận hàng thành mục riêng và chuyển Số điện thoại vào mục Bảo mật trong Account Center.
 - [x] Cho phép cập nhật độc lập Số điện thoại hoặc Địa chỉ trong Account Center, vẫn yêu cầu đủ dữ liệu khi checkout.
+- [x] Thêm sổ nhiều địa chỉ giao hàng, chọn địa chỉ mặc định và hiển thị trạng thái đã cập nhật của số điện thoại/địa chỉ trong Account Center.

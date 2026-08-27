@@ -1724,3 +1724,97 @@ end;
 $$;
 revoke all on function public.update_my_account(text, text, text, text) from public, anon;
 grant execute on function public.update_my_account(text, text, text, text) to authenticated;
+
+-- 33. Sổ nhiều địa chỉ giao hàng: chỉ chủ tài khoản quản lý, một địa chỉ mặc định cho checkout.
+create table if not exists public.shipping_addresses (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  label text not null default 'Địa chỉ nhận hàng' check (length(trim(label)) between 1 and 60),
+  address text not null check (length(trim(address)) between 8 and 500),
+  is_default boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists shipping_addresses_user_updated_idx on public.shipping_addresses(user_id, updated_at desc);
+create unique index if not exists shipping_addresses_one_default_idx on public.shipping_addresses(user_id) where is_default;
+alter table public.shipping_addresses enable row level security;
+revoke all on table public.shipping_addresses from public, anon, authenticated;
+
+insert into public.shipping_addresses(user_id, label, address, is_default)
+select p.user_id, 'Địa chỉ mặc định', p.default_shipping_address, true
+from public.customer_profiles p
+where nullif(trim(p.default_shipping_address), '') is not null
+  and not exists (select 1 from public.shipping_addresses a where a.user_id = p.user_id);
+
+create or replace function public.list_my_shipping_addresses()
+returns setof public.shipping_addresses language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  return query select * from public.shipping_addresses where user_id = auth.uid() order by is_default desc, updated_at desc;
+end;
+$$;
+
+create or replace function public.save_my_shipping_address(p_id uuid default null, p_label text default null, p_address text default null, p_make_default boolean default false)
+returns public.shipping_addresses language plpgsql security definer set search_path = public, auth
+as $$
+declare v_address text := nullif(trim(p_address), ''); v_label text := coalesce(nullif(trim(p_label), ''), 'Địa chỉ nhận hàng'); v_item public.shipping_addresses; v_is_first boolean;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status <> 'active') then raise exception 'Tài khoản hiện không thể cập nhật địa chỉ.'; end if;
+  if v_address is null or length(v_address) not between 8 and 500 then raise exception 'Địa chỉ nhận hàng cần từ 8 đến 500 ký tự.'; end if;
+  if length(v_label) not between 1 and 60 then raise exception 'Nhãn địa chỉ cần từ 1 đến 60 ký tự.'; end if;
+  perform public.ensure_my_account(null, null, null, null);
+  if p_id is null then
+    insert into public.shipping_addresses(user_id, label, address) values (auth.uid(), v_label, v_address) returning * into v_item;
+  else
+    update public.shipping_addresses set label = v_label, address = v_address, updated_at = now() where id = p_id and user_id = auth.uid() returning * into v_item;
+    if not found then raise exception 'Không tìm thấy địa chỉ để cập nhật.'; end if;
+  end if;
+  select not exists (select 1 from public.shipping_addresses where user_id = auth.uid() and is_default) into v_is_first;
+  if p_make_default or v_is_first or v_item.is_default then
+    update public.shipping_addresses set is_default = false, updated_at = now() where user_id = auth.uid() and id <> v_item.id and is_default;
+    update public.shipping_addresses set is_default = true, updated_at = now() where id = v_item.id returning * into v_item;
+    update public.customer_profiles set default_shipping_address = v_item.address, updated_at = now() where user_id = auth.uid();
+  end if;
+  return v_item;
+end;
+$$;
+
+create or replace function public.set_my_default_shipping_address(p_id uuid)
+returns public.shipping_addresses language plpgsql security definer set search_path = public, auth
+as $$
+declare v_item public.shipping_addresses;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  select * into v_item from public.shipping_addresses where id = p_id and user_id = auth.uid();
+  if not found then raise exception 'Không tìm thấy địa chỉ của bạn.'; end if;
+  update public.shipping_addresses set is_default = false, updated_at = now() where user_id = auth.uid() and id <> p_id and is_default;
+  update public.shipping_addresses set is_default = true, updated_at = now() where id = p_id returning * into v_item;
+  update public.customer_profiles set default_shipping_address = v_item.address, updated_at = now() where user_id = auth.uid();
+  return v_item;
+end;
+$$;
+
+create or replace function public.delete_my_shipping_address(p_id uuid)
+returns void language plpgsql security definer set search_path = public, auth
+as $$
+declare v_deleted public.shipping_addresses; v_fallback public.shipping_addresses;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  delete from public.shipping_addresses where id = p_id and user_id = auth.uid() returning * into v_deleted;
+  if not found then raise exception 'Không tìm thấy địa chỉ để xóa.'; end if;
+  if v_deleted.is_default then
+    select * into v_fallback from public.shipping_addresses where user_id = auth.uid() order by updated_at desc limit 1;
+    if found then
+      update public.shipping_addresses set is_default = true, updated_at = now() where id = v_fallback.id returning * into v_fallback;
+      update public.customer_profiles set default_shipping_address = v_fallback.address, updated_at = now() where user_id = auth.uid();
+    else
+      update public.customer_profiles set default_shipping_address = null, updated_at = now() where user_id = auth.uid();
+    end if;
+  end if;
+end;
+$$;
+
+revoke all on function public.list_my_shipping_addresses(), public.save_my_shipping_address(uuid,text,text,boolean), public.set_my_default_shipping_address(uuid), public.delete_my_shipping_address(uuid) from public, anon;
+grant execute on function public.list_my_shipping_addresses(), public.save_my_shipping_address(uuid,text,text,boolean), public.set_my_default_shipping_address(uuid), public.delete_my_shipping_address(uuid) to authenticated;

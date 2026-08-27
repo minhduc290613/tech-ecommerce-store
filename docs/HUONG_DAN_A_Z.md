@@ -175,7 +175,9 @@ Storefront dùng `supabase.auth.signUp()` để đăng ký, `supabase.auth.signI
 
 ### 5.3.1 Hồ sơ giao nhận, chia sẻ sản phẩm và affiliate
 
-Từ phiên bản hiện tại, khách tạo tài khoản phải nhập **số điện thoại nhận hàng** và **địa chỉ nhận hàng**. Hai giá trị được lưu trong `customer_profiles`, tự điền vào giỏ hàng và khách có thể sửa trong **Tài khoản**. Khi tạo đơn, số điện thoại và địa chỉ vẫn được kiểm tra lại rồi lưu cùng đơn để giữ lịch sử giao nhận chính xác.
+Từ phiên bản hiện tại, khách tạo tài khoản phải nhập **số điện thoại nhận hàng** và **địa chỉ nhận hàng**. Trong **Tài khoản**, số điện thoại nằm ở tab **Bảo mật**; tab **Địa chỉ** là sổ địa chỉ riêng, cho phép thêm, sửa, xóa và đặt một địa chỉ làm **mặc định**. Địa chỉ mặc định được đồng bộ về `customer_profiles` để tự điền vào giỏ hàng. Mỗi tab hiển thị rõ trạng thái đã lưu hoặc chưa cập nhật cùng thời điểm cập nhật gần nhất.
+
+Người dùng có thể lưu số điện thoại hoặc địa chỉ độc lập. Tuy nhiên, khi tạo đơn, checkout vẫn kiểm tra lại và bắt buộc có **cả số điện thoại lẫn địa chỉ hợp lệ**, sau đó lưu bản sao vào đơn để lịch sử giao nhận không bị thay đổi khi khách chỉnh sổ địa chỉ về sau. Sổ địa chỉ không mở quyền đọc bảng trực tiếp; các RPC chỉ trả dữ liệu của người đang đăng nhập.
 
 Mỗi thẻ sản phẩm có nút chia sẻ. Với khách thường, hệ thống chia sẻ link sản phẩm; với affiliate đã được duyệt, link tự kèm `?ref=<mã>` để dùng luồng referral hiện có. Không tự tạo hoa hồng chỉ vì nhấn chia sẻ; hoa hồng vẫn phụ thuộc quy tắc affiliate và trạng thái đơn đã cấu hình.
 
