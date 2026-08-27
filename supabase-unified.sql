@@ -1390,3 +1390,102 @@ $$;
 
 revoke all on function public.can_manage_shipments(), public.request_order_payment_confirmation(uuid), public.save_shipping_carrier(uuid,text,text,text,text,boolean), public.save_order_shipment(uuid,uuid,text,text,text,integer,text,timestamptz), public.delete_shipping_carrier(uuid) from public, anon;
 grant execute on function public.can_manage_shipments(), public.request_order_payment_confirmation(uuid), public.save_shipping_carrier(uuid,text,text,text,text,boolean), public.save_order_shipment(uuid,uuid,text,text,text,integer,text,timestamptz), public.delete_shipping_carrier(uuid) to authenticated;
+
+-- 28. CK tự động đa nhà cung cấp. Credential luôn ở server environment, không nằm trong site_settings.
+alter table public.orders drop constraint if exists orders_payment_method_check;
+alter table public.orders add constraint orders_payment_method_check check (payment_method in ('vietqr', 'momo', 'zalopay', 'wallet', 'auto_transfer'));
+alter table public.orders add column if not exists auto_transfer_provider text check (auto_transfer_provider in ('sepay', 'casso', 'vietqr'));
+alter table public.orders add column if not exists auto_transfer_reference text;
+alter table public.orders drop constraint if exists orders_auto_transfer_provider_check;
+alter table public.orders add constraint orders_auto_transfer_provider_check check (payment_method <> 'auto_transfer' or auto_transfer_provider is not null);
+alter table public.site_settings add column if not exists payment_auto_transfer_enabled boolean not null default false;
+alter table public.site_settings add column if not exists payment_auto_transfer_provider text not null default 'sepay' check (payment_auto_transfer_provider in ('sepay', 'casso', 'vietqr'));
+
+create table if not exists public.payment_webhook_events (
+  id uuid primary key default gen_random_uuid(),
+  provider text not null check (provider in ('sepay', 'casso', 'vietqr')),
+  provider_transaction_id text not null,
+  order_id uuid references public.orders(id) on delete set null,
+  order_number text not null,
+  amount numeric(12, 0) not null check (amount > 0),
+  reference_text text not null default '',
+  result text not null check (result in ('matched', 'order_not_found', 'amount_mismatch', 'not_active', 'already_paid')),
+  received_at timestamptz not null default now(),
+  unique(provider, provider_transaction_id)
+);
+create index if not exists payment_webhook_events_order_received_idx on public.payment_webhook_events(order_id, received_at desc);
+alter table public.payment_webhook_events enable row level security;
+revoke all on table public.payment_webhook_events from anon, authenticated;
+grant select on table public.payment_webhook_events to authenticated;
+drop policy if exists "Order managers can read payment webhook events" on public.payment_webhook_events;
+create policy "Order managers can read payment webhook events" on public.payment_webhook_events for select to authenticated using (public.can_manage_orders());
+
+create or replace function public.select_auto_transfer_payment(p_order_id uuid)
+returns public.orders language plpgsql security definer set search_path = public, auth
+as $$
+declare v_order public.orders; v_provider text; v_enabled boolean;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập để chọn CK tự động.'; end if;
+  select payment_auto_transfer_enabled, payment_auto_transfer_provider into v_enabled, v_provider from public.site_settings where singleton = true;
+  if coalesce(v_enabled, false) is not true then raise exception 'CK tự động hiện chưa được shop bật.'; end if;
+  select * into v_order from public.orders where id = p_order_id and user_id = auth.uid() for update;
+  if not found then raise exception 'Không tìm thấy đơn hàng.'; end if;
+  if v_order.status <> 'pending_payment' then raise exception 'Đơn hàng không còn chờ thanh toán.'; end if;
+  update public.orders set payment_method = 'auto_transfer', auto_transfer_provider = v_provider, auto_transfer_reference = v_order.order_number, payment_note = 'CK tự động · ' || upper(v_provider), updated_at = now() where id = v_order.id returning * into v_order;
+  return v_order;
+end;
+$$;
+
+create or replace function public.process_auto_transfer_webhook(p_provider text, p_transaction_id text, p_amount numeric, p_order_number text, p_reference text default '')
+returns jsonb language plpgsql security definer set search_path = public, auth
+as $$
+declare v_order public.orders; v_event_id uuid; v_enabled boolean; v_active_provider text; v_result text;
+begin
+  if p_provider not in ('sepay', 'casso', 'vietqr') then raise exception 'Nhà cung cấp không hợp lệ.'; end if;
+  if nullif(trim(p_transaction_id), '') is null or p_amount is null or p_amount <= 0 or nullif(trim(p_order_number), '') is null then raise exception 'Dữ liệu webhook không hợp lệ.'; end if;
+  select payment_auto_transfer_enabled, payment_auto_transfer_provider into v_enabled, v_active_provider from public.site_settings where singleton = true;
+  if coalesce(v_enabled, false) is not true or v_active_provider <> p_provider then v_result := 'not_active';
+  else
+    select * into v_order from public.orders where order_number = trim(p_order_number) and payment_method = 'auto_transfer' and auto_transfer_provider = p_provider for update;
+    if not found then v_result := 'order_not_found';
+    elsif v_order.status = 'paid' then v_result := 'already_paid';
+    elsif v_order.status <> 'pending_payment' then v_result := 'order_not_found';
+    elsif v_order.total_amount <> p_amount then v_result := 'amount_mismatch';
+    else v_result := 'matched'; end if;
+  end if;
+  insert into public.payment_webhook_events(provider, provider_transaction_id, order_id, order_number, amount, reference_text, result)
+  values (p_provider, trim(p_transaction_id), case when v_result in ('matched','already_paid') then v_order.id else null end, trim(p_order_number), p_amount, left(coalesce(p_reference, ''), 500), v_result)
+  on conflict (provider, provider_transaction_id) do nothing returning id into v_event_id;
+  if v_event_id is null then return jsonb_build_object('duplicate', true, 'matched', false); end if;
+  if v_result = 'matched' then
+    update public.orders set status = 'paid', payment_confirmed_at = now(), payment_confirmation_note = 'Tự đối soát qua ' || upper(p_provider) || ' · mã giao dịch ' || left(trim(p_transaction_id), 80), updated_at = now() where id = v_order.id;
+    insert into public.account_audit_log(target_user_id, actor_user_id, action, metadata) values (v_order.user_id, null, 'auto_transfer_matched', jsonb_build_object('provider', p_provider, 'order_number', v_order.order_number, 'amount', p_amount, 'transaction_id', left(trim(p_transaction_id), 80)));
+  end if;
+  return jsonb_build_object('duplicate', false, 'matched', v_result = 'matched', 'result', v_result);
+end;
+$$;
+
+create or replace function public.guard_auto_transfer_paid_transition()
+returns trigger language plpgsql security invoker set search_path = public, auth
+as $$
+begin
+  if new.payment_method = 'auto_transfer' and old.status <> 'paid' and new.status = 'paid' and auth.uid() is not null then
+    raise exception 'Đơn CK tự động chỉ được chuyển Đã thanh toán bởi webhook đã xác thực.';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists guard_auto_transfer_paid_transition_trigger on public.orders;
+create trigger guard_auto_transfer_paid_transition_trigger before update on public.orders for each row execute function public.guard_auto_transfer_paid_transition();
+
+do $$ begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'orders') then
+    alter publication supabase_realtime add table public.orders;
+  end if;
+exception when undefined_object then null;
+end $$;
+
+revoke all on function public.guard_auto_transfer_paid_transition() from public, anon, authenticated;
+revoke all on function public.select_auto_transfer_payment(uuid), public.process_auto_transfer_webhook(text,text,numeric,text,text) from public, anon, authenticated;
+grant execute on function public.select_auto_transfer_payment(uuid) to authenticated;
+grant execute on function public.process_auto_transfer_webhook(text,text,numeric,text,text) to service_role;

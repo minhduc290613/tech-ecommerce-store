@@ -52,3 +52,5 @@ Modal QR ZaloPay giữ trạng thái cuộn khi nội dung dài, khung QR hiển
 Kiểm thử hai nút sao chép trong modal ZaloPay bằng dữ liệu UI giả xác nhận nút **Sao chép nội dung chuyển khoản** ghi đúng mã đơn giả và nút **Sao chép số tài khoản** ghi đúng giá trị giả vào clipboard. Hai nút có nhãn rõ ràng, hiển thị khi QR ZaloPay hợp lệ và không tạo đơn hoặc giao dịch thật.
 
 Ở viewport 390px, hai nút tự xếp một cột, mỗi nút cao 44px và modal không tràn ngang.
+
+CK tự động được kiểm thử bằng module dữ liệu thuần và endpoint trạng thái server: SePay/Casso/VietQR Host2Host chỉ nhận mã đơn NEXORA hợp lệ, giao dịch tiền vào và chữ ký/timestamp hợp lệ. Endpoint Command Deck chỉ trả trạng thái đã/chưa cấu hình, không có secret. Test không gọi nhà cung cấp, không tạo đơn, không chuyển trạng thái thanh toán và không phát sinh giao dịch tiền thật.

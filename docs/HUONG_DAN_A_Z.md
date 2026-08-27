@@ -275,6 +275,20 @@ Vào **Command Deck → Cấu hình nâng cao → Nhận tiền & Zalo**, dán *
 
 > Nếu repository là public, không commit số tài khoản cá nhân hoặc dữ liệu thanh toán nhạy cảm nếu bạn không muốn nó hiển thị công khai. Với vận hành thật, nên chuyển thông tin này sang config riêng hoặc đọc từ CMS có RLS admin.
 
+### 7.1.2 CK tự động: SePay, Casso và VietQR Host2Host
+
+NEXORA hỗ trợ một phương thức checkout **CK tự động**. Admin vào **Command Deck → Cấu hình nâng cao → CK tự động**, bật phương thức rồi chọn đúng một nhà cung cấp đang vận hành: **SePay**, **Casso** hoặc **VietQR Host2Host**. Command Deck hiển thị URL webhook tương ứng và trạng thái **Đã cấu hình secret server / Chưa cấu hình secret server**; tuyệt đối không hiển thị, ghi lại hoặc cho nhập secret tại form quản trị.
+
+| Nhà cung cấp | URL cần khai báo tại dashboard đối tác | Secret ở server |
+| --- | --- | --- |
+| SePay | `https://<domain>/api/payments/webhooks/sepay` | `SEPAY_WEBHOOK_SECRET` |
+| Casso | `https://<domain>/api/payments/webhooks/casso` | `CASSO_WEBHOOK_SECURE_TOKEN` |
+| VietQR Host2Host | `https://<domain>/bank/api/transaction-sync` và `https://<domain>/api/token_generate` | Credential đối tác VietQR ở server |
+
+Backend cũng cần URL Supabase và service-role key **chỉ phía server** để gọi RPC đối soát. Không đặt bất kỳ giá trị nào trong `site_settings`, JavaScript browser, GitHub hoặc Command Deck. Khi cần thay key, vào **Settings → Secrets** của dự án để thay key rồi cập nhật cùng giá trị ở dashboard nhà cung cấp; giá trị cũ không thể xem lại từ Admin.
+
+Khi webhook đi vào, hệ thống chỉ đánh dấu `paid` nếu nhà cung cấp đang được bật, callback hợp lệ, giao dịch là tiền vào, mã đơn NEXORA và số tiền khớp tuyệt đối, đồng thời mã giao dịch chưa từng được xử lý. Các callback không đạt điều kiện được ghi nhận để đối soát, không xác nhận đơn. Đơn chọn **CK tự động** không có nút xác nhận thủ công hoặc CTA nhắn Zalo; khách chỉ cần giữ nguyên mã đơn khi chuyển khoản.
+
 ### 7.2 Zalo xác nhận và liên hệ người bán
 
 Command Deck có phần CMS để quản lý `zalo_phone`, `zalo_confirmation_message`, `seller_zalo_phone`, nhãn CTA và thông tin liên hệ ở footer. Dùng số theo định dạng quốc tế mà URL Zalo yêu cầu, ví dụ `84xxxxxxxxx`, thay vì tự thêm số điện thoại vào HTML rải rác.

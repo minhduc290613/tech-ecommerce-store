@@ -32,6 +32,8 @@ Schema canonical hiện hành đã bao gồm RPC chỉnh tỷ lệ affiliate, Re
 
 `handle_auth_user_created` là trigger chạy sau khi người dùng đăng ký trong `auth.users`. Trigger này tạo hoặc cập nhật `customer_profiles`, `wallet_accounts` và `user_roles` với role `customer`, vì vậy tài khoản mới xuất hiện ngay trong **Tài khoản & số dư** của Command Deck. Nếu một project cũ từng thiếu trigger, chỉ backfill một lần các bảng trên từ `auth.users`; không chỉnh số dư hay trạng thái thanh toán trong thao tác đó.
 
+CK tự động dùng thêm `orders.auto_transfer_provider`, `orders.auto_transfer_reference` và `payment_webhook_events`. RPC `select_auto_transfer_payment` chỉ cho khách chuyển đơn chờ thanh toán sang phương thức đã được admin bật. RPC server-only `process_auto_transfer_webhook` khóa theo mã giao dịch nhà cung cấp, đối chiếu chính xác mã đơn/số tiền và chỉ khi đó mới cập nhật `paid`. Trigger `guard_auto_transfer_paid_transition` chặn user/admin đang đăng nhập tự chuyển đơn CK tự động sang `paid`; chỉ service role phía server được gọi RPC đối soát sau khi webhook ký số đã được kiểm tra.
+
 Vận chuyển dùng `shipping_carriers`, các cột shipment của `orders` và `order_shipment_events`. Role `inventory_staff` có capability `logistics`; moderator và admin cũng có capability này. Chỉ các role đó được tạo nhà vận chuyển hoặc cập nhật hành trình. RPC `request_order_payment_confirmation` chỉ ghi nhận yêu cầu khách liên hệ Zalo cho đơn đang `pending_payment`; nó **không** tự chuyển đơn sang đã thanh toán.
 
 ## Xác minh sau khi áp dụng

@@ -9,6 +9,7 @@ import { getWalletPaymentOrdersUrl } from "./payment-redirect.js";
 import { getTrustedZaloPayQrUrl } from "./zalopay-qr.js";
 import { getPaymentPresentation } from "./payment-presentation.js";
 import { getZaloPayCopyActions } from "./payment-copy-actions.js";
+import { getAutoTransferPresentation } from "./auto-transfer-payment.js";
 
 const UI_TRANSLATIONS = {
   vi: { discover: "Khám phá", discoverProducts: "Khám phá sản phẩm", flashSale: "Flash Sale", categories: "Danh mục", shops: "Gian hàng", journal: "Bài viết", help: "Trợ giúp", exploreDeals: "Khám phá ưu đãi", viewFlashSale: "Xem Flash Sale", searchPlaceholder: "Tìm thiết bị, phụ kiện...", mobileSearchPlaceholder: "Tìm kiếm trong NEXORA", skipCatalog: "Đi tới danh sách sản phẩm", loaderTitle: "Đang đưa thiết bị lên màn hình", loaderDetail: "Chờ một nhịp để đồng bộ catalog và ưu đãi.", storeOnline: "Storefront online", curatedDevices: "Thiết bị tuyển chọn", orderResponse: "Phản hồi đơn hàng", productSupport: "Hỗ trợ sản phẩm", flashHeading: "Flash Sale<br /><em>đang truyền tín hiệu.</em>", flashDescription: "Giá ưu đãi chỉ mở trong khung giờ này. Hãy thêm sản phẩm trước khi đồng hồ quay về 00.", huntNow: "Săn giá ngay", saleHuntHeading: "Săn mã đúng nhịp.<br /><em>Giảm thẳng vào đơn.</em>", saleHuntDescription: "Chọn một mã đang mở, mã sẽ được đưa vào giỏ. Tổng ưu đãi cuối cùng luôn được kiểm tra lại khi tạo đơn.", catalogHeading: "Thiết bị<br /><em>đang bắt sóng.</em>", clearFilters: "Xóa lọc", categoryLabel: "Danh mục", allDevices: "Tất cả thiết bị", phones: "Điện thoại", accessories: "Phụ kiện", priceRange: "Khoảng giá", saleOnly: "Chỉ xem đang SALE", filterNote: "Giá đã hiển thị là giá hiện tại. Các ưu đãi Flash Sale có thể kết thúc sớm.", catalogUnavailable: "Không thể đồng bộ catalog mới nhất.", catalogFallback: "Đang hiển thị dữ liệu dự phòng để bạn tiếp tục xem sản phẩm.", retry: "Thử lại", emptyTitle: "Không tìm thấy tín hiệu phù hợp.", emptyDetail: "Điều chỉnh bộ lọc hoặc thử một từ khóa khác.", resetFilters: "Thiết lập lại bộ lọc", shopsHeading: "Gian hàng<br /><em>đang được xác minh.</em>", shopsDescription: "Khám phá các không gian công nghệ theo nhu cầu, có mô tả hoạt động và đầu mối hỗ trợ rõ ràng.", sellerStandard: "Tìm hiểu về tiêu chuẩn gian hàng", helpHeading: "Câu hỏi có<br /><em>tín hiệu rõ ràng.</em>", helpDescription: "Thông tin về tài khoản, thanh toán và hỗ trợ sau đơn được tập hợp ở một nơi.", helpCenter: "Đến trung tâm hỗ trợ", trustHeading: "Mua sắm với<br />thông tin rõ ràng.", trustDescription: "Các chính sách và hướng dẫn được công bố tập trung để bạn xem trước khi giao dịch.", shippingReturns: "Giao hàng & đổi trả", shippingReturnsDetail: "Quy trình và thông tin cần chuẩn bị", privacy: "Bảo mật dữ liệu", privacyDetail: "Nguyên tắc xử lý tài khoản và đơn hàng", terms: "Điều khoản sử dụng", termsDetail: "Các nguyên tắc vận hành nền tảng", about: "Về NEXORA", aboutDetail: "Cam kết về trải nghiệm và minh bạch", clearInfo: "Minh bạch thông tin", clearInfoDetail: "Mô tả, giá và ưu đãi hiển thị rõ ràng.", carefulPacking: "Đóng gói cẩn thận", carefulPackingDetail: "Kiểm tra thiết bị trước khi bàn giao.", afterOrderSupport: "Hỗ trợ sau đơn", afterOrderSupportDetail: "Đội ngũ NEXORA sẵn sàng phản hồi.", storeAdmin: "Quản trị cửa hàng", cartTitle: "Giỏ hàng", subtotal: "Tạm tính", securePayment: "Thanh toán an toàn qua VietQR hoặc MoMo.", continueCheckout: "Tiếp tục thanh toán", authHeading: "Đăng nhập để<br /><em>đồng bộ đơn hàng.</em>", authIntro: "Tạo tài khoản hoặc đăng nhập bằng email để tiếp tục với thanh toán và quản lý đơn hàng.", login: "Đăng nhập", signup: "Đăng ký", passwordLabel: "Mật khẩu", passwordPlaceholder: "Tối thiểu 6 ký tự", inStock: "Còn hàng", nationwideDelivery: "Giao hàng toàn quốc", addToCart: "Thêm vào giỏ", orderCreated: "ĐƠN HÀNG ĐÃ ĐƯỢC TẠO", qrHeading: "Quét mã để<br /><em>hoàn tất thanh toán.</em>", devicesShown: (count) => `${count.toString().padStart(2, "0")} thiết bị đang hiển thị`, catalogLoading: "Đang đồng bộ catalog...", searchLoading: "Đang tìm trong catalog...", searchHint: "Đang lọc thiết bị phù hợp…", addCart: "Thêm giỏ", soldOut: "Hết hàng", comments: "Bình luận", useCode: "Dùng mã", noActiveSale: "Chưa có mã săn sale đang mở. Hãy quay lại trong đợt tiếp theo.", verified: "Đã xác minh", updating: "Đang cập nhật", contactSupport: "Liên hệ hỗ trợ", standard: "Tiêu chuẩn", emptyCart: "Giỏ hàng đang trống. Chọn một thiết bị để bắt đầu phiên mua sắm." },
@@ -74,7 +75,7 @@ const els = {
   cartButton: $("#cartButton"), cartDrawer: $("#cartDrawer"), cartBadge: $("#cartBadge"), cartItemLabel: $("#cartItemLabel"), cartItems: $("#cartItems"), cartTotal: $("#cartTotal"), checkoutButton: $("#checkoutButton"),
   overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authEmailField: $("#authEmailField"), authPassword: $("#authPassword"), authPasswordField: $("#authPasswordField"), authPasswordConfirm: $("#authPasswordConfirm"), authPasswordConfirmField: $("#authPasswordConfirmField"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authIntro: $("#authIntro"), authHelper: $("#authHelper"),
   quickViewModal: $("#quickViewModal"), quickViewImage: $("#quickViewImage"), quickViewCategory: $("#quickViewCategory"), quickViewTitle: $("#quickViewTitle"), quickViewDescription: $("#quickViewDescription"), quickViewPrice: $("#quickViewPrice"), quickViewAdd: $("#quickViewAdd"),
-  qrModal: $("#qrModal"), qrCard: $("#qrModal .qr-card"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), zalopayScanGuide: $("#zalopayScanGuide"), zalopayCopyActions: $("#zalopayCopyActions"), copyZaloPayTransferContent: $("#copyZaloPayTransferContent"), copyZaloPayAccountNumber: $("#copyZaloPayAccountNumber"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), carrierSection: $("#shipping-partners"), carrierGrid: $("#carrierStorefrontGrid"), faqList: $("#faqList"), saleHuntGrid: $("#saleHuntGrid"), pageLoader: $("#pageLoader"),
+  qrModal: $("#qrModal"), qrCard: $("#qrModal .qr-card"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), autoTransferNotice: $("#autoTransferNotice"), autoTransferNoticeTitle: $("#autoTransferNoticeTitle"), autoTransferNoticeText: $("#autoTransferNoticeText"), zalopayScanGuide: $("#zalopayScanGuide"), zalopayCopyActions: $("#zalopayCopyActions"), copyZaloPayTransferContent: $("#copyZaloPayTransferContent"), copyZaloPayAccountNumber: $("#copyZaloPayAccountNumber"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), carrierSection: $("#shipping-partners"), carrierGrid: $("#carrierStorefrontGrid"), faqList: $("#faqList"), saleHuntGrid: $("#saleHuntGrid"), pageLoader: $("#pageLoader"),
 };
 
 document.addEventListener("DOMContentLoaded", initializeApp);
@@ -562,25 +563,48 @@ async function setPaymentMethod(method) {
     window.location.assign(ordersUrl);
     return;
   }
+  if (method === "auto_transfer") {
+    const presentation = getAutoTransferPresentation(state.settings);
+    if (!presentation.ready) return showToast("CK tự động chưa được shop bật hoặc chưa có đủ thông tin nhận tiền.", "error");
+    if (!db || !state.user || !state.lastOrder) return;
+    const previousMethod = state.activePaymentMethod;
+    state.activePaymentMethod = method; updatePaymentQR();
+    const { data, error } = await db.rpc("select_auto_transfer_payment", { p_order_id: state.lastOrder.id });
+    if (error) { state.activePaymentMethod = previousMethod; updatePaymentQR(); showToast(error.message, "error"); return; }
+    state.lastOrder = { ...state.lastOrder, provider: data.auto_transfer_provider || presentation.provider };
+    watchAutoTransferOrder();
+    return;
+  }
   state.activePaymentMethod = method;
   updatePaymentQR();
   if (!db || !state.user || !state.lastOrder) return;
-  const { error } = await db.from("orders").update({ payment_method: method }).eq("id", state.lastOrder.id).eq("user_id", state.user.id);
+  const { error } = await db.from("orders").update({ payment_method: method, auto_transfer_provider: null, auto_transfer_reference: null }).eq("id", state.lastOrder.id).eq("user_id", state.user.id);
   if (error) showToast("Không thể đồng bộ phương thức thanh toán đã chọn.", "error");
 }
 function updatePaymentQR() {
   if (!state.lastOrder) return;
   const zaloPayQrUrl = state.activePaymentMethod === "zalopay" ? getTrustedZaloPayQrUrl(state.settings?.payment_zalopay_qr_url) : null;
   const presentation = getPaymentPresentation(state.activePaymentMethod, Boolean(zaloPayQrUrl));
+  const autoTransfer = getAutoTransferPresentation(state.settings);
   els.qrCard?.classList.toggle("is-zalopay", presentation.isZaloPay);
   if (els.zalopayScanGuide) els.zalopayScanGuide.hidden = !presentation.showZaloPayGuide;
+  if (els.autoTransferNotice) els.autoTransferNotice.hidden = state.activePaymentMethod !== "auto_transfer";
   $$("[data-payment-method]").forEach((button) => button.classList.toggle("active", button.dataset.paymentMethod === state.activePaymentMethod));
   const { number, total } = state.lastOrder; const content = encodeURIComponent(number); const transferNote = `${number} thanh toan NEXORA`;
   els.qrOrderNumber.textContent = number; els.qrTotal.textContent = formatCurrency(total); els.qrContent.textContent = number; renderZaloPayCopyActions({ presentation, number }); renderZaloConfirmation();
+  els.zaloConfirmation.hidden = state.activePaymentMethod === "auto_transfer";
   if (state.activePaymentMethod === "wallet") {
     els.qrImage.hidden = true; showQRState("Đơn đã được thanh toán bằng số dư NEXORA."); els.qrStateMessage.textContent = "Số dư đã được trừ và giao dịch được ghi vào Account Center."; els.paymentInstruction.textContent = "Bạn có thể xem số dư và sổ cái bằng nút tài khoản trên header."; return;
   }
-  if (state.activePaymentMethod === "vietqr") {
+  if (state.activePaymentMethod === "auto_transfer") {
+    if (!autoTransfer.ready) { showQRState("CK tự động chưa sẵn sàng. Vui lòng chọn phương thức khác."); return; }
+    els.qrImage.hidden = false;
+    els.qrImage.src = `https://img.vietqr.io/image/${PAYMENT_CONFIG.bankId}-${PAYMENT_CONFIG.accountNumber}-compact2.png?amount=${total}&addInfo=${content}&accountName=${encodeURIComponent(PAYMENT_CONFIG.accountName)}`;
+    els.qrImage.alt = `QR CK tự động thanh toán đơn ${number}`;
+    els.paymentInstruction.textContent = `Quét mã bằng ứng dụng ngân hàng và giữ nguyên số tiền cùng nội dung ${number}. Hệ thống sẽ tự đối soát sau khi tiền vào.`;
+    els.autoTransferNoticeTitle.textContent = `Tự đối soát qua ${autoTransfer.providerLabel}`;
+    els.autoTransferNoticeText.textContent = "Không cần nhắn shop. Đơn chỉ được xác nhận khi webhook đã xác thực, mã đơn và số tiền khớp.";
+  } else if (state.activePaymentMethod === "vietqr") {
     if (!isPaymentConfigured("vietqr")) { showQRState("Cần điền mã ngân hàng, số tài khoản và tên người nhận thật trong PAYMENT_CONFIG."); return; }
     els.qrImage.hidden = false;
     els.qrImage.src = `https://img.vietqr.io/image/${PAYMENT_CONFIG.bankId}-${PAYMENT_CONFIG.accountNumber}-compact2.png?amount=${total}&addInfo=${content}&accountName=${encodeURIComponent(PAYMENT_CONFIG.accountName)}`;
@@ -600,6 +624,17 @@ function updatePaymentQR() {
     els.qrImage.alt = `QR MoMo thanh toán đơn ${number}`;
     els.paymentInstruction.textContent = `Mở MoMo, quét mã và kiểm tra đúng số tiền. Nội dung thanh toán: ${number}.`;
   }
+}
+let autoTransferRealtimeChannel = null;
+function watchAutoTransferOrder() {
+  if (!db || !state.lastOrder) return;
+  if (autoTransferRealtimeChannel) db.removeChannel(autoTransferRealtimeChannel);
+  autoTransferRealtimeChannel = db.channel(`nexora-auto-transfer-${state.lastOrder.id}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${state.lastOrder.id}` }, (payload) => {
+    if (payload.new?.status !== "paid") return;
+    db.removeChannel(autoTransferRealtimeChannel); autoTransferRealtimeChannel = null;
+    showToast("Đã tự đối soát thanh toán. Đơn hàng sẵn sàng được xử lý.", "success");
+    window.setTimeout(() => window.location.assign(`/orders.html?paid=auto_transfer&order=${encodeURIComponent(state.lastOrder.number)}`), 850);
+  }).subscribe();
 }
 function isPaymentConfigured(method) {
   if (method === "zalopay") return Boolean(getTrustedZaloPayQrUrl(state.settings?.payment_zalopay_qr_url));
@@ -663,7 +698,7 @@ function showQRState(message) { els.qrImage.removeAttribute("src"); els.qrImage.
 function hideQRState() { els.qrImage.hidden = false; els.qrImage.closest(".qr-image-wrap").classList.remove("has-state"); els.qrState.hidden = true; }
 
 function openModal(name) { const modal = getModal(name); if (!modal) return; modal.hidden = false; document.body.classList.add("no-scroll"); requestAnimationFrame(() => $("button, input", modal)?.focus()); }
-function closeModal(name) { const modal = getModal(name); if (!modal) return; modal.hidden = true; if (!els.cartDrawer.classList.contains("open")) document.body.classList.remove("no-scroll"); }
+function closeModal(name) { const modal = getModal(name); if (!modal) return; modal.hidden = true; if (name === "qr" && autoTransferRealtimeChannel) { db?.removeChannel(autoTransferRealtimeChannel); autoTransferRealtimeChannel = null; } if (!els.cartDrawer.classList.contains("open")) document.body.classList.remove("no-scroll"); }
 function closeSurface(name) { if (name === "cart") closeCart(); else closeModal(name); }
 function getModal(name) { return { auth: els.authModal, "quick-view": els.quickViewModal, qr: els.qrModal }[name]; }
 

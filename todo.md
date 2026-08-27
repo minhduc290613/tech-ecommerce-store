@@ -194,3 +194,8 @@
 - [x] Bổ sung thanh toán ZaloPay qua QR/chuyển khoản thủ công, cấu hình được từ Admin và chỉ xác nhận sau đối soát.
 - [x] Làm nổi bật vùng QR ZaloPay trong modal thanh toán và bổ sung hướng dẫn quét mã rõ ràng cho khách, responsive trên mobile.
 - [x] Thêm nút sao chép nội dung chuyển khoản và số tài khoản dưới mã QR ZaloPay, có phản hồi trạng thái và hỗ trợ mobile.
+- [x] Rà soát và thiết kế phương thức CK tự động qua nhà cung cấp được ủy quyền, giữ đối soát thủ công làm phương án dự phòng.
+- [x] Bổ sung cấu hình quản trị CK tự động không lộ secret, webhook ký số và kiểm soát an toàn chống xác nhận sai đơn.
+- [ ] Kiểm thử và hướng dẫn kích hoạt nhà cung cấp CK tự động sau khi shop cung cấp thông tin kết nối hợp lệ.
+- [x] Hỗ trợ chọn một trong ba nhà cung cấp CK tự động: VietQR Host2Host, SePay hoặc Casso trong Command Deck.
+- [x] Hiển thị trạng thái secret CK tự động đã cấu hình/ chưa cấu hình và hướng dẫn thay thế an toàn, không lưu secret trong Admin hoặc database.

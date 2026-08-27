@@ -1,0 +1,7 @@
+.auto-transfer-notice { display: grid; grid-template-columns: auto 1fr; gap: .72rem; align-items: start; margin: .85rem 0 0; padding: .8rem .9rem; border: 1px solid rgba(56, 189, 248, .3); border-radius: 12px; background: linear-gradient(120deg, rgba(14, 116, 144, .18), rgba(15, 23, 42, .86)); color: #b9dff0; }
+.auto-transfer-notice > i { display: grid; width: 30px; height: 30px; place-items: center; color: #6ee7ff; border-radius: 9px; background: rgba(56, 189, 248, .12); }
+.auto-transfer-notice strong { display: block; color: #effbff; font: 700 .7rem var(--font-display); letter-spacing: .03em; }
+.auto-transfer-notice p { margin: .18rem 0 0; font-size: .68rem; line-height: 1.5; }
+.payment-tabs button[data-payment-method="auto_transfer"] { grid-column: 1 / -1; color: #93dff5; border-top: 1px solid rgba(116, 142, 177, .14); }
+.payment-tabs button[data-payment-method="auto_transfer"].active { color: #062533; background: #67dcff; }
+@media (max-width: 720px) { .auto-transfer-notice { padding: .75rem; } .payment-tabs button[data-payment-method="auto_transfer"] { min-height: 38px; } }

@@ -1,0 +1,10 @@
+.auto-transfer-admin { border-color: rgba(103, 220, 255, .22); background: linear-gradient(140deg, rgba(16, 72, 98, .22), rgba(12, 20, 35, .34)); }
+.auto-transfer-secret-status { display: grid; grid-template-columns: auto 1fr; gap: .55rem; align-items: start; margin: .8rem 0; padding: .65rem .7rem; border: 1px solid rgba(125, 153, 184, .2); border-radius: .65rem; background: rgba(4, 12, 25, .44); }
+.auto-transfer-secret-status > i { color: #72dffb; padding-top: .15rem; }
+.auto-transfer-secret-status b { display: block; color: #d7f5ff; font: 700 .66rem var(--font-mono); letter-spacing: .04em; }
+.auto-transfer-secret-status p { margin: .2rem 0 0; color: #94afc8; font-size: .68rem; line-height: 1.45; }
+.auto-transfer-secret-status.is-ready { border-color: rgba(74, 222, 128, .34); }
+.auto-transfer-secret-status.is-ready > i, .auto-transfer-secret-status.is-ready b { color: #86efac; }
+.auto-transfer-secret-help { color: #abc4d9; font-size: .68rem; line-height: 1.5; }
+.auto-transfer-secret-help summary { color: #e8f7ff; cursor: pointer; font-weight: 700; }
+.auto-transfer-secret-help p { margin: .55rem 0 0; }
