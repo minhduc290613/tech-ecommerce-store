@@ -5,7 +5,9 @@ import { filterOrders } from "./order-filters.js";
 import { canAdminConfirmPayment, getManualTransferReviewQueue } from "./transfer-payment-review.js";
 import { getAdminAccessMessage } from "./admin-access-state.js";
 import { canCancelPendingOrder, cancellationReason } from "./order-cancellation.js";
+import { normalizeProductGallery, productGalleryUrls } from "./product-gallery.js";
 import "./admin-transfer-payments.css";
+import "./admin-product-gallery.css";
 import "./admin-accounts.js";
 import "./admin-email-delivery.js";
 import "./admin-roles-content.js";
@@ -18,7 +20,7 @@ const $ = (selector, parent = document) => parent.querySelector(selector);
 const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
 const state = {
-  user: null, role: "customer", roleDefinitions: [], capabilities: {}, products: [], orders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
+  user: null, role: "customer", roleDefinitions: [], capabilities: {}, products: [], productImages: [], editingProductGallery: [], orders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
   fulfillmentFilter: "all", paymentFilter: "all", orderQuery: "", carrierFilter: "all", activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null, editingSaleCampaignId: null,
 };
 let clearingExpiredAdminSession = false;
@@ -55,7 +57,7 @@ async function init() {
 function bindEvents() {
   els.loginForm.addEventListener("submit", login);
   els.signOut.addEventListener("click", signOut);
-  mountTechnicalSpecsEditor(); mountContactSettingsFields(); mountEnglishBrandContentFields(); mountEnglishPageContentFields(); mountBrandAssetUploads(); mountContentImageUploads(); mountOrderCancellationControls(); mountSaleAdminUI(); mountProductShopSelector();
+  mountTechnicalSpecsEditor(); mountContactSettingsFields(); mountEnglishBrandContentFields(); mountEnglishPageContentFields(); mountBrandAssetUploads(); mountContentImageUploads(); mountProductGalleryEditor(); mountOrderCancellationControls(); mountSaleAdminUI(); mountProductShopSelector();
   $$(".admin-nav button[data-view]").forEach((button) => button.addEventListener("click", () => activateView(button.dataset.view)));
   $$('[data-view-jump]').forEach((button) => button.addEventListener("click", () => activateView(button.dataset.viewJump)));
   els.newProduct.addEventListener("click", () => openProductModal());
@@ -68,7 +70,7 @@ function bindEvents() {
   $("#productForm").addEventListener("submit", saveProduct);
   $("#deleteProductButton").addEventListener("click", deleteProduct);
   $("#productName").addEventListener("input", suggestSku);
-  $("#productImageUrl").addEventListener("input", updateProductPreview);
+  $("#productImageUrl").addEventListener("input", () => { updateProductPreview(); renderAdminProductGallery(); });
   $("#productImagePreview").addEventListener("error", () => hideProductPreview("Không tải được ảnh"));
   els.fulfillmentFilters.addEventListener("click", (event) => {
     const button = event.target.closest("[data-fulfillment-filter]"); if (!button) return;
@@ -80,7 +82,7 @@ function bindEvents() {
   mountAdvancedOrderFilters(); mountTransferPaymentReview();
   $("#transferPaymentQueue")?.addEventListener("click", (event) => { const button = event.target.closest("[data-transfer-confirm]"); if (button) updatePaymentStatus(button.dataset.transferConfirm, "paid"); });
   $("#focusTransferPaymentQueue")?.addEventListener("click", () => { state.paymentFilter = "pending_payment"; els.paymentFilter.value = "pending_payment"; renderOrders(); $("#transferPaymentReview")?.scrollIntoView({ behavior: "smooth", block: "start" }); });
-  els.ordersBody.addEventListener("click", (event) => { const paymentButton = event.target.closest("[data-payment-action]"); if (paymentButton) { updatePaymentStatus(paymentButton.dataset.orderId, paymentButton.dataset.paymentAction); return; } const cancelButton = event.target.closest("[data-cancel-order]"); if (cancelButton) { cancelOrderAsManager(cancelButton.dataset.cancelOrder); return; } const button = event.target.closest("[data-edit-order]"); if (button) openOrderModal(getOrder(button.dataset.editOrder)); });
+  els.ordersBody.addEventListener("click", (event) => { const paymentButton = event.target.closest("[data-payment-action]"); if (paymentButton) { updatePaymentStatus(paymentButton.dataset.orderId, paymentButton.dataset.paymentAction); return; } const cancelButton = event.target.closest("[data-cancel-order]"); if (cancelButton) { cancelOrderAsManager(cancelButton.dataset.cancelOrder); return; } const archiveButton = event.target.closest("[data-archive-order]"); if (archiveButton) { archiveCancelledOrder(archiveButton.dataset.archiveOrder); return; } const button = event.target.closest("[data-edit-order]"); if (button) openOrderModal(getOrder(button.dataset.editOrder)); });
   els.refreshOrders.addEventListener("click", loadData);
   $("#orderForm").addEventListener("submit", saveOrder);
   $("#cancelOrderButton")?.addEventListener("click", () => cancelOrderAsManager(state.activeOrderId));
@@ -105,6 +107,13 @@ function mountProductShopSelector() {
   if (!categoryField) return;
   categoryField.insertAdjacentHTML("afterend", '<label>Gian hàng<select id="productShopId"><option value="">Chưa gán gian hàng</option></select></label>');
 }
+
+function mountProductGalleryEditor() { if ($("#adminProductGallery")) return; const imageField = $("#productImageUrl")?.closest("label"); if (!imageField) return; imageField.insertAdjacentHTML("afterend", '<section class="admin-product-gallery" id="adminProductGallery"><header><h4>GALLERY ẢNH SẢN PHẨM</h4><small id="productGalleryCount">0/8 ảnh</small></header><div class="admin-product-gallery-add"><input id="productGalleryUrl" type="url" placeholder="Dán URL HTTPS ảnh bổ sung" /><button class="quiet-button" id="addProductGalleryUrl" type="button"><i class="fa-solid fa-link"></i> Thêm URL</button><input id="productGalleryUpload" type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" hidden /><button class="quiet-button" id="uploadProductGallery" type="button"><i class="fa-solid fa-cloud-arrow-up"></i> Tải ảnh</button></div><div class="admin-product-gallery-list" id="productGalleryList"></div><div class="admin-product-gallery-actions"><small>Ảnh đầu tiên là ảnh chính. Chọn một ảnh để đặt làm ảnh chính; tối đa 8 ảnh.</small></div></section>'); $("#addProductGalleryUrl").addEventListener("click", addProductGalleryUrl); $("#uploadProductGallery").addEventListener("click", () => $("#productGalleryUpload").click()); $("#productGalleryUpload").addEventListener("change", uploadProductGalleryImage); $("#productGalleryList").addEventListener("click", handleProductGalleryAction); renderAdminProductGallery(); }
+function currentProductGallery() { return normalizeProductGallery($("#productImageUrl")?.value, state.editingProductGallery); }
+function renderAdminProductGallery() { const list = $("#productGalleryList"); if (!list) return; const images = currentProductGallery(); $("#productGalleryCount").textContent = `${images.length}/8 ảnh`; list.innerHTML = images.map((url, index) => `<article class="admin-gallery-tile"><img src="${escapeHtml(url)}" alt="Ảnh sản phẩm ${index + 1}" /><b>${index === 0 ? "ẢNH CHÍNH" : `ẢNH ${index + 1}`}</b>${index > 0 ? `<button type="button" data-remove-gallery-image="${index}" aria-label="Xóa ảnh ${index + 1}"><i class="fa-solid fa-xmark"></i></button>` : ""}<button type="button" data-primary-gallery-image="${index}" aria-label="Đặt ảnh ${index + 1} làm ảnh chính"><i class="fa-solid fa-star"></i></button></article>`).join(""); }
+function addProductGalleryUrl() { const input = $("#productGalleryUrl"); const url = input.value.trim(); if (!/^https:\/\//i.test(url)) return toast("Ảnh gallery phải dùng URL HTTPS.", "error"); if (!$("#productImageUrl").value.trim()) { $("#productImageUrl").value = url; input.value = ""; updateProductPreview(); return renderAdminProductGallery(); } const next = normalizeProductGallery($("#productImageUrl").value, [...state.editingProductGallery, url]); if (next.length === currentProductGallery().length) return toast("Ảnh đã tồn tại hoặc gallery đã đủ 8 ảnh.", "error"); state.editingProductGallery = next.slice(1); input.value = ""; renderAdminProductGallery(); }
+function handleProductGalleryAction(event) { const remove = event.target.closest("[data-remove-gallery-image]"); if (remove) { const index = Number(remove.dataset.removeGalleryImage); const images = currentProductGallery(); state.editingProductGallery = images.filter((_, itemIndex) => itemIndex !== index).slice(1); return renderAdminProductGallery(); } const primary = event.target.closest("[data-primary-gallery-image]"); if (!primary) return; const index = Number(primary.dataset.primaryGalleryImage); const images = currentProductGallery(); const selected = images[index]; images.splice(index, 1); $("#productImageUrl").value = selected; state.editingProductGallery = images; updateProductPreview(); renderAdminProductGallery(); }
+async function uploadProductGalleryImage(event) { const input = event.currentTarget; const file = input.files?.[0]; const button = $("#uploadProductGallery"); if (!file || !button || !db) return; const allowed = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]); if (!allowed.has(file.type) || file.size > 5242880) { input.value = ""; return toast("Chỉ nhận PNG, JPG, WEBP hoặc SVG tối đa 5 MB.", "error"); } const extension = file.name.split(".").pop()?.replace(/[^a-z0-9]/gi, "").toLowerCase() || "png"; const path = `products/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${extension}`; setLoading(button, true, "Đang upload"); const { error } = await db.storage.from("nexora-brand-assets").upload(path, file, { cacheControl: "3600", contentType: file.type, upsert: false }); setLoading(button, false); input.value = ""; if (error) return toast(`Không upload được ảnh: ${error.message}`, "error"); const { data } = db.storage.from("nexora-brand-assets").getPublicUrl(path); if (!$("#productImageUrl").value.trim()) { $("#productImageUrl").value = data.publicUrl; updateProductPreview(); renderAdminProductGallery(); return toast("Đã đặt ảnh đầu tiên làm ảnh chính. Hãy lưu sản phẩm để áp dụng.", "success"); } const next = normalizeProductGallery($("#productImageUrl").value, [...state.editingProductGallery, data.publicUrl]); if (next.length === currentProductGallery().length) return toast("Gallery đã đủ 8 ảnh.", "error"); state.editingProductGallery = next.slice(1); renderAdminProductGallery(); toast("Đã thêm ảnh. Hãy lưu sản phẩm để áp dụng.", "success"); }
 
 function mountOrderCancellationControls() {
   $("#orderPaymentStatus option[value='cancelled']")?.remove();
@@ -164,17 +173,18 @@ function showGate(message) { state.user = null; els.app.hidden = true; els.gate.
 
 async function loadData() {
   setTableLoading();
-  const [productsResult, ordersResult, settingsResult, pagesResult, faqsResult, shopsResult, campaignsResult] = await Promise.all([
+  const [productsResult, productImagesResult, ordersResult, settingsResult, pagesResult, faqsResult, shopsResult, campaignsResult] = await Promise.all([
     db.from("products").select("*").order("created_at", { ascending: false }),
-    db.from("orders").select("id,order_number,user_id,subtotal_amount,discount_amount,sale_campaign_id,sale_code,total_amount,status,payment_method,auto_transfer_provider,payment_note,payment_confirmed_at,payment_confirmation_note,zalo_confirmation_requested_at,customer_name,customer_phone,shipping_address,shipping_note,fulfillment_status,carrier,tracking_code,admin_note,fulfillment_updated_at,delivered_at,created_at,updated_at,order_items(product_name,unit_price,quantity,subtotal)").order("created_at", { ascending: false }),
+    db.from("product_images").select("product_id,image_url,sort_order").order("sort_order"),
+    db.from("orders").select("id,order_number,user_id,subtotal_amount,discount_amount,sale_campaign_id,sale_code,total_amount,status,payment_method,auto_transfer_provider,payment_note,payment_confirmed_at,payment_confirmation_note,zalo_confirmation_requested_at,customer_name,customer_phone,shipping_address,shipping_note,fulfillment_status,carrier,tracking_code,admin_note,fulfillment_updated_at,delivered_at,created_at,updated_at,order_items(product_name,unit_price,quantity,subtotal)").is("archived_at", null).order("created_at", { ascending: false }),
     db.from("site_settings").select("*").eq("singleton", true).maybeSingle(),
     db.from("site_pages").select("*").order("slug"),
     db.from("faqs").select("*").order("sort_order"),
     db.from("shops").select("*").order("created_at", { ascending: false }),
     db.from("sale_campaigns").select("*").order("created_at", { ascending: false }),
   ]);
-  if (productsResult.error || ordersResult.error) return toast(productsResult.error?.message || ordersResult.error?.message || "Không tải được dữ liệu quản trị.", "error");
-  state.products = productsResult.data || []; state.orders = ordersResult.data || []; refreshCarrierFilterOptions();
+  if (productsResult.error || ordersResult.error || productImagesResult.error) return toast(productsResult.error?.message || productImagesResult.error?.message || ordersResult.error?.message || "Không tải được dữ liệu quản trị.", "error");
+  state.productImages = productImagesResult.data || []; state.products = (productsResult.data || []).map((product) => ({ ...product, product_images: state.productImages.filter((image) => image.product_id === product.id) })); state.orders = ordersResult.data || []; refreshCarrierFilterOptions();
   if (settingsResult.error || pagesResult.error || faqsResult.error || shopsResult.error || campaignsResult.error) toast("CMS/sale chưa sẵn sàng. Hãy chạy các migration Supabase mới nhất.", "error");
   state.settings = settingsResult.data || null; state.pages = pagesResult.data || []; state.faqs = faqsResult.data || []; state.shops = shopsResult.data || []; state.saleCampaigns = campaignsResult.data || []; populateProductShopOptions($("#productShopId")?.value || "");
   renderMetrics(); renderOperationsMetrics(); renderRevenueChart(); renderProducts(); renderOrders(); renderRecentOrders(); renderSettings(); renderFaqs(); renderShops(); renderSaleCampaigns(); fillPageForm();
@@ -240,7 +250,8 @@ function orderRow(order) {
   const sale = Number(order.discount_amount || 0) > 0 ? `<small class="sale-status-live">${escapeHtml(order.sale_code || "SALE")} · -${currency(order.discount_amount)}</small>` : "";
   const confirmation = order.payment_method === "auto_transfer" && order.status === "pending_payment" ? `<span class="customer-email">Chờ webhook ${{ sepay: "SePay", casso: "Casso", vietqr: "VietQR" }[order.auto_transfer_provider] || ""}</span>` : canAdminConfirmPayment(order) ? `<button class="payment-action transfer" data-payment-action="paid" data-order-id="${escapeHtml(order.id)}" type="button">Xác nhận CK</button>` : order.payment_method === "wallet" && order.status === "pending_payment" ? '<span class="customer-email">Chờ khách thanh toán ví</span>' : `<div class="payment-actions"><button class="payment-action pending ${order.status === "pending_payment" ? "active" : ""}" data-payment-action="pending_payment" data-order-id="${escapeHtml(order.id)}" type="button">Chưa TT</button><button class="payment-action paid ${order.status === "paid" ? "active" : ""}" data-payment-action="paid" data-order-id="${escapeHtml(order.id)}" type="button">Đã TT</button></div>`;
   const cancel = canCancelPendingOrder(order) ? `<button class="row-action danger" data-cancel-order="${escapeHtml(order.id)}" type="button" title="Hủy đơn chưa thanh toán"><i class="fa-solid fa-ban"></i></button>` : "";
-  return `<tr><td><b>${escapeHtml(order.order_number)}</b><br /><small class="customer-email">${escapeHtml(order.tracking_code || "Chưa có mã vận đơn")}</small></td><td><span class="order-customer"><b>${escapeHtml(customerName)}</b><small>${escapeHtml(order.customer_phone || "Chưa có số liên hệ")}</small></span></td><td>${formatDate(order.created_at)}</td><td><span class="status-pill status-${escapeHtml(order.status)}">${statusLabel(order.status)}</span></td><td>${confirmation}</td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td><td><b>${currency(order.total_amount)}</b><br />${sale}</td><td>${itemCount} SP</td><td><div class="row-actions">${cancel}<button class="row-action" data-edit-order="${escapeHtml(order.id)}" aria-label="Chỉnh sửa đơn ${escapeHtml(order.order_number)}"><i class="fa-solid fa-pen"></i></button></div></td></tr>`;
+  const archive = order.status === "cancelled" ? `<button class="row-action danger" data-archive-order="${escapeHtml(order.id)}" type="button" title="Xóa khỏi danh sách, giữ lịch sử"><i class="fa-solid fa-box-archive"></i></button>` : "";
+  return `<tr><td><b>${escapeHtml(order.order_number)}</b><br /><small class="customer-email">${escapeHtml(order.tracking_code || "Chưa có mã vận đơn")}</small></td><td><span class="order-customer"><b>${escapeHtml(customerName)}</b><small>${escapeHtml(order.customer_phone || "Chưa có số liên hệ")}</small></span></td><td>${formatDate(order.created_at)}</td><td><span class="status-pill status-${escapeHtml(order.status)}">${statusLabel(order.status)}</span></td><td>${confirmation}</td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td><td><b>${currency(order.total_amount)}</b><br />${sale}</td><td>${itemCount} SP</td><td><div class="row-actions">${cancel}${archive}<button class="row-action" data-edit-order="${escapeHtml(order.id)}" aria-label="Chỉnh sửa đơn ${escapeHtml(order.order_number)}"><i class="fa-solid fa-pen"></i></button></div></td></tr>`;
 }
 
 function renderProducts() {
@@ -259,8 +270,9 @@ function fillPageForm() { const page = state.pages.find((item) => item.slug === 
 function renderFaqs() { els.faqCount.textContent = state.faqs.length; els.faqBody.innerHTML = state.faqs.map((faq) => `<tr><td><span class="list-name">${escapeHtml(faq.question)}</span><span class="list-description">${escapeHtml(faq.answer)}</span></td><td><input class="status-toggle" type="checkbox" disabled ${faq.is_published ? "checked" : ""} /></td><td><button class="row-action" data-edit-faq="${escapeHtml(faq.id)}"><i class="fa-solid fa-pen"></i></button></td></tr>`).join("") || emptyRow("Chưa có FAQ.", 3); }
 function renderShops() { els.shopsBody.innerHTML = state.shops.map((shop) => `<tr><td><div class="product-cell">${shop.banner_url ? `<img class="image-mini" src="${escapeHtml(shop.banner_url)}" alt="" />` : ""}<span><b>${escapeHtml(shop.name)}</b><small>${escapeHtml(shop.slug)}</small></span></div></td><td>${escapeHtml(shop.category)}</td><td class="customer-email">${escapeHtml(shop.contact_email || "—")}</td><td><span class="shop-flag ${shop.is_verified ? "" : "muted"}"><i class="fa-solid fa-circle-check"></i>${shop.is_verified ? "Verified" : "Chưa xác minh"}</span></td><td><span class="sale-pill ${shop.is_active ? "yes" : "no"}">${shop.is_active ? "ACTIVE" : "HIDDEN"}</span></td><td><button class="row-action" data-edit-shop="${escapeHtml(shop.id)}"><i class="fa-solid fa-pen"></i></button></td></tr>`).join("") || emptyRow("Chưa có gian hàng.", 6); }
 
-  function openProductModal(product = null) {
+function openProductModal(product = null) {
   state.editingProductId = product?.id || null;
+  state.editingProductGallery = productGalleryUrls(product).slice(1);
   $("#productForm").reset();
   $("#productModalTitle").textContent = product ? "Chỉnh sửa sản phẩm" : "Tạo sản phẩm mới";
   $("#deleteProductButton").classList.toggle("hidden", !product);
@@ -274,7 +286,7 @@ function renderShops() { els.shopsBody.innerHTML = state.shops.map((shop) => `<t
     $("#productImageUrl").value = product.image_url; $("#productPrice").value = product.price; $("#productOriginalPrice").value = product.original_price;
     $("#productSale").checked = product.is_sale; $("#productFeatured").checked = product.featured;
   }
-  setTechnicalSpecs(product?.technical_specs || {});
+  setTechnicalSpecs(product?.technical_specs || {}); renderAdminProductGallery();
   updateProductPreview(); openModal("product");
 }
 function openFaqModal(faq = null) { state.editingFaqId = faq?.id || null; $("#faqForm").reset(); $("#deleteFaqButton").classList.toggle("hidden", !faq); $("#faqModalTitle").textContent = faq ? "Chỉnh sửa FAQ" : "Thêm FAQ"; if (faq) { $("#faqId").value = faq.id; $("#faqQuestion").value = faq.question; $("#faqAnswer").value = faq.answer; $("#faqQuestionEn").value = faq.question_en || ""; $("#faqAnswerEn").value = faq.answer_en || ""; $("#faqSortOrder").value = faq.sort_order; $("#faqPublished").checked = faq.is_published; } openModal("faq"); }
@@ -304,9 +316,11 @@ async function saveProduct(event) {
     price, original_price: originalPrice, shop_id: $("#productShopId").value || null, technical_specs: collectTechnicalSpecs(), is_active: $("#productActive").checked, is_sale: $("#productSale").checked, featured: $("#productFeatured").checked, updated_at: new Date().toISOString(),
   };
   setLoading($("#saveProductButton"), true, "Đang lưu");
-  const result = state.editingProductId ? await db.from("products").update(payload).eq("id", state.editingProductId) : await db.from("products").insert(payload);
+  const result = state.editingProductId ? await db.from("products").update(payload).eq("id", state.editingProductId).select("id").single() : await db.from("products").insert(payload).select("id").single();
   setLoading($("#saveProductButton"), false);
   if (result.error) return toast(result.error.message, "error");
+  const gallery = currentProductGallery(); const { error: galleryError } = await db.rpc("replace_product_gallery", { p_product_id: result.data.id, p_image_urls: gallery });
+  if (galleryError) return toast(`Đã lưu sản phẩm nhưng chưa lưu gallery: ${galleryError.message}`, "error");
   closeModal("product"); toast(state.editingProductId ? "Đã cập nhật sản phẩm." : "Đã tạo sản phẩm mới.", "success"); await loadData();
 }
 async function deleteProduct() { if (!state.editingProductId || !window.confirm("Xóa sản phẩm này?")) return; const { error } = await db.from("products").delete().eq("id", state.editingProductId); if (error) return toast(error.message, "error"); closeModal("product"); toast("Đã xóa sản phẩm.", "success"); loadData(); }
@@ -368,6 +382,7 @@ async function cancelOrderAsManager(orderId) {
   if (error) return toast(error.message, "error");
   closeModal("order"); toast("Đã hủy đơn và lưu lịch sử vận hành.", "success"); await loadData();
 }
+async function archiveCancelledOrder(orderId) { const order = getOrder(orderId); if (!order || order.status !== "cancelled") return toast("Chỉ xóa khỏi danh sách được đơn đã hủy.", "error"); const reason = window.prompt(`Ghi chú lưu trữ đơn ${order.order_number}:`, "Đơn hủy được lưu trữ khỏi danh sách vận hành."); if (reason === null) return; if (!window.confirm(`Xóa đơn ${order.order_number} khỏi danh sách? Dữ liệu sẽ được lưu trữ để đối soát, không xóa vĩnh viễn.`)) return; const { error } = await db.rpc("archive_cancelled_order", { p_order_id: order.id, p_reason: reason.trim() || null }); if (error) return toast(error.message, "error"); toast("Đã xóa khỏi danh sách và lưu trữ lịch sử đơn.", "success"); await loadData(); }
 
 function activateView(view) { $$(".admin-nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === view)); $$("[data-admin-view]").forEach((section) => section.classList.toggle("active", section.dataset.adminView === view)); els.viewTitle.textContent = ({ overview: "Tổng quan vận hành", products: "Quản lý sản phẩm", orders: "Quản lý đơn hàng", brand: "Thương hiệu & banner", content: "Nội dung & FAQ", shops: "Gian hàng & đối tác", "sale-campaigns": "Săn sale & ưu đãi" })[view] || "Command Deck"; }
 function getProduct(id) { return state.products.find((product) => product.id === id); }

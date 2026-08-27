@@ -1963,3 +1963,79 @@ grant execute on function public.delete_my_article(uuid) to authenticated;
 drop policy if exists "NEXORA article cover upload" on storage.objects;
 create policy "NEXORA article cover upload" on storage.objects for insert to authenticated
 with check (bucket_id = 'nexora-brand-assets' and (storage.foldername(name))[1] = 'articles' and lower(storage.extension(name)) in ('png','jpg','jpeg','webp','svg') and public.can_write_articles());
+
+-- 37. Gallery sản phẩm và xóa đơn theo dạng lưu trữ để bảo toàn đối soát.
+create table if not exists public.product_images (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete cascade,
+  image_url text not null check (length(trim(image_url)) between 8 and 700 and image_url ~* '^https://'),
+  sort_order smallint not null default 0 check (sort_order between 0 and 7),
+  created_at timestamptz not null default now(),
+  unique (product_id, image_url),
+  unique (product_id, sort_order)
+);
+create index if not exists product_images_product_sort_idx on public.product_images(product_id, sort_order);
+alter table public.product_images enable row level security;
+revoke all on table public.product_images from public, anon, authenticated;
+create policy "Public reads product gallery" on public.product_images for select using (exists (select 1 from public.products p where p.id = product_id and p.is_active));
+
+insert into public.product_images(product_id, image_url, sort_order)
+select p.id, p.image_url, 0 from public.products p
+where p.image_url ~* '^https://'
+on conflict (product_id, image_url) do nothing;
+
+create or replace function public.replace_product_gallery(p_product_id uuid, p_image_urls jsonb)
+returns void language plpgsql security definer set search_path = public, auth
+as $$
+declare v_url text; v_position integer := 0; v_urls jsonb;
+begin
+  if auth.uid() is null or not public.is_admin() then raise exception 'Bạn không có quyền quản lý ảnh sản phẩm.'; end if;
+  if jsonb_typeof(p_image_urls) <> 'array' or jsonb_array_length(p_image_urls) not between 1 and 8 then raise exception 'Gallery cần từ 1 đến 8 ảnh.'; end if;
+  if not exists (select 1 from public.products where id = p_product_id) then raise exception 'Không tìm thấy sản phẩm.'; end if;
+  select jsonb_agg(distinct_url order by position) into v_urls from (
+    select value as distinct_url, min(ordinality) as position from jsonb_array_elements_text(p_image_urls) with ordinality where value ~* '^https://' and length(trim(value)) between 8 and 700 group by value
+  ) compact;
+  if v_urls is null or jsonb_array_length(v_urls) <> jsonb_array_length(p_image_urls) then raise exception 'Mỗi ảnh phải là URL HTTPS hợp lệ và không trùng lặp.'; end if;
+  delete from public.product_images where product_id = p_product_id;
+  for v_url in select value from jsonb_array_elements_text(v_urls) loop
+    insert into public.product_images(product_id, image_url, sort_order) values (p_product_id, v_url, v_position);
+    v_position := v_position + 1;
+  end loop;
+  update public.products set image_url = (v_urls ->> 0), updated_at = now() where id = p_product_id;
+end;
+$$;
+revoke all on function public.replace_product_gallery(uuid,jsonb) from public, anon;
+grant execute on function public.replace_product_gallery(uuid,jsonb) to authenticated;
+
+alter table public.orders add column if not exists archived_at timestamptz;
+alter table public.orders add column if not exists archived_by uuid references auth.users(id) on delete set null;
+alter table public.orders add column if not exists archive_reason text;
+alter table public.orders drop constraint if exists orders_archive_reason_check;
+alter table public.orders add constraint orders_archive_reason_check check (archive_reason is null or length(trim(archive_reason)) between 1 and 400);
+
+create or replace function public.archive_cancelled_order(p_order_id uuid, p_reason text default null)
+returns public.orders language plpgsql security definer set search_path = public, auth
+as $$
+declare v_order public.orders; v_reason text := coalesce(nullif(trim(p_reason), ''), 'Đơn hủy được lưu trữ khỏi danh sách vận hành.');
+begin
+  if auth.uid() is null or not public.can_manage_orders() then raise exception 'Bạn không có quyền xóa/lưu trữ đơn.'; end if;
+  if length(v_reason) > 400 then raise exception 'Ghi chú lưu trữ tối đa 400 ký tự.'; end if;
+  select * into v_order from public.orders where id = p_order_id for update;
+  if not found then raise exception 'Không tìm thấy đơn hàng.'; end if;
+  if v_order.status <> 'cancelled' then raise exception 'Hãy hủy đơn trước khi xóa khỏi danh sách.'; end if;
+  if v_order.archived_at is not null then raise exception 'Đơn này đã được lưu trữ.'; end if;
+  update public.orders set archived_at = now(), archived_by = auth.uid(), archive_reason = v_reason, updated_at = now() where id = v_order.id returning * into v_order;
+  insert into public.account_audit_log(actor_user_id, action, metadata) values (auth.uid(), 'order_archived', jsonb_build_object('order_id', v_order.id, 'order_number', v_order.order_number));
+  return v_order;
+end;
+$$;
+revoke all on function public.archive_cancelled_order(uuid,text) from public, anon;
+grant execute on function public.archive_cancelled_order(uuid,text) to authenticated;
+
+drop policy if exists "NEXORA product gallery upload" on storage.objects;
+create policy "NEXORA product gallery upload" on storage.objects for insert to authenticated
+with check (bucket_id = 'nexora-brand-assets' and (storage.foldername(name))[1] = 'products' and lower(storage.extension(name)) in ('png','jpg','jpeg','webp','svg') and public.is_admin());
+
+-- 38. Admin cần xem gallery của cả sản phẩm đang tạm ngừng bán để chỉnh sửa.
+drop policy if exists "Public reads product gallery" on public.product_images;
+create policy "Public reads product gallery" on public.product_images for select using (exists (select 1 from public.products p where p.id = product_id and (p.is_active or public.is_admin())));

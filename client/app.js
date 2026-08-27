@@ -13,7 +13,9 @@ import { getAutoTransferPresentation } from "./auto-transfer-payment.js";
 import { getCheckoutDelivery } from "./checkout-delivery.js";
 import { normalizeDeliveryProfile } from "./account-delivery.js";
 import { normalizeSignupUsername } from "./signup-username.js";
+import { productGalleryUrls } from "./product-gallery.js";
 import { buildProductShareText, buildProductShareUrl } from "./product-sharing.js";
+import "./product-gallery.css";
 
 const UI_TRANSLATIONS = {
   vi: { discover: "Khám phá", discoverProducts: "Khám phá sản phẩm", flashSale: "Flash Sale", categories: "Danh mục", shops: "Gian hàng", journal: "Bài viết", help: "Trợ giúp", exploreDeals: "Khám phá ưu đãi", viewFlashSale: "Xem Flash Sale", searchPlaceholder: "Tìm thiết bị, phụ kiện...", mobileSearchPlaceholder: "Tìm kiếm trong NEXORA", skipCatalog: "Đi tới danh sách sản phẩm", loaderTitle: "Đang đưa thiết bị lên màn hình", loaderDetail: "Chờ một nhịp để đồng bộ catalog và ưu đãi.", storeOnline: "Storefront online", curatedDevices: "Thiết bị tuyển chọn", orderResponse: "Phản hồi đơn hàng", productSupport: "Hỗ trợ sản phẩm", flashHeading: "Flash Sale<br /><em>đang truyền tín hiệu.</em>", flashDescription: "Giá ưu đãi chỉ mở trong khung giờ này. Hãy thêm sản phẩm trước khi đồng hồ quay về 00.", huntNow: "Săn giá ngay", saleHuntHeading: "Săn mã đúng nhịp.<br /><em>Giảm thẳng vào đơn.</em>", saleHuntDescription: "Chọn một mã đang mở, mã sẽ được đưa vào giỏ. Tổng ưu đãi cuối cùng luôn được kiểm tra lại khi tạo đơn.", catalogHeading: "Thiết bị<br /><em>đang bắt sóng.</em>", clearFilters: "Xóa lọc", categoryLabel: "Danh mục", allDevices: "Tất cả thiết bị", phones: "Điện thoại", accessories: "Phụ kiện", priceRange: "Khoảng giá", saleOnly: "Chỉ xem đang SALE", filterNote: "Giá đã hiển thị là giá hiện tại. Các ưu đãi Flash Sale có thể kết thúc sớm.", catalogUnavailable: "Không thể đồng bộ catalog mới nhất.", catalogFallback: "Đang hiển thị dữ liệu dự phòng để bạn tiếp tục xem sản phẩm.", retry: "Thử lại", emptyTitle: "Không tìm thấy tín hiệu phù hợp.", emptyDetail: "Điều chỉnh bộ lọc hoặc thử một từ khóa khác.", resetFilters: "Thiết lập lại bộ lọc", shopsHeading: "Gian hàng<br /><em>đang được xác minh.</em>", shopsDescription: "Khám phá các không gian công nghệ theo nhu cầu, có mô tả hoạt động và đầu mối hỗ trợ rõ ràng.", sellerStandard: "Tìm hiểu về tiêu chuẩn gian hàng", helpHeading: "Câu hỏi có<br /><em>tín hiệu rõ ràng.</em>", helpDescription: "Thông tin về tài khoản, thanh toán và hỗ trợ sau đơn được tập hợp ở một nơi.", helpCenter: "Đến trung tâm hỗ trợ", trustHeading: "Mua sắm với<br />thông tin rõ ràng.", trustDescription: "Các chính sách và hướng dẫn được công bố tập trung để bạn xem trước khi giao dịch.", shippingReturns: "Giao hàng & đổi trả", shippingReturnsDetail: "Quy trình và thông tin cần chuẩn bị", privacy: "Bảo mật dữ liệu", privacyDetail: "Nguyên tắc xử lý tài khoản và đơn hàng", terms: "Điều khoản sử dụng", termsDetail: "Các nguyên tắc vận hành nền tảng", about: "Về NEXORA", aboutDetail: "Cam kết về trải nghiệm và minh bạch", clearInfo: "Minh bạch thông tin", clearInfoDetail: "Mô tả, giá và ưu đãi hiển thị rõ ràng.", carefulPacking: "Đóng gói cẩn thận", carefulPackingDetail: "Kiểm tra thiết bị trước khi bàn giao.", afterOrderSupport: "Hỗ trợ sau đơn", afterOrderSupportDetail: "Đội ngũ NEXORA sẵn sàng phản hồi.", storeAdmin: "Quản trị cửa hàng", cartTitle: "Giỏ hàng", subtotal: "Tạm tính", securePayment: "Thanh toán an toàn qua VietQR hoặc MoMo.", continueCheckout: "Tiếp tục thanh toán", authHeading: "Đăng nhập để<br /><em>đồng bộ đơn hàng.</em>", authIntro: "Tạo tài khoản hoặc đăng nhập bằng email để tiếp tục với thanh toán và quản lý đơn hàng.", login: "Đăng nhập", signup: "Đăng ký", passwordLabel: "Mật khẩu", passwordPlaceholder: "Tối thiểu 6 ký tự", inStock: "Còn hàng", nationwideDelivery: "Giao hàng toàn quốc", addToCart: "Thêm vào giỏ", orderCreated: "ĐƠN HÀNG ĐÃ ĐƯỢC TẠO", qrHeading: "Quét mã để<br /><em>hoàn tất thanh toán.</em>", devicesShown: (count) => `${count.toString().padStart(2, "0")} thiết bị đang hiển thị`, catalogLoading: "Đang đồng bộ catalog...", searchLoading: "Đang tìm trong catalog...", searchHint: "Đang lọc thiết bị phù hợp…", addCart: "Thêm giỏ", soldOut: "Hết hàng", comments: "Bình luận", useCode: "Dùng mã", noActiveSale: "Chưa có mã săn sale đang mở. Hãy quay lại trong đợt tiếp theo.", verified: "Đã xác minh", updating: "Đang cập nhật", contactSupport: "Liên hệ hỗ trợ", standard: "Tiêu chuẩn", emptyCart: "Giỏ hàng đang trống. Chọn một thiết bị để bắt đầu phiên mua sắm." },
@@ -161,6 +163,7 @@ function bindEvents() {
   $$("[data-auth-mode]").forEach((button) => button.addEventListener("click", () => setAuthMode(button.dataset.authMode)));
   els.authForm.addEventListener("submit", handleAuthSubmit);
   els.quickViewAdd.addEventListener("click", () => { if (state.activeProduct) addToCart(state.activeProduct); });
+  els.quickViewImage.addEventListener("click", selectQuickViewImage);
   $$("[data-payment-method]").forEach((button) => button.addEventListener("click", () => setPaymentMethod(button.dataset.paymentMethod)));
   els.qrImage.addEventListener("error", () => {
     if (state.lastOrder) showQRState("Không tải được QR. Hãy kiểm tra Internet và thông tin nhận tiền trong app.js.");
@@ -230,14 +233,16 @@ async function loadProducts() {
     openSharedProductFromUrl();
     return;
   }
-  const { data, error } = await db.from("products").select("*").order("featured", { ascending: false }).order("created_at", { ascending: false });
-  if (error) {
-    console.error("Không thể tải sản phẩm:", error);
+  const [productsResult, imagesResult] = await Promise.all([db.from("products").select("*").order("featured", { ascending: false }).order("created_at", { ascending: false }), db.from("product_images").select("product_id,image_url,sort_order").order("sort_order")]);
+  if (productsResult.error) {
+    console.error("Không thể tải sản phẩm:", productsResult.error);
     state.products = LOCAL_DEMO_PRODUCTS;
     state.catalogLoadError = "Đang hiển thị dữ liệu dự phòng để bạn tiếp tục xem sản phẩm.";
     showToast("Không tải được catalog từ Supabase. Bạn có thể thử lại khi mạng ổn định.", "error");
   } else {
-    state.products = data || [];
+    const galleryByProduct = new Map();
+    (imagesResult.data || []).forEach((image) => { const current = galleryByProduct.get(image.product_id) || []; current.push(image); galleryByProduct.set(image.product_id, current); });
+    state.products = (productsResult.data || []).map((product) => ({ ...product, product_images: galleryByProduct.get(product.id) || [] }));
     state.catalogLoadError = null;
   }
   renderProducts();
@@ -371,7 +376,8 @@ function handleSearchSubmit(event) { event.preventDefault(); $("#products").scro
 
 function openQuickView(product) {
   state.activeProduct = product;
-  els.quickViewImage.innerHTML = `<img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name)}" />`;
+  const images = productGalleryUrls(product);
+  els.quickViewImage.innerHTML = `<div class="quick-view-gallery"><div class="quick-view-gallery-main"><img id="quickViewMainImage" src="${escapeHtml(images[0] || product.image_url)}" alt="${escapeHtml(product.name)}" />${images.length > 1 ? `<span class="quick-view-gallery-count">1/${images.length}</span>` : ""}</div>${images.length > 1 ? `<div class="quick-view-gallery-thumbs">${images.map((url, index) => `<button type="button" data-gallery-image="${escapeHtml(url)}" class="${index === 0 ? "active" : ""}" aria-label="Xem ảnh ${index + 1} của ${escapeHtml(product.name)}"><img src="${escapeHtml(url)}" alt="" /></button>`).join("")}</div>` : ""}</div>`;
   els.quickViewCategory.textContent = `${product.category.toUpperCase()} / ${product.is_sale ? "SALE ACTIVE" : "STANDARD"}`;
   els.quickViewTitle.textContent = product.name;
   els.quickViewDescription.textContent = product.description;
@@ -385,6 +391,7 @@ function openQuickView(product) {
   openModal("quick-view");
   window.dispatchEvent(new CustomEvent("nexora:quickview", { detail: { product } }));
 }
+function selectQuickViewImage(event) { const button = event.target.closest("[data-gallery-image]"); if (!button) return; const image = $("#quickViewMainImage"); if (!image) return; image.src = button.dataset.galleryImage; const buttons = $$('[data-gallery-image]', els.quickViewImage); buttons.forEach((item) => item.classList.toggle("active", item === button)); const count = $(".quick-view-gallery-count", els.quickViewImage); if (count) count.textContent = `${buttons.indexOf(button) + 1}/${buttons.length}`; }
 
 function openSharedProductFromUrl() {
   if (state.sharedProductOpened) return;

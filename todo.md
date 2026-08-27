@@ -218,3 +218,5 @@
 - [x] Thêm hủy đơn có kiểm soát cho khách và quản trị viên, bảo toàn trạng thái thanh toán/giao nhận hợp lệ.
 - [x] Chuẩn hóa các trường ảnh trong Command Deck để chọn tải ảnh lên hoặc nhập URL HTTPS công khai.
 - [x] Thêm xóa bài viết có xác nhận và sửa luồng tải lên/hiển thị ảnh bìa bài viết theo quyền.
+- [x] Thêm thư viện nhiều ảnh cho sản phẩm, chọn ảnh chính và hỗ trợ tải ảnh lên hoặc dán URL trong Admin.
+- [x] Bổ sung hủy đơn rõ ràng cho khách và hủy/xóa lưu trữ đơn có kiểm soát trong Admin.

@@ -187,6 +187,8 @@ Trong Command Deck, các trường logo, favicon, ảnh Open Graph, hero/banner,
 
 Trong tab **Bài viết** của Account Center, tác giả có thể tải ảnh bìa PNG, JPG, WEBP hoặc SVG tối đa 5 MB, hoặc dán URL HTTPS công khai. Hệ thống hiển thị ảnh xem trước và thay biểu tượng dự phòng nếu URL không tải được ở trang chủ/trang đọc. Nút **Xóa bài viết** chỉ xóa bài do chính tài khoản đó tạo sau khi xác nhận; bài lập tức biến mất khỏi storefront và hệ thống lưu một bản ghi audit không chứa nội dung bài viết.
 
+Trong **Sản phẩm → Chỉnh sửa**, phần **Gallery ảnh sản phẩm** nhận tối đa 8 ảnh HTTPS. Quản trị viên có thể dán URL hoặc tải PNG, JPG, WEBP, SVG tối đa 5 MB; ảnh đầu tiên là ảnh chính và thumbnail trong Xem nhanh cho phép khách đổi ảnh đang xem. Khách có thể hủy đơn khi đơn còn chờ thanh toán/chưa vào giao nhận. Trong Command Deck, quản trị viên hủy đơn theo đúng điều kiện này, sau đó dùng nút **Xóa khỏi danh sách** để lưu trữ đơn hủy; dữ liệu không bị xóa cứng nhằm giữ lịch sử đối soát.
+
 Mỗi thẻ sản phẩm có nút chia sẻ. Với khách thường, hệ thống chia sẻ link sản phẩm; với affiliate đã được duyệt, link tự kèm `?ref=<mã>` để dùng luồng referral hiện có. Không tự tạo hoa hồng chỉ vì nhấn chia sẻ; hoa hồng vẫn phụ thuộc quy tắc affiliate và trạng thái đơn đã cấu hình.
 
 Số điện thoại/địa chỉ chỉ hiển thị trong **Quản lý khách hàng** cho Admin và trong **Kiểm hàng & giao nhận** cho vai trò có quyền logistics. Nhân viên kiểm hàng dùng thông tin đó để điều phối đơn; không sao chép hoặc công bố ngoài mục đích giao nhận. Ở cùng workspace này, dùng nút **Sửa** để chỉnh đối tác giao hàng, hoặc biểu tượng thùng rác để xóa. Hệ thống từ chối xóa đối tác đang được gắn với đơn hàng.
