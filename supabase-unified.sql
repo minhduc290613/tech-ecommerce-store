@@ -1943,3 +1943,23 @@ begin
   return new;
 end;
 $$;
+
+-- 36. Bài viết: xóa có xác nhận ở giao diện, quyền kiểm tra ở RPC và ảnh bìa theo role tác giả.
+create or replace function public.delete_my_article(p_id uuid)
+returns void language plpgsql security definer set search_path = public, auth
+as $$
+declare v_article public.articles;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  delete from public.articles where id = p_id and author_id = auth.uid() returning * into v_article;
+  if not found then raise exception 'Không thể xóa bài viết này.'; end if;
+  insert into public.account_audit_log(actor_user_id, action, metadata)
+  values (auth.uid(), 'article_deleted', jsonb_build_object('article_id', v_article.id, 'slug', v_article.slug, 'prior_status', v_article.status));
+end;
+$$;
+revoke all on function public.delete_my_article(uuid) from public, anon;
+grant execute on function public.delete_my_article(uuid) to authenticated;
+
+drop policy if exists "NEXORA article cover upload" on storage.objects;
+create policy "NEXORA article cover upload" on storage.objects for insert to authenticated
+with check (bucket_id = 'nexora-brand-assets' and (storage.foldername(name))[1] = 'articles' and lower(storage.extension(name)) in ('png','jpg','jpeg','webp','svg') and public.can_write_articles());

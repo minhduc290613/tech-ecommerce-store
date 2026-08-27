@@ -217,3 +217,4 @@
 - [x] Bắt buộc username hợp lệ khi đăng ký tài khoản, không ràng buộc username khi cập nhật số điện thoại hoặc địa chỉ.
 - [x] Thêm hủy đơn có kiểm soát cho khách và quản trị viên, bảo toàn trạng thái thanh toán/giao nhận hợp lệ.
 - [x] Chuẩn hóa các trường ảnh trong Command Deck để chọn tải ảnh lên hoặc nhập URL HTTPS công khai.
+- [x] Thêm xóa bài viết có xác nhận và sửa luồng tải lên/hiển thị ảnh bìa bài viết theo quyền.
