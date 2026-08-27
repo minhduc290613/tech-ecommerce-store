@@ -212,3 +212,4 @@
 - [x] Bảo đảm dashboard chỉ hiển thị dữ liệu của affiliate đang đăng nhập, có kiểm thử phân quyền và responsive.
 - [x] Thêm lối vào Đơn hàng cạnh Tài khoản trên desktop, trong menu mobile và ở chân trang storefront.
 - [x] Tách Địa chỉ nhận hàng thành mục riêng và chuyển Số điện thoại vào mục Bảo mật trong Account Center.
+- [x] Cho phép cập nhật độc lập Số điện thoại hoặc Địa chỉ trong Account Center, vẫn yêu cầu đủ dữ liệu khi checkout.

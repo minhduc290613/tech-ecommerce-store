@@ -1705,3 +1705,22 @@ $$;
 revoke all on function public.track_affiliate_link_click(text,uuid,uuid), public.get_my_affiliate_dashboard() from public;
 grant execute on function public.track_affiliate_link_click(text,uuid,uuid) to anon, authenticated;
 grant execute on function public.get_my_affiliate_dashboard() to authenticated;
+
+-- 32. Account Center cho phép cập nhật số điện thoại và địa chỉ độc lập; checkout vẫn bắt buộc đủ cả hai.
+create or replace function public.update_my_account(p_display_name text, p_username text, p_delivery_phone text, p_default_shipping_address text)
+returns public.customer_profiles language plpgsql security definer set search_path = public, auth
+as $$
+declare v_profile public.customer_profiles; v_phone text := nullif(trim(p_delivery_phone), ''); v_address text := nullif(trim(p_default_shipping_address), '');
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status <> 'active') then raise exception 'Tài khoản hiện không thể cập nhật hồ sơ.'; end if;
+  if p_delivery_phone is not null and (v_phone is null or length(v_phone) not between 8 and 20) then raise exception 'Số điện thoại nhận hàng cần từ 8 đến 20 ký tự.'; end if;
+  if p_default_shipping_address is not null and (v_address is null or length(v_address) not between 8 and 500) then raise exception 'Địa chỉ nhận hàng cần từ 8 đến 500 ký tự.'; end if;
+  perform public.ensure_my_account(null, null, null, null);
+  if p_username is not null and (length(trim(p_username)) < 3 or trim(p_username) !~ '^[a-zA-Z0-9_.-]+$') then raise exception 'Username chỉ gồm 3–40 ký tự chữ, số, dấu gạch ngang, gạch dưới hoặc dấu chấm.'; end if;
+  update public.customer_profiles set display_name = nullif(trim(p_display_name), ''), username = nullif(lower(trim(p_username)), ''), delivery_phone = case when p_delivery_phone is null then delivery_phone else v_phone end, default_shipping_address = case when p_default_shipping_address is null then default_shipping_address else v_address end, email = auth.jwt() ->> 'email', updated_at = now() where user_id = auth.uid() returning * into v_profile;
+  return v_profile;
+end;
+$$;
+revoke all on function public.update_my_account(text, text, text, text) from public, anon;
+grant execute on function public.update_my_account(text, text, text, text) to authenticated;
