@@ -14,6 +14,7 @@ import "./admin-sale-usage-history.css";
 import "./admin-order-service.css";
 import "./admin-accounts.js";
 import "./admin-email-delivery.js";
+import "./admin-transactional-notifications.js";
 import "./admin-roles-content.js";
 import "./admin-logistics.js";
 

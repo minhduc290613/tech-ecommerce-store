@@ -2156,3 +2156,126 @@ revoke all on table public.order_service_requests from anon, authenticated;
 grant select on table public.order_service_requests to authenticated;
 revoke all on function public.request_post_payment_order_service(uuid,text,text), public.review_post_payment_order_service(uuid,text,text) from public, anon;
 grant execute on function public.request_post_payment_order_service(uuid,text,text), public.review_post_payment_order_service(uuid,text,text) to authenticated;
+
+-- 42. Thông báo hậu mãi: ghi nhận trong tài khoản, xếp hàng email và chỉ gửi khi server đã cấu hình secret.
+alter table public.email_delivery_settings add column if not exists transactional_mode text not null default 'disabled' check (transactional_mode in ('disabled','api','smtp'));
+alter table public.email_delivery_settings add column if not exists transactional_enabled boolean not null default false;
+
+create table if not exists public.transactional_email_templates (
+  event_type text primary key check (event_type in ('paid_cancellation_status','return_status','order_delivered')),
+  is_enabled boolean not null default true,
+  subject text not null, preheader text not null default '', heading text not null, body_text text not null, cta_label text not null default 'Xem đơn hàng', footer_text text not null default '',
+  updated_at timestamptz not null default now(), updated_by uuid references auth.users(id) on delete set null,
+  constraint transactional_email_templates_length_check check (greatest(length(subject), length(preheader), length(heading), length(body_text), length(cta_label), length(footer_text)) between 1 and 4000)
+);
+create table if not exists public.customer_notifications (
+  id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users(id) on delete restrict, order_id uuid references public.orders(id) on delete set null, service_request_id uuid references public.order_service_requests(id) on delete set null,
+  event_type text not null check (event_type in ('paid_cancellation_status','return_status','order_delivered')), title text not null check (length(trim(title)) between 1 and 180), body text not null check (length(trim(body)) between 1 and 800), is_read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists customer_notifications_user_created_idx on public.customer_notifications(user_id, created_at desc);
+create table if not exists public.transactional_email_logs (
+  id uuid primary key default gen_random_uuid(), event_key text not null unique check (length(trim(event_key)) between 1 and 180), event_type text not null check (event_type in ('paid_cancellation_status','return_status','order_delivered')),
+  user_id uuid not null references auth.users(id) on delete restrict, order_id uuid references public.orders(id) on delete set null, service_request_id uuid references public.order_service_requests(id) on delete set null,
+  delivery_mode text not null default 'disabled' check (delivery_mode in ('disabled','api','smtp')), status text not null default 'queued' check (status in ('queued','sent','skipped','failed')),
+  provider_message_id text, error_message text, sent_at timestamptz, created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create index if not exists transactional_email_logs_status_created_idx on public.transactional_email_logs(status, created_at desc);
+
+alter table public.transactional_email_templates enable row level security;
+alter table public.customer_notifications enable row level security;
+alter table public.transactional_email_logs enable row level security;
+revoke all on table public.transactional_email_templates, public.customer_notifications, public.transactional_email_logs from anon, authenticated;
+grant select on table public.transactional_email_templates, public.customer_notifications, public.transactional_email_logs to authenticated;
+drop policy if exists transactional_email_templates_admin_read on public.transactional_email_templates;
+create policy transactional_email_templates_admin_read on public.transactional_email_templates for select to authenticated using (public.is_admin());
+drop policy if exists customer_notifications_owner_read on public.customer_notifications;
+create policy customer_notifications_owner_read on public.customer_notifications for select to authenticated using (user_id = auth.uid());
+drop policy if exists customer_notifications_owner_update on public.customer_notifications;
+create policy customer_notifications_owner_update on public.customer_notifications for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists customer_notifications_manager_read on public.customer_notifications;
+create policy customer_notifications_manager_read on public.customer_notifications for select to authenticated using (public.can_manage_orders());
+drop policy if exists transactional_email_logs_admin_read on public.transactional_email_logs;
+create policy transactional_email_logs_admin_read on public.transactional_email_logs for select to authenticated using (public.is_admin());
+
+insert into public.transactional_email_templates(event_type, subject, preheader, heading, body_text, cta_label, footer_text) values
+  ('paid_cancellation_status', 'Cập nhật yêu cầu hủy đơn {order_number}', 'Yêu cầu hủy đơn đã thanh toán của bạn vừa được cập nhật.', 'Yêu cầu hủy đơn đã thanh toán', 'Yêu cầu của bạn cho đơn {order_number} hiện có trạng thái: {status}. {review_note}', 'Xem đơn hàng', 'Nếu bạn cần thêm hỗ trợ, hãy liên hệ NEXORA.'),
+  ('return_status', 'Cập nhật yêu cầu trả hàng {order_number}', 'Yêu cầu trả hàng của bạn vừa được cập nhật.', 'Yêu cầu trả hàng', 'Yêu cầu trả hàng cho đơn {order_number} hiện có trạng thái: {status}. {review_note}', 'Xem đơn hàng', 'Nếu bạn cần thêm hỗ trợ, hãy liên hệ NEXORA.'),
+  ('order_delivered', 'Đơn hàng {order_number} đã được giao', 'Đơn hàng của bạn đã đến nơi.', 'Đơn hàng đã được giao', 'Đơn {order_number} đã được cập nhật trạng thái đã giao. Cảm ơn bạn đã mua sắm tại NEXORA.', 'Xem đơn hàng', 'Hãy kiểm tra đơn hàng và liên hệ NEXORA nếu cần hỗ trợ.')
+on conflict (event_type) do nothing;
+
+create or replace function public.enqueue_order_notification(p_user_id uuid, p_order_id uuid, p_service_request_id uuid, p_event_type text, p_event_key text, p_title text, p_body text)
+returns void language plpgsql security definer set search_path = public, auth
+as $$
+declare v_mode text := 'disabled'; v_enabled boolean := false; v_template_enabled boolean := true;
+begin
+  select transactional_mode, transactional_enabled into v_mode, v_enabled from public.email_delivery_settings where singleton = true;
+  select is_enabled into v_template_enabled from public.transactional_email_templates where event_type = p_event_type;
+  insert into public.customer_notifications(user_id, order_id, service_request_id, event_type, title, body) values (p_user_id, p_order_id, p_service_request_id, p_event_type, p_title, p_body);
+  insert into public.transactional_email_logs(event_key, event_type, user_id, order_id, service_request_id, delivery_mode, status, error_message)
+  values (p_event_key, p_event_type, p_user_id, p_order_id, p_service_request_id, case when v_enabled and v_template_enabled then coalesce(v_mode, 'disabled') else 'disabled' end, case when v_enabled and v_template_enabled and coalesce(v_mode, 'disabled') <> 'disabled' then 'queued' else 'skipped' end, case when v_enabled and v_template_enabled and coalesce(v_mode, 'disabled') <> 'disabled' then null else 'Kênh email chưa được bật hoặc mẫu đang tắt.' end)
+  on conflict (event_key) do nothing;
+end;
+$$;
+
+create or replace function public.order_service_notification_trigger()
+returns trigger language plpgsql security definer set search_path = public, auth
+as $$
+declare v_order public.orders; v_event_type text; v_title text; v_body text; v_status text;
+begin
+  if new.status is not distinct from old.status or new.status not in ('approved','completed','rejected') then return new; end if;
+  select * into v_order from public.orders where id = new.order_id;
+  v_event_type := case when new.service_type = 'return' then 'return_status' else 'paid_cancellation_status' end;
+  v_status := case new.status when 'approved' then 'Đã duyệt' when 'completed' then 'Hoàn tất' else 'Từ chối' end;
+  v_title := case when new.service_type = 'return' then 'Cập nhật yêu cầu trả hàng' else 'Cập nhật yêu cầu hủy đơn đã thanh toán' end;
+  v_body := format('%s cho đơn %s: %s%s', v_title, v_order.order_number, v_status, case when new.review_note is null then '' else ' — ' || new.review_note end);
+  perform public.enqueue_order_notification(new.user_id, new.order_id, new.id, v_event_type, 'service:' || new.id::text || ':' || new.status, v_title, v_body);
+  return new;
+end;
+$$;
+drop trigger if exists order_service_notification_after_update on public.order_service_requests;
+create trigger order_service_notification_after_update after update of status on public.order_service_requests for each row execute procedure public.order_service_notification_trigger();
+
+create or replace function public.order_delivered_notification_trigger()
+returns trigger language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  if new.fulfillment_status = 'delivered' and old.fulfillment_status is distinct from 'delivered' then
+    perform public.enqueue_order_notification(new.user_id, new.id, null, 'order_delivered', 'order:' || new.id::text || ':delivered', 'Đơn hàng đã được giao', format('Đơn %s đã được cập nhật trạng thái đã giao. Cảm ơn bạn đã mua sắm tại NEXORA.', new.order_number));
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists order_delivered_notification_after_update on public.orders;
+create trigger order_delivered_notification_after_update after update of fulfillment_status on public.orders for each row execute procedure public.order_delivered_notification_trigger();
+
+create or replace function public.admin_update_transactional_email_settings(p_mode text, p_enabled boolean)
+returns public.email_delivery_settings language plpgsql security definer set search_path = public, auth
+as $$
+declare v_settings public.email_delivery_settings;
+begin
+  if not public.is_admin() then raise exception 'Chỉ quản trị viên được chỉnh kênh email giao dịch.'; end if;
+  if p_mode not in ('disabled','api','smtp') then raise exception 'Kênh email giao dịch không hợp lệ.'; end if;
+  insert into public.email_delivery_settings(singleton, transactional_mode, transactional_enabled, updated_at) values (true, p_mode, coalesce(p_enabled, false), now()) on conflict (singleton) do update set transactional_mode = excluded.transactional_mode, transactional_enabled = excluded.transactional_enabled, updated_at = now() returning * into v_settings;
+  insert into public.account_audit_log(actor_user_id, action, metadata) values (auth.uid(), 'transactional_email_settings_updated', jsonb_build_object('mode', p_mode, 'enabled', coalesce(p_enabled, false)));
+  return v_settings;
+end;
+$$;
+
+create or replace function public.admin_update_transactional_email_template(p_event_type text, p_enabled boolean, p_subject text, p_preheader text, p_heading text, p_body_text text, p_cta_label text, p_footer_text text)
+returns public.transactional_email_templates language plpgsql security definer set search_path = public, auth
+as $$
+declare v_template public.transactional_email_templates;
+begin
+  if not public.is_admin() then raise exception 'Chỉ quản trị viên được chỉnh mẫu email giao dịch.'; end if;
+  if p_event_type not in ('paid_cancellation_status','return_status','order_delivered') then raise exception 'Mẫu email không hợp lệ.'; end if;
+  if nullif(trim(p_subject), '') is null or nullif(trim(p_heading), '') is null or nullif(trim(p_body_text), '') is null or nullif(trim(p_cta_label), '') is null then raise exception 'Subject, heading, nội dung và CTA không được để trống.'; end if;
+  if greatest(length(p_subject), length(coalesce(p_preheader, '')), length(p_heading), length(p_body_text), length(p_cta_label), length(coalesce(p_footer_text, ''))) > 4000 then raise exception 'Mẫu email quá dài.'; end if;
+  insert into public.transactional_email_templates(event_type, is_enabled, subject, preheader, heading, body_text, cta_label, footer_text, updated_at, updated_by) values (p_event_type, coalesce(p_enabled, true), trim(p_subject), trim(coalesce(p_preheader, '')), trim(p_heading), trim(p_body_text), trim(p_cta_label), trim(coalesce(p_footer_text, '')), now(), auth.uid()) on conflict (event_type) do update set is_enabled = excluded.is_enabled, subject = excluded.subject, preheader = excluded.preheader, heading = excluded.heading, body_text = excluded.body_text, cta_label = excluded.cta_label, footer_text = excluded.footer_text, updated_at = now(), updated_by = auth.uid() returning * into v_template;
+  insert into public.account_audit_log(actor_user_id, action, metadata) values (auth.uid(), 'transactional_email_template_updated', jsonb_build_object('event_type', p_event_type, 'enabled', coalesce(p_enabled, true)));
+  return v_template;
+end;
+$$;
+
+revoke all on function public.enqueue_order_notification(uuid,uuid,uuid,text,text,text,text), public.admin_update_transactional_email_settings(text,boolean), public.admin_update_transactional_email_template(text,boolean,text,text,text,text,text,text) from public, anon;
+grant execute on function public.admin_update_transactional_email_settings(text,boolean), public.admin_update_transactional_email_template(text,boolean,text,text,text,text,text,text) to authenticated;

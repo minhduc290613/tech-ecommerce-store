@@ -3,6 +3,7 @@ import { canWriteArticles } from "./role-permissions.js";
 import { getAuthRedirectUrl } from "./public-url.js";
 import { normalizeDeliveryPhone, normalizeShippingAddress } from "./account-delivery.js";
 import "./account-article-cover.css";
+import "./account-notifications.css";
 
 const configured = !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const db = window.nexoraDb || (configured && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null);
@@ -11,7 +12,7 @@ const currency = (value) => new Intl.NumberFormat("vi-VN", { style: "currency", 
 const dateTime = (value) => value ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—";
 const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char]));
 
-const state = { user: null, profile: null, wallet: null, ledger: [], topups: [], warnings: [], settings: null, role: null, affiliate: null, commissions: [], orders: [], refunds: [], articles: [], affiliateSettings: null, shippingAddresses: [] };
+const state = { user: null, profile: null, wallet: null, ledger: [], topups: [], warnings: [], notifications: [], settings: null, role: null, affiliate: null, commissions: [], orders: [], refunds: [], articles: [], affiliateSettings: null, shippingAddresses: [] };
 
 document.addEventListener("DOMContentLoaded", () => {
   mountAccountCenter();
@@ -37,6 +38,7 @@ function mountAccountCenter() {
         <div class="account-balance-card"><span>SỐ DƯ KHẢ DỤNG</span><strong id="accountBalance">0đ</strong><small id="accountBalanceUpdated">Đang đồng bộ…</small></div>
         <div class="account-tabs" role="tablist">
           <button class="active" data-account-tab="overview" type="button">Tổng quan</button>
+          <button data-account-tab="notifications" type="button">Thông báo <b id="accountNotificationBadge" hidden>0</b></button>
           <button data-account-tab="delivery" type="button">Địa chỉ</button>
           <button data-account-tab="wallet" type="button">Nạp tiền</button>
           <button data-account-tab="affiliate" type="button">Affiliate</button>
@@ -51,6 +53,11 @@ function mountAccountCenter() {
             <button class="button button-primary" id="saveAccountProfile" type="submit">Lưu hồ sơ <i class="fa-solid fa-check"></i></button>
           </form>
           <div class="account-activity"><h3>Cảnh cáo tài khoản</h3><div id="accountWarnings" class="account-list"><p class="account-empty">Chưa có cảnh cáo nào.</p></div></div>
+        </section>
+        <section class="account-tab" data-account-panel="notifications">
+          <div class="account-form-head"><h3>Thông báo đơn hàng</h3><p>Cập nhật hủy đơn, trả hàng và giao hàng được lưu tại đây. Email chỉ được gửi khi shop đã cấu hình kênh email riêng.</p></div>
+          <div class="account-inline-actions account-notification-actions"><button class="button button-quiet" id="markAccountNotificationsRead" type="button">Đánh dấu đã đọc</button><a class="button button-primary" href="/orders.html">Xem đơn hàng</a></div>
+          <div id="accountNotifications" class="account-list account-notification-list" aria-live="polite"><p class="account-empty">Đang đồng bộ thông báo…</p></div>
         </section>
         <section class="account-tab" data-account-panel="delivery">
           <div class="account-form-head"><h3>Sổ địa chỉ giao hàng</h3><p>Lưu nhiều địa chỉ để tiện nhận hàng. Một địa chỉ được chọn làm mặc định và tự điền vào checkout.</p><small class="account-data-status is-missing" id="accountAddressStatus"><i class="fa-solid fa-circle-info"></i> Đang đồng bộ địa chỉ…</small></div><div id="accountShippingAddressList" class="account-address-book" aria-live="polite"></div>
@@ -101,6 +108,7 @@ function mountAccountCenter() {
   $("#requestAccountDeletion").addEventListener("click", requestAccountDeletion);
   $("#accountSignOut").addEventListener("click", signOutAccount);
   $("#accountSignOutQuick").addEventListener("click", signOutAccount);
+  $("#markAccountNotificationsRead").addEventListener("click", markNotificationsRead);
   $("#affiliateProfileCard").addEventListener("click", handleAffiliateAction);
   $("#refundRequestForm").addEventListener("submit", requestRefund);
   $("#refundOrderId").addEventListener("change", syncRefundMaximum);
@@ -126,12 +134,13 @@ async function openAccountCenter() {
 async function loadAccount() {
   const initial = await db.rpc("ensure_my_account", { p_display_name: null, p_username: null });
   if (initial.error) return notify(initial.error.message, "error");
-  const [profile, wallet, ledger, topups, warnings, settings, role, affiliate, commissions, orders, refunds, articles, affiliateSettings, shippingAddresses] = await Promise.all([
+  const [profile, wallet, ledger, topups, warnings, notifications, settings, role, affiliate, commissions, orders, refunds, articles, affiliateSettings, shippingAddresses] = await Promise.all([
     db.from("customer_profiles").select("*").eq("user_id", state.user.id).maybeSingle(),
     db.from("wallet_accounts").select("*").eq("user_id", state.user.id).maybeSingle(),
     db.from("wallet_ledger").select("*").eq("user_id", state.user.id).order("created_at", { ascending: false }).limit(10),
     db.from("wallet_topup_requests").select("*").eq("user_id", state.user.id).order("created_at", { ascending: false }).limit(10),
     db.from("account_warnings").select("*").eq("user_id", state.user.id).order("created_at", { ascending: false }).limit(10),
+    db.from("customer_notifications").select("id,event_type,title,body,is_read,created_at,order_id").eq("user_id", state.user.id).order("created_at", { ascending: false }).limit(30),
     db.from("site_settings").select("zalo_phone,zalo_label,public_site_url").eq("singleton", true).maybeSingle(),
     db.from("user_roles").select("role").eq("user_id", state.user.id).maybeSingle(),
     db.from("affiliate_profiles").select("*").eq("user_id", state.user.id).maybeSingle(),
@@ -142,7 +151,7 @@ async function loadAccount() {
     db.from("affiliate_program_settings").select("*").eq("singleton", true).maybeSingle(),
     db.rpc("list_my_shipping_addresses"),
   ]);
-  state.profile = profile.data; state.wallet = wallet.data; state.ledger = ledger.data || []; state.topups = topups.data || []; state.warnings = warnings.data || []; state.settings = settings.data; state.role = role.data?.role || "customer"; state.affiliate = affiliate.data; state.commissions = commissions.data || []; state.orders = orders.data || []; state.refunds = refunds.data || []; state.articles = articles.data || []; state.affiliateSettings = affiliateSettings.data; state.shippingAddresses = shippingAddresses.data || [];
+  state.profile = profile.data; state.wallet = wallet.data; state.ledger = ledger.data || []; state.topups = topups.data || []; state.warnings = warnings.data || []; state.notifications = notifications.data || []; state.settings = settings.data; state.role = role.data?.role || "customer"; state.affiliate = affiliate.data; state.commissions = commissions.data || []; state.orders = orders.data || []; state.refunds = refunds.data || []; state.articles = articles.data || []; state.affiliateSettings = affiliateSettings.data; state.shippingAddresses = shippingAddresses.data || [];
   renderAccount();
 }
 
@@ -154,8 +163,10 @@ function renderAccount() {
   $("#accountWarnings").innerHTML = state.warnings.length ? state.warnings.map((item) => `<article class="account-list-item warning"><strong><i class="fa-solid fa-triangle-exclamation"></i> Cảnh cáo</strong><p>${escapeHtml(item.message)}</p><small>${dateTime(item.created_at)}</small></article>`).join("") : '<p class="account-empty">Chưa có cảnh cáo nào.</p>';
   $("#accountTopups").innerHTML = state.topups.length ? state.topups.map((item) => `<article class="account-list-item"><div><strong>${currency(item.amount)}</strong><small>${dateTime(item.created_at)}</small></div><span class="account-status ${escapeHtml(item.status)}">${topupLabel(item.status)}</span>${item.review_note ? `<p>${escapeHtml(item.review_note)}</p>` : ""}</article>`).join("") : '<p class="account-empty">Chưa có yêu cầu nạp.</p>';
   $("#accountLedger").innerHTML = state.ledger.length ? state.ledger.map((item) => `<article class="account-list-item"><div><strong class="${Number(item.amount) > 0 ? "credit" : "debit"}">${Number(item.amount) > 0 ? "+" : ""}${currency(item.amount)}</strong><small>${escapeHtml(ledgerLabel(item.entry_type))} · ${dateTime(item.created_at)}</small></div><span>${currency(item.balance_after)}</span>${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}</article>`).join("") : '<p class="account-empty">Chưa có giao dịch số dư.</p>';
-  renderShippingAddresses(); renderAffiliate(); renderRefunds(); renderArticles();
+  renderNotifications(); renderShippingAddresses(); renderAffiliate(); renderRefunds(); renderArticles();
 }
+function renderNotifications() { const host = $("#accountNotifications"); const unread = state.notifications.filter((item) => !item.is_read).length; const badge = $("#accountNotificationBadge"); if (badge) { badge.hidden = !unread; badge.textContent = unread > 99 ? "99+" : String(unread); } if (!host) return; host.innerHTML = state.notifications.length ? state.notifications.map((item) => `<article class="account-list-item account-notification ${item.is_read ? "" : "is-unread"}"><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.body)}</p><small>${dateTime(item.created_at)}</small></div>${item.order_id ? '<a class="button button-quiet" href="/orders.html">Xem đơn</a>' : ""}</article>`).join("") : '<p class="account-empty">Chưa có thông báo đơn hàng hoặc hậu mãi.</p>'; }
+async function markNotificationsRead() { const unread = state.notifications.filter((item) => !item.is_read).map((item) => item.id); if (!unread.length) return notify("Không có thông báo chưa đọc.", "info"); const { error } = await db.from("customer_notifications").update({ is_read: true }).in("id", unread); if (error) return notify(error.message, "error"); notify("Đã đánh dấu các thông báo là đã đọc.", "success"); loadAccount(); }
 function renderShippingAddresses() { const defaultAddress = state.shippingAddresses.find((item) => item.is_default); const phone = state.profile?.delivery_phone || ""; $("#accountPhoneStatus").classList.toggle("is-missing", !phone); $("#accountPhoneStatus").innerHTML = phone ? `<i class="fa-solid fa-circle-check"></i> Đã lưu: ${escapeHtml(phone)} · cập nhật ${dateTime(state.profile?.updated_at)}` : '<i class="fa-solid fa-circle-info"></i> Chưa cập nhật số điện thoại'; $("#accountAddressStatus").classList.toggle("is-missing", !defaultAddress); $("#accountAddressStatus").innerHTML = defaultAddress ? `<i class="fa-solid fa-circle-check"></i> Địa chỉ mặc định: ${escapeHtml(defaultAddress.label)} · cập nhật ${dateTime(defaultAddress.updated_at)}` : '<i class="fa-solid fa-circle-info"></i> Chưa có địa chỉ mặc định'; $("#accountShippingAddressList").innerHTML = state.shippingAddresses.length ? state.shippingAddresses.map((item) => `<article class="account-address-card ${item.is_default ? "is-default" : ""}"><div><h4>${escapeHtml(item.label)}</h4><p>${escapeHtml(item.address)}</p><div class="account-address-meta">${item.is_default ? '<span class="default-badge">MẶC ĐỊNH</span>' : ""}<span>Cập nhật ${escapeHtml(dateTime(item.updated_at))}</span></div></div><div class="account-address-actions"><button type="button" data-edit-shipping-address="${escapeHtml(item.id)}" aria-label="Sửa địa chỉ ${escapeHtml(item.label)}" title="Sửa"><i class="fa-solid fa-pen"></i></button><button type="button" data-default-shipping-address="${escapeHtml(item.id)}" ${item.is_default ? "disabled" : ""} aria-label="Đặt ${escapeHtml(item.label)} làm mặc định" title="Đặt mặc định"><i class="fa-solid fa-star"></i></button><button type="button" data-delete-shipping-address="${escapeHtml(item.id)}" aria-label="Xóa địa chỉ ${escapeHtml(item.label)}" title="Xóa"><i class="fa-solid fa-trash"></i></button></div></article>`).join("") : '<p class="account-address-empty">Chưa lưu địa chỉ nào. Thêm một địa chỉ để tự điền nhanh khi checkout.</p>'; }
 function resetShippingAddressForm() { $("#accountDeliveryAddressForm").reset(); $("#shippingAddressId").value = ""; $("#shippingAddressFormTitle").textContent = "Thêm địa chỉ mới"; $("#saveDeliveryAddress").innerHTML = 'Lưu địa chỉ <i class="fa-solid fa-location-dot"></i>'; $("#cancelShippingAddressEdit").hidden = true; }
 async function handleShippingAddressAction(event) { const edit = event.target.closest("[data-edit-shipping-address]"); if (edit) { const address = state.shippingAddresses.find((item) => item.id === edit.dataset.editShippingAddress); if (!address) return; $("#shippingAddressId").value = address.id; $("#shippingAddressLabel").value = address.label; $("#accountDeliveryAddress").value = address.address; $("#shippingAddressIsDefault").checked = address.is_default; $("#shippingAddressFormTitle").textContent = "Chỉnh sửa địa chỉ"; $("#saveDeliveryAddress").innerHTML = 'Lưu thay đổi <i class="fa-solid fa-check"></i>'; $("#cancelShippingAddressEdit").hidden = false; $("#shippingAddressLabel").focus(); return; } const makeDefault = event.target.closest("[data-default-shipping-address]"); if (makeDefault) { const { error } = await db.rpc("set_my_default_shipping_address", { p_id: makeDefault.dataset.defaultShippingAddress }); if (error) return notify(error.message, "error"); notify("Đã đổi địa chỉ mặc định.", "success"); return loadAccount(); } const remove = event.target.closest("[data-delete-shipping-address]"); if (remove) { if (!window.confirm("Xóa địa chỉ này? Nếu đây là địa chỉ mặc định, hệ thống sẽ chọn địa chỉ còn lại mới nhất.")) return; const { error } = await db.rpc("delete_my_shipping_address", { p_id: remove.dataset.deleteShippingAddress }); if (error) return notify(error.message, "error"); notify("Đã xóa địa chỉ.", "success"); resetShippingAddressForm(); return loadAccount(); } }

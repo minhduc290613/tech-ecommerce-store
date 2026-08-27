@@ -234,3 +234,8 @@
 - [x] Thêm thống kê và lịch sử sử dụng theo từng mã giảm giá trong Command Deck.
 - [x] Thêm mục Liên kết nhanh ở chân trang gồm Dashboard Affiliate, Đơn hàng của tôi và Quản trị cửa hàng.
 - [x] Thêm yêu cầu hủy đơn đã thanh toán và yêu cầu trả hàng đơn đã giao cho khách lẫn Admin, không tự động hoàn tiền.
+- [x] Gửi email thông báo cho khách khi trạng thái yêu cầu hủy sau thanh toán hoặc trả hàng được cập nhật.
+- [x] Cho phép Admin chọn kênh gửi email giao dịch qua API hoặc SMTP mà không lộ secret.
+- [x] Cho phép Admin chỉnh mẫu thông báo email cho hủy đơn, trả hàng và đơn đã giao.
+- [x] Thêm mục thông báo trong tài khoản khách cho các cập nhật đơn và hậu mãi.
+- [x] Giữ thông báo email ở chế độ không gửi cho đến khi kênh đã chọn có đủ secret máy chủ.
