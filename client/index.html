@@ -288,6 +288,15 @@
         <div class="qr-image-wrap"><img id="qrImage" src="" alt="Mã QR thanh toán" /><div class="qr-state" id="qrState" role="status" hidden><i class="fa-solid fa-qrcode" aria-hidden="true"></i><strong>Chưa thể tạo QR</strong><span id="qrStateMessage">Cần cấu hình phương thức nhận tiền trong app.js.</span></div><span class="qr-corner top-left"></span><span class="qr-corner top-right"></span><span class="qr-corner bottom-left"></span><span class="qr-corner bottom-right"></span></div>
         <div class="payment-info"><div><span>Số tiền</span><strong id="qrTotal">0đ</strong></div><div><span>Nội dung</span><strong id="qrContent">NXR-000000</strong></div></div>
         <p class="payment-instruction" id="paymentInstruction">Mở ứng dụng ngân hàng, quét VietQR và kiểm tra đúng số tiền trước khi xác nhận.</p>
+        <section class="zalopay-scan-guide" id="zalopayScanGuide" aria-live="polite" hidden>
+          <div class="zalopay-guide-heading"><i class="fa-solid fa-qrcode" aria-hidden="true"></i><div><strong>Quét QR ZaloPay</strong><span>Thanh toán thủ công — shop sẽ đối soát trước khi duyệt đơn.</span></div></div>
+          <ol>
+            <li><span>1</span><p>Mở ứng dụng <strong>ZaloPay</strong> trên điện thoại và chọn <strong>Quét mã</strong>.</p></li>
+            <li><span>2</span><p>Đưa camera vào mã QR, rồi kiểm tra <strong>số tiền</strong> và <strong>mã đơn</strong> hiển thị phía trên.</p></li>
+            <li><span>3</span><p>Xác nhận trong ZaloPay, sau đó nhấn <strong>Nhắn Zalo cho shop</strong> bên dưới để gửi mã đơn đối soát.</p></li>
+          </ol>
+          <p class="zalopay-guide-tip"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Không gửi mã OTP, mật khẩu hoặc mã PIN cho bất kỳ ai.</p>
+        </section>
         <div class="zalo-confirmation" id="zaloConfirmation" data-configured="false"><div class="zalo-confirmation-head"><i class="fa-solid fa-comment-dots" aria-hidden="true"></i><span>Đã chuyển khoản? Xác nhận cùng shop</span></div><p id="zaloConfirmationText">Sau khi chuyển khoản, hãy nhắn Zalo cho shop kèm mã đơn để được kiểm tra nhanh.</p><div class="zalo-confirmation-actions"><a id="zaloConfirmLink" href="#" target="_blank" rel="noopener"><i class="fa-solid fa-comment" aria-hidden="true"></i> Nhắn Zalo cho shop</a><button id="copyZaloMessage" type="button"><i class="fa-regular fa-copy" aria-hidden="true"></i> Sao chép</button></div></div>
         <button class="button button-quiet close-qr-action" data-close="qr" type="button">Tôi sẽ thanh toán sau</button>
       </div>

@@ -42,3 +42,9 @@ Rà soát truy cập Command Deck ghi nhận backend/preview vẫn phục vụ t
 Đã xử lý thêm thứ tự sự kiện sign-out: thông báo “phiên cũ không còn hợp lệ” không còn bị callback Supabase ghi đè thành thông báo chung sau khi local session được dọn.
 
 ZaloPay được thêm ở chế độ QR/chuyển khoản thủ công: tab checkout và nhãn VietQR/MoMo/ZaloPay hiển thị đúng trên storefront. Kiểm thử chỉ xác nhận sự hiện diện giao diện/URL HTTPS, không tạo đơn hoặc xác nhận giao dịch tiền thật.
+
+Modal checkout ZaloPay đã được kiểm thử bằng dữ liệu hiển thị giả: khung QR chuyển sang trạng thái tím nổi bật, panel ba bước quét mã hiện đúng, và không có đơn hoặc giao dịch tiền thật nào được tạo.
+
+Kiểm tra trực quan modal QR ZaloPay xác nhận QR, số tiền, mã đơn, ba bước quét và cảnh báo bảo mật cùng hiển thị trong một luồng; console không ghi nhận lỗi runtime sau khi mở trạng thái này.
+
+Modal QR ZaloPay giữ trạng thái cuộn khi nội dung dài, khung QR hiển thị 270px ở desktop và hướng dẫn vẫn có thể truy cập; không phát hiện lỗi console trong kiểm thử giao diện.

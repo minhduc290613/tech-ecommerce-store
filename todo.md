@@ -192,3 +192,4 @@
 - [x] Cải thiện Command Deck để ưu tiên hiển thị đơn chuyển khoản đang chờ và giúp admin xác nhận Đã thanh toán có kiểm soát.
 - [x] Chẩn đoán và khắc phục lỗi không truy cập được Command Deck/máy chủ hoặc không đăng nhập được phiên quản trị.
 - [x] Bổ sung thanh toán ZaloPay qua QR/chuyển khoản thủ công, cấu hình được từ Admin và chỉ xác nhận sau đối soát.
+- [x] Làm nổi bật vùng QR ZaloPay trong modal thanh toán và bổ sung hướng dẫn quét mã rõ ràng cho khách, responsive trên mobile.
