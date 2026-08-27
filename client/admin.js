@@ -8,6 +8,7 @@ import { canCancelPendingOrder, cancellationReason } from "./order-cancellation.
 import { normalizeProductGallery, productGalleryUrls } from "./product-gallery.js";
 import "./admin-transfer-payments.css";
 import "./admin-product-gallery.css";
+import "./admin-order-action-labels.css";
 import "./admin-accounts.js";
 import "./admin-email-delivery.js";
 import "./admin-roles-content.js";
@@ -249,8 +250,8 @@ function orderRow(order) {
   const customerName = order.customer_name || shortId(order.user_id); const itemCount = order.order_items?.reduce((sum, item) => sum + Number(item.quantity), 0) || 0;
   const sale = Number(order.discount_amount || 0) > 0 ? `<small class="sale-status-live">${escapeHtml(order.sale_code || "SALE")} · -${currency(order.discount_amount)}</small>` : "";
   const confirmation = order.payment_method === "auto_transfer" && order.status === "pending_payment" ? `<span class="customer-email">Chờ webhook ${{ sepay: "SePay", casso: "Casso", vietqr: "VietQR" }[order.auto_transfer_provider] || ""}</span>` : canAdminConfirmPayment(order) ? `<button class="payment-action transfer" data-payment-action="paid" data-order-id="${escapeHtml(order.id)}" type="button">Xác nhận CK</button>` : order.payment_method === "wallet" && order.status === "pending_payment" ? '<span class="customer-email">Chờ khách thanh toán ví</span>' : `<div class="payment-actions"><button class="payment-action pending ${order.status === "pending_payment" ? "active" : ""}" data-payment-action="pending_payment" data-order-id="${escapeHtml(order.id)}" type="button">Chưa TT</button><button class="payment-action paid ${order.status === "paid" ? "active" : ""}" data-payment-action="paid" data-order-id="${escapeHtml(order.id)}" type="button">Đã TT</button></div>`;
-  const cancel = canCancelPendingOrder(order) ? `<button class="row-action danger" data-cancel-order="${escapeHtml(order.id)}" type="button" title="Hủy đơn chưa thanh toán"><i class="fa-solid fa-ban"></i></button>` : "";
-  const archive = order.status === "cancelled" ? `<button class="row-action danger" data-archive-order="${escapeHtml(order.id)}" type="button" title="Xóa khỏi danh sách, giữ lịch sử"><i class="fa-solid fa-box-archive"></i></button>` : "";
+  const cancel = canCancelPendingOrder(order) ? `<button class="row-action danger order-row-action" data-cancel-order="${escapeHtml(order.id)}" type="button" title="Hủy đơn chưa thanh toán"><i class="fa-solid fa-ban"></i><span>Hủy đơn</span></button>` : "";
+  const archive = order.status === "cancelled" ? `<button class="row-action order-row-action archive" data-archive-order="${escapeHtml(order.id)}" type="button" title="Xóa khỏi danh sách, giữ lịch sử"><i class="fa-solid fa-box-archive"></i><span>Xóa lưu trữ</span></button>` : "";
   return `<tr><td><b>${escapeHtml(order.order_number)}</b><br /><small class="customer-email">${escapeHtml(order.tracking_code || "Chưa có mã vận đơn")}</small></td><td><span class="order-customer"><b>${escapeHtml(customerName)}</b><small>${escapeHtml(order.customer_phone || "Chưa có số liên hệ")}</small></span></td><td>${formatDate(order.created_at)}</td><td><span class="status-pill status-${escapeHtml(order.status)}">${statusLabel(order.status)}</span></td><td>${confirmation}</td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td><td><b>${currency(order.total_amount)}</b><br />${sale}</td><td>${itemCount} SP</td><td><div class="row-actions">${cancel}${archive}<button class="row-action" data-edit-order="${escapeHtml(order.id)}" aria-label="Chỉnh sửa đơn ${escapeHtml(order.order_number)}"><i class="fa-solid fa-pen"></i></button></div></td></tr>`;
 }
 

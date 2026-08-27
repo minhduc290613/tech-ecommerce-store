@@ -221,3 +221,5 @@
 - [x] Thêm thư viện nhiều ảnh cho sản phẩm, chọn ảnh chính và hỗ trợ tải ảnh lên hoặc dán URL trong Admin.
 - [x] Bổ sung hủy đơn rõ ràng cho khách và hủy/xóa lưu trữ đơn có kiểm soát trong Admin.
 - [x] Khắc phục lỗi database khiến Command Deck không cập nhật được thông tin quản trị.
+- [x] Kiểm tra trực tiếp tài khoản quản trị và xác minh vị trí/thao tác hủy, lưu trữ đơn trong Admin.
+- [x] Đổi thao tác hủy và xóa lưu trữ đơn trong Admin từ icon đơn lẻ thành nút có nhãn chữ rõ ràng.
