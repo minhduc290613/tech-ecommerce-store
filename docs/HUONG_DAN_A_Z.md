@@ -132,7 +132,7 @@ Schema tạo các thành phần sau:
 | Quản trị | `admin_users`, hàm `is_admin()` và policy Command Deck. |
 | CMS | `site_settings`, `site_pages`, `faqs`, `shops`. |
 | Khuyến mại | `sale_campaigns`, mã sale và `create_order_with_sale`. |
-| Account Center | Hồ sơ khách, số dư, sổ cái, cảnh cáo, yêu cầu nạp tiền Zalo và audit log. |
+| Account Center | Hồ sơ khách, số dư, sổ cái, cảnh cáo, yêu cầu nạp tiền Zalo, số điện thoại/địa chỉ nhận hàng và audit log. |
 | Role & nội dung | `user_roles`, review/bình luận moderation, bài viết draft/pending/published và article reader. |
 | Affiliate & hoàn tiền | Referral được duyệt, hoa hồng 15% cấu hình được, `refund_requests`, hoàn wallet/manual và CSV quản trị. |
 | Bảo mật | RLS, policy catalog công khai, quyền user-own-order, giới hạn RPC checkout và kiểm tra trạng thái account. |
@@ -170,6 +170,14 @@ Thiết lập NEXORA hiện tại chọn **tắt Confirm email**, nên user mớ
 ### 5.3 Luồng frontend
 
 Storefront dùng `supabase.auth.signUp()` để đăng ký, `supabase.auth.signInWithPassword()` để đăng nhập và `resetPasswordForEmail()` cho **Quên mật khẩu**. Khi không yêu cầu xác nhận email, session có thể được cấp ngay sau đăng ký nếu thông tin hợp lệ. Không lưu mật khẩu, JWT hay service role key vào local file ngoài cơ chế session của Supabase Auth.
+
+### 5.3.1 Hồ sơ giao nhận, chia sẻ sản phẩm và affiliate
+
+Từ phiên bản hiện tại, khách tạo tài khoản phải nhập **số điện thoại nhận hàng** và **địa chỉ nhận hàng**. Hai giá trị được lưu trong `customer_profiles`, tự điền vào giỏ hàng và khách có thể sửa trong **Tài khoản**. Khi tạo đơn, số điện thoại và địa chỉ vẫn được kiểm tra lại rồi lưu cùng đơn để giữ lịch sử giao nhận chính xác.
+
+Mỗi thẻ sản phẩm có nút chia sẻ. Với khách thường, hệ thống chia sẻ link sản phẩm; với affiliate đã được duyệt, link tự kèm `?ref=<mã>` để dùng luồng referral hiện có. Không tự tạo hoa hồng chỉ vì nhấn chia sẻ; hoa hồng vẫn phụ thuộc quy tắc affiliate và trạng thái đơn đã cấu hình.
+
+Số điện thoại/địa chỉ chỉ hiển thị trong **Quản lý khách hàng** cho Admin và trong **Kiểm hàng & giao nhận** cho vai trò có quyền logistics. Nhân viên kiểm hàng dùng thông tin đó để điều phối đơn; không sao chép hoặc công bố ngoài mục đích giao nhận. Ở cùng workspace này, dùng nút **Sửa** để chỉnh đối tác giao hàng, hoặc biểu tượng thùng rác để xóa. Hệ thống từ chối xóa đối tác đang được gắn với đơn hàng.
 
 ### 5.4 Khắc phục link email trỏ về `localhost`
 

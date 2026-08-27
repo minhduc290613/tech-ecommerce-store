@@ -1,0 +1,7 @@
+.product-actions { grid-template-columns: minmax(0, 1fr) 32px 32px; }
+.share-action { width: 32px; min-height: 32px; padding: 0; border: 1px solid rgba(127, 178, 216, .28); color: #b5d7ef; background: rgba(12, 33, 54, .62); }
+.share-action:hover, .share-action:focus-visible { border-color: var(--cyan); color: var(--cyan-bright); background: rgba(56, 189, 248, .13); }
+.share-action:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+#authDeliveryFields { display: grid; gap: .78rem; padding: .8rem; border: 1px solid rgba(56, 189, 248, .22); background: rgba(56, 189, 248, .045); }
+.auth-delivery-note { color: #8da9c1; font-size: .66rem; line-height: 1.45; }
+@media (max-width: 720px) { .product-actions { grid-template-columns: minmax(0, 1fr) 32px 32px; } }

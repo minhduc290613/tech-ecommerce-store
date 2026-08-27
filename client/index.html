@@ -32,6 +32,7 @@
     <link rel="stylesheet" href="/account-community.css" />
     <link rel="stylesheet" href="/auto-transfer-payment.css" />
     <link rel="stylesheet" href="/responsive-layout-fixes.css" />
+    <link rel="stylesheet" href="/product-sharing.css" />
   </head>
   <body>
     <a class="skip-link" href="#products" data-i18n="skipCatalog">Đi tới danh sách sản phẩm</a>
@@ -249,7 +250,7 @@
       <div class="cart-items" id="cartItems"></div>
       <div class="cart-delivery" id="checkoutDelivery" aria-labelledby="checkoutDeliveryTitle">
         <div class="cart-delivery-head"><i class="fa-solid fa-location-dot" aria-hidden="true"></i><div><span class="panel-label">DELIVERY DETAILS</span><h3 id="checkoutDeliveryTitle">Địa chỉ nhận hàng</h3></div></div>
-        <div class="cart-delivery-grid"><label>Người nhận <input id="checkoutCustomerName" type="text" maxlength="140" autocomplete="name" placeholder="Họ và tên" /></label><label>Số điện thoại <input id="checkoutCustomerPhone" type="tel" maxlength="40" inputmode="tel" autocomplete="tel" placeholder="Số điện thoại" /></label></div>
+        <div class="cart-delivery-grid"><label>Người nhận <input id="checkoutCustomerName" type="text" maxlength="140" autocomplete="name" placeholder="Họ và tên" /></label><label>Số điện thoại <input id="checkoutCustomerPhone" type="tel" maxlength="20" inputmode="tel" autocomplete="tel" placeholder="Số điện thoại" required /></label></div>
         <label>Địa chỉ nhận hàng <textarea id="checkoutShippingAddress" maxlength="500" autocomplete="street-address" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" required></textarea></label>
         <small>Địa chỉ được lưu cùng đơn hàng để shop sắp xếp giao nhận.</small>
       </div>
@@ -272,6 +273,11 @@
           <label id="authEmailField">Email<input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
           <label id="authPasswordField"><span data-i18n="passwordLabel">Mật khẩu</span><input id="authPassword" type="password" placeholder="Tối thiểu 6 ký tự" data-i18n-placeholder="passwordPlaceholder" autocomplete="current-password" minlength="6" required /></label>
           <label id="authPasswordConfirmField" hidden>Nhập lại mật khẩu mới<input id="authPasswordConfirm" type="password" autocomplete="new-password" minlength="8" /></label>
+          <div id="authDeliveryFields" hidden>
+            <label>Số điện thoại nhận hàng<input id="authDeliveryPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="Ví dụ: 0901 234 567" /></label>
+            <label>Địa chỉ nhận hàng<textarea id="authDeliveryAddress" autocomplete="street-address" maxlength="500" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"></textarea></label>
+            <small class="auth-delivery-note">Thông tin này bắt buộc để tạo đơn và có thể cập nhật trong Tài khoản.</small>
+          </div>
           <button class="button button-primary auth-submit" id="authSubmit" type="submit"><span data-i18n="login">Đăng nhập</span> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
         </form>
         <p class="auth-helper" id="authHelper">Chưa có tài khoản? Chuyển sang tab <button data-auth-mode="signup" type="button">Đăng ký</button>.</p>

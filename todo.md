@@ -204,3 +204,7 @@
 - [x] Thêm trường địa chỉ nhận hàng vào checkout, lưu cùng đơn hàng và hiển thị phù hợp trên desktop/mobile.
 - [x] Sửa menu ba gạch mobile bị tràn/lệch sang phải khi mở.
 - [x] Mở rộng thực tế modal Tài khoản & số dư trên desktop, không làm thay đổi mobile.
+- [x] Thêm chia sẻ sản phẩm và liên kết chia sẻ affiliate có kiểm soát quyền hoa hồng.
+- [x] Bắt buộc thu thập số điện thoại và địa chỉ nhận hàng khi đăng ký; cho khách cập nhật trong Tài khoản.
+- [x] Hiển thị số điện thoại và địa chỉ giao nhận theo quyền cho Admin và Nhân viên kiểm hàng.
+- [x] Bổ sung chỉnh sửa và xóa đối tác giao hàng trong Command Deck, có phân quyền phù hợp.

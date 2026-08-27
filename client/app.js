@@ -11,6 +11,8 @@ import { getPaymentPresentation } from "./payment-presentation.js";
 import { getZaloPayCopyActions } from "./payment-copy-actions.js";
 import { getAutoTransferPresentation } from "./auto-transfer-payment.js";
 import { getCheckoutDelivery } from "./checkout-delivery.js";
+import { normalizeDeliveryProfile } from "./account-delivery.js";
+import { buildProductShareText, buildProductShareUrl } from "./product-sharing.js";
 
 const UI_TRANSLATIONS = {
   vi: { discover: "Khám phá", discoverProducts: "Khám phá sản phẩm", flashSale: "Flash Sale", categories: "Danh mục", shops: "Gian hàng", journal: "Bài viết", help: "Trợ giúp", exploreDeals: "Khám phá ưu đãi", viewFlashSale: "Xem Flash Sale", searchPlaceholder: "Tìm thiết bị, phụ kiện...", mobileSearchPlaceholder: "Tìm kiếm trong NEXORA", skipCatalog: "Đi tới danh sách sản phẩm", loaderTitle: "Đang đưa thiết bị lên màn hình", loaderDetail: "Chờ một nhịp để đồng bộ catalog và ưu đãi.", storeOnline: "Storefront online", curatedDevices: "Thiết bị tuyển chọn", orderResponse: "Phản hồi đơn hàng", productSupport: "Hỗ trợ sản phẩm", flashHeading: "Flash Sale<br /><em>đang truyền tín hiệu.</em>", flashDescription: "Giá ưu đãi chỉ mở trong khung giờ này. Hãy thêm sản phẩm trước khi đồng hồ quay về 00.", huntNow: "Săn giá ngay", saleHuntHeading: "Săn mã đúng nhịp.<br /><em>Giảm thẳng vào đơn.</em>", saleHuntDescription: "Chọn một mã đang mở, mã sẽ được đưa vào giỏ. Tổng ưu đãi cuối cùng luôn được kiểm tra lại khi tạo đơn.", catalogHeading: "Thiết bị<br /><em>đang bắt sóng.</em>", clearFilters: "Xóa lọc", categoryLabel: "Danh mục", allDevices: "Tất cả thiết bị", phones: "Điện thoại", accessories: "Phụ kiện", priceRange: "Khoảng giá", saleOnly: "Chỉ xem đang SALE", filterNote: "Giá đã hiển thị là giá hiện tại. Các ưu đãi Flash Sale có thể kết thúc sớm.", catalogUnavailable: "Không thể đồng bộ catalog mới nhất.", catalogFallback: "Đang hiển thị dữ liệu dự phòng để bạn tiếp tục xem sản phẩm.", retry: "Thử lại", emptyTitle: "Không tìm thấy tín hiệu phù hợp.", emptyDetail: "Điều chỉnh bộ lọc hoặc thử một từ khóa khác.", resetFilters: "Thiết lập lại bộ lọc", shopsHeading: "Gian hàng<br /><em>đang được xác minh.</em>", shopsDescription: "Khám phá các không gian công nghệ theo nhu cầu, có mô tả hoạt động và đầu mối hỗ trợ rõ ràng.", sellerStandard: "Tìm hiểu về tiêu chuẩn gian hàng", helpHeading: "Câu hỏi có<br /><em>tín hiệu rõ ràng.</em>", helpDescription: "Thông tin về tài khoản, thanh toán và hỗ trợ sau đơn được tập hợp ở một nơi.", helpCenter: "Đến trung tâm hỗ trợ", trustHeading: "Mua sắm với<br />thông tin rõ ràng.", trustDescription: "Các chính sách và hướng dẫn được công bố tập trung để bạn xem trước khi giao dịch.", shippingReturns: "Giao hàng & đổi trả", shippingReturnsDetail: "Quy trình và thông tin cần chuẩn bị", privacy: "Bảo mật dữ liệu", privacyDetail: "Nguyên tắc xử lý tài khoản và đơn hàng", terms: "Điều khoản sử dụng", termsDetail: "Các nguyên tắc vận hành nền tảng", about: "Về NEXORA", aboutDetail: "Cam kết về trải nghiệm và minh bạch", clearInfo: "Minh bạch thông tin", clearInfoDetail: "Mô tả, giá và ưu đãi hiển thị rõ ràng.", carefulPacking: "Đóng gói cẩn thận", carefulPackingDetail: "Kiểm tra thiết bị trước khi bàn giao.", afterOrderSupport: "Hỗ trợ sau đơn", afterOrderSupportDetail: "Đội ngũ NEXORA sẵn sàng phản hồi.", storeAdmin: "Quản trị cửa hàng", cartTitle: "Giỏ hàng", subtotal: "Tạm tính", securePayment: "Thanh toán an toàn qua VietQR hoặc MoMo.", continueCheckout: "Tiếp tục thanh toán", authHeading: "Đăng nhập để<br /><em>đồng bộ đơn hàng.</em>", authIntro: "Tạo tài khoản hoặc đăng nhập bằng email để tiếp tục với thanh toán và quản lý đơn hàng.", login: "Đăng nhập", signup: "Đăng ký", passwordLabel: "Mật khẩu", passwordPlaceholder: "Tối thiểu 6 ký tự", inStock: "Còn hàng", nationwideDelivery: "Giao hàng toàn quốc", addToCart: "Thêm vào giỏ", orderCreated: "ĐƠN HÀNG ĐÃ ĐƯỢC TẠO", qrHeading: "Quét mã để<br /><em>hoàn tất thanh toán.</em>", devicesShown: (count) => `${count.toString().padStart(2, "0")} thiết bị đang hiển thị`, catalogLoading: "Đang đồng bộ catalog...", searchLoading: "Đang tìm trong catalog...", searchHint: "Đang lọc thiết bị phù hợp…", addCart: "Thêm giỏ", soldOut: "Hết hàng", comments: "Bình luận", useCode: "Dùng mã", noActiveSale: "Chưa có mã săn sale đang mở. Hãy quay lại trong đợt tiếp theo.", verified: "Đã xác minh", updating: "Đang cập nhật", contactSupport: "Liên hệ hỗ trợ", standard: "Tiêu chuẩn", emptyCart: "Giỏ hàng đang trống. Chọn một thiết bị để bắt đầu phiên mua sắm." },
@@ -63,7 +65,7 @@ const state = {
   authMode: "login",
   activeProduct: null,
   lastOrder: null,
-  activePaymentMethod: "vietqr", settings: DEFAULT_SETTINGS, faqs: DEFAULT_FAQS, shops: DEFAULT_SHOPS, saleCampaigns: DEFAULT_SALE_CAMPAIGNS, carriers: [], appliedSaleCode: "", locale: "vi", catalogLoadError: null, searchTimer: null,
+  activePaymentMethod: "vietqr", settings: DEFAULT_SETTINGS, faqs: DEFAULT_FAQS, shops: DEFAULT_SHOPS, saleCampaigns: DEFAULT_SALE_CAMPAIGNS, carriers: [], appliedSaleCode: "", affiliateShareCode: "", sharedProductOpened: false, locale: "vi", catalogLoadError: null, searchTimer: null,
   filters: { category: "all", maxPrice: 35000000, saleOnly: false, search: "", technical: {} },
 };
 
@@ -74,7 +76,7 @@ const els = {
   priceRange: $("#priceRange"), priceOutput: $("#priceOutput"), saleOnly: $("#saleOnly"), clearFilters: $("#clearFilters"), emptyReset: $("#emptyReset"),
   searchInput: $("#searchInput"), mobileSearchInput: $("#mobileSearchInput"), headerSearch: $("#headerSearch"), mobileSearchForm: $("#mobileSearchForm"), mobileSearchButton: $("#mobileSearchButton"), mobileMenuButton: $("#mobileMenuButton"), mobileAccountButton: $("#mobileAccountButton"), mobileNav: $("#mobileNav"), mobileNavScrim: $("#mobileNavScrim"), languageToggle: $("#languageToggle"),
   cartButton: $("#cartButton"), cartDrawer: $("#cartDrawer"), cartBadge: $("#cartBadge"), cartItemLabel: $("#cartItemLabel"), cartItems: $("#cartItems"), cartTotal: $("#cartTotal"), checkoutButton: $("#checkoutButton"), checkoutDelivery: $("#checkoutDelivery"), checkoutCustomerName: $("#checkoutCustomerName"), checkoutCustomerPhone: $("#checkoutCustomerPhone"), checkoutShippingAddress: $("#checkoutShippingAddress"),
-  overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authEmailField: $("#authEmailField"), authPassword: $("#authPassword"), authPasswordField: $("#authPasswordField"), authPasswordConfirm: $("#authPasswordConfirm"), authPasswordConfirmField: $("#authPasswordConfirmField"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authIntro: $("#authIntro"), authHelper: $("#authHelper"),
+  overlay: $("#overlay"), authButton: $("#authButton"), authModal: $("#authModal"), authForm: $("#authForm"), authEmail: $("#authEmail"), authEmailField: $("#authEmailField"), authPassword: $("#authPassword"), authPasswordField: $("#authPasswordField"), authPasswordConfirm: $("#authPasswordConfirm"), authPasswordConfirmField: $("#authPasswordConfirmField"), authDeliveryFields: $("#authDeliveryFields"), authDeliveryPhone: $("#authDeliveryPhone"), authDeliveryAddress: $("#authDeliveryAddress"), authSubmit: $("#authSubmit"), authTitle: $("#authTitle"), authIntro: $("#authIntro"), authHelper: $("#authHelper"),
   quickViewModal: $("#quickViewModal"), quickViewImage: $("#quickViewImage"), quickViewCategory: $("#quickViewCategory"), quickViewTitle: $("#quickViewTitle"), quickViewDescription: $("#quickViewDescription"), quickViewPrice: $("#quickViewPrice"), quickViewAdd: $("#quickViewAdd"),
   qrModal: $("#qrModal"), qrCard: $("#qrModal .qr-card"), qrOrderNumber: $("#qrOrderNumber"), qrTotal: $("#qrTotal"), qrContent: $("#qrContent"), qrImage: $("#qrImage"), qrState: $("#qrState"), qrStateMessage: $("#qrStateMessage"), paymentInstruction: $("#paymentInstruction"), autoTransferNotice: $("#autoTransferNotice"), autoTransferNoticeTitle: $("#autoTransferNoticeTitle"), autoTransferNoticeText: $("#autoTransferNoticeText"), zalopayScanGuide: $("#zalopayScanGuide"), zalopayCopyActions: $("#zalopayCopyActions"), copyZaloPayTransferContent: $("#copyZaloPayTransferContent"), copyZaloPayAccountNumber: $("#copyZaloPayAccountNumber"), zaloConfirmation: $("#zaloConfirmation"), zaloConfirmationText: $("#zaloConfirmationText"), zaloConfirmLink: $("#zaloConfirmLink"), copyZaloMessage: $("#copyZaloMessage"), toastRegion: $("#toastRegion"), shopsGrid: $("#shopsGrid"), carrierSection: $("#shipping-partners"), carrierGrid: $("#carrierStorefrontGrid"), faqList: $("#faqList"), saleHuntGrid: $("#saleHuntGrid"), pageLoader: $("#pageLoader"),
 };
@@ -144,6 +146,7 @@ function bindEvents() {
     if (actionButton.dataset.action === "add") addToCart(product);
     if (actionButton.dataset.action === "quick-view") openQuickView(product);
     if (actionButton.dataset.action === COMMENT_ACTION) openProductComment(product);
+    if (actionButton.dataset.action === "share") shareProduct(product);
   });
 
   els.cartButton.addEventListener("click", openCart);
@@ -222,6 +225,7 @@ async function loadProducts() {
     state.products = LOCAL_DEMO_PRODUCTS;
     state.catalogLoadError = null;
     renderProducts();
+    openSharedProductFromUrl();
     return;
   }
   const { data, error } = await db.from("products").select("*").order("featured", { ascending: false }).order("created_at", { ascending: false });
@@ -235,6 +239,7 @@ async function loadProducts() {
     state.catalogLoadError = null;
   }
   renderProducts();
+  openSharedProductFromUrl();
 }
 
 async function loadMarketplaceCMS() {
@@ -327,6 +332,7 @@ function createProductCard(product) {
         <div class="product-actions">
           <button class="button button-primary add-button" data-action="add" data-product-id="${escapeHtml(product.id)}" type="button" ${purchasable ? "" : "disabled"}>${purchasable ? `${t("addCart")} <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>` : t("soldOut")}</button>
           <button class="view-button" data-action="quick-view" data-product-id="${escapeHtml(product.id)}" type="button" aria-label="${t("discover")}"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+          <button class="share-action" data-action="share" data-product-id="${escapeHtml(product.id)}" type="button" aria-label="Chia sẻ ${escapeHtml(product.name)}"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i></button>
           <button class="comment-action" data-action="comment" data-product-id="${escapeHtml(product.id)}" type="button" aria-label="${t("comments")} ${escapeHtml(product.name)}"><i class="fa-regular fa-comment" aria-hidden="true"></i><span>${t("comments")}</span></button>
         </div>
       </div>
@@ -376,6 +382,31 @@ function openQuickView(product) {
   els.quickViewAdd.innerHTML = purchasable ? `${t("addToCart")} <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i>` : t("soldOut");
   openModal("quick-view");
   window.dispatchEvent(new CustomEvent("nexora:quickview", { detail: { product } }));
+}
+
+function openSharedProductFromUrl() {
+  if (state.sharedProductOpened) return;
+  const productId = new URLSearchParams(window.location.search).get("product");
+  const product = productId ? getProductById(productId) : null;
+  if (!product) return;
+  state.sharedProductOpened = true;
+  openQuickView(product);
+}
+
+async function shareProduct(product) {
+  const url = buildProductShareUrl(window.location.origin, product.id, state.affiliateShareCode);
+  const text = buildProductShareText(product.name, formatCurrency(product.price), Boolean(state.affiliateShareCode));
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: product.name, text, url });
+      return;
+    }
+    if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+    await navigator.clipboard.writeText(url);
+    showToast(state.affiliateShareCode ? "Đã sao chép link sản phẩm kèm referral affiliate." : "Đã sao chép link sản phẩm.", "success");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("Không thể mở chia sẻ tự động. Hãy thử lại hoặc sao chép URL trình duyệt.", "error");
+  }
 }
 
 function openProductComment(product) {
@@ -476,9 +507,23 @@ function setCurrentUser(user) {
   if (user) {
     const label = user.email ? user.email.split("@")[0] : "Tài khoản";
     els.authButton.classList.add("logged-in"); els.authButton.innerHTML = `<i class="fa-solid fa-user-check" aria-hidden="true"></i><span>${escapeHtml(label)}</span>`;
+    hydrateCheckoutDelivery(user);
   } else {
     els.authButton.classList.remove("logged-in"); els.authButton.innerHTML = `<i class="fa-regular fa-user" aria-hidden="true"></i><span>${t("login")}</span>`;
   }
+}
+
+async function hydrateCheckoutDelivery(user) {
+  if (!db || !user?.id) return;
+  const [profileResult, affiliateResult] = await Promise.all([
+    db.from("customer_profiles").select("delivery_phone,default_shipping_address").eq("user_id", user.id).maybeSingle(),
+    db.from("affiliate_profiles").select("referral_code,status").eq("user_id", user.id).maybeSingle(),
+  ]);
+  if (state.user?.id !== user.id) return;
+  const profile = profileResult.data || {};
+  if (!els.checkoutCustomerPhone.value) els.checkoutCustomerPhone.value = profile.delivery_phone || "";
+  if (!els.checkoutShippingAddress.value) els.checkoutShippingAddress.value = profile.default_shipping_address || "";
+  state.affiliateShareCode = affiliateResult.data?.status === "approved" ? affiliateResult.data.referral_code || "" : "";
 }
 
 function setAuthMode(mode) {
@@ -492,12 +537,15 @@ function setAuthMode(mode) {
   els.authEmail.required = !recovery;
   els.authPasswordField.hidden = forgotten;
   els.authPasswordConfirmField.hidden = !recovery;
+  els.authDeliveryFields.hidden = !signup;
+  els.authDeliveryPhone.required = signup;
+  els.authDeliveryAddress.required = signup;
   els.authPassword.required = !forgotten;
   els.authPassword.minLength = recovery ? 8 : 6;
   els.authPasswordConfirm.required = recovery;
   if (forgotten) { els.authPassword.value = ""; els.authPasswordConfirm.value = ""; }
   els.authTitle.innerHTML = recovery ? (en ? "Choose a new<br /><em>secure password.</em>" : "Đặt mật khẩu<br /><em>mới an toàn.</em>") : forgotten ? (en ? "Reset your<br /><em>password safely.</em>" : "Khôi phục<br /><em>mật khẩu an toàn.</em>") : signup ? (en ? "Create an account to<br /><em>keep every step.</em>" : "Tạo tài khoản để<br /><em>lưu trọn hành trình.</em>") : t("authHeading");
-  els.authIntro.textContent = recovery ? (en ? "Set a new password for the recovery session opened from your email link." : "Đặt mật khẩu mới cho phiên khôi phục được mở từ link trong email của bạn.") : forgotten ? (en ? "Enter your account email and we will send a secure password reset link." : "Nhập email tài khoản để nhận link đặt lại mật khẩu an toàn.") : t("authIntro");
+  els.authIntro.textContent = recovery ? (en ? "Set a new password for the recovery session opened from your email link." : "Đặt mật khẩu mới cho phiên khôi phục được mở từ link trong email của bạn.") : forgotten ? (en ? "Enter your account email and we will send a secure password reset link." : "Nhập email tài khoản để nhận link đặt lại mật khẩu an toàn.") : signup ? (en ? "Add your delivery phone and address now. You can update them later in Account." : "Nhập số điện thoại và địa chỉ nhận hàng. Bạn có thể cập nhật chúng sau trong Tài khoản.") : t("authIntro");
   els.authSubmit.innerHTML = `${recovery ? (en ? "Update password" : "Cập nhật mật khẩu") : forgotten ? (en ? "Send reset link" : "Gửi link đặt lại") : signup ? (en ? "Create account" : "Tạo tài khoản") : t("login")} <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>`;
   els.authHelper.innerHTML = recovery ? (en ? 'This link is valid for one recovery session. <button data-auth-mode="login" type="button">Back to sign in</button>.' : 'Link này chỉ dùng cho một phiên khôi phục. <button data-auth-mode="login" type="button">Quay về đăng nhập</button>.') : forgotten ? (en ? 'Remember it? <button data-auth-mode="login" type="button">Sign in</button>.' : 'Đã nhớ mật khẩu? <button data-auth-mode="login" type="button">Đăng nhập</button>.') : signup ? (en ? 'Already have an account? <button data-auth-mode="login" type="button">Sign in</button>.' : 'Đã có tài khoản? <button data-auth-mode="login" type="button">Đăng nhập</button>.') : (en ? 'Forgot your password? <button data-auth-mode="forgot" type="button">Send a reset link</button> · New here? <button data-auth-mode="signup" type="button">Create account</button>.' : 'Quên mật khẩu? <button data-auth-mode="forgot" type="button">Gửi link đặt lại</button> · Chưa có tài khoản? <button data-auth-mode="signup" type="button">Đăng ký</button>.');
   $$("[data-auth-mode]", els.authHelper).forEach((button) => button.addEventListener("click", () => setAuthMode(button.dataset.authMode)));
@@ -510,9 +558,11 @@ async function handleAuthSubmit(event) {
   const email = els.authEmail.value.trim(); const password = els.authPassword.value; const recovery = state.authMode === "recovery";
   if ((!recovery && !email) || (state.authMode !== "forgot" && password.length < (recovery ? 8 : 6))) { showToast(state.authMode === "forgot" ? "Vui lòng nhập email hợp lệ." : recovery ? "Mật khẩu mới cần ít nhất 8 ký tự." : "Vui lòng nhập email hợp lệ và mật khẩu từ 6 ký tự.", "error"); return; }
   if (recovery && password !== els.authPasswordConfirm.value) { showToast("Hai mật khẩu mới chưa khớp.", "error"); return; }
+  const deliveryProfile = state.authMode === "signup" ? normalizeDeliveryProfile({ phone: els.authDeliveryPhone.value, address: els.authDeliveryAddress.value }) : null;
+  if (deliveryProfile && !deliveryProfile.valid) { showToast(deliveryProfile.message, "error"); (deliveryProfile.field === "address" ? els.authDeliveryAddress : els.authDeliveryPhone).focus(); return; }
   const redirectTo = getAuthRedirectUrl(state.settings?.public_site_url, "/?recovery=1");
   setButtonLoading(els.authSubmit, true, recovery ? "Đang cập nhật" : state.authMode === "forgot" ? "Đang gửi liên kết" : state.authMode === "signup" ? "Đang tạo tài khoản" : "Đang đăng nhập");
-  const result = recovery ? await db.auth.updateUser({ password }) : state.authMode === "forgot" ? await db.auth.resetPasswordForEmail(email, { redirectTo }) : state.authMode === "signup" ? await db.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } }) : await db.auth.signInWithPassword({ email, password });
+  const result = recovery ? await db.auth.updateUser({ password }) : state.authMode === "forgot" ? await db.auth.resetPasswordForEmail(email, { redirectTo }) : state.authMode === "signup" ? await db.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo, data: { delivery_phone: deliveryProfile.phone, default_shipping_address: deliveryProfile.address } } }) : await db.auth.signInWithPassword({ email, password });
   setButtonLoading(els.authSubmit, false);
   if (result.error) { showToast(result.error.message, "error"); return; }
   if (recovery) { clearRecoveryUrl(); els.authForm.reset(); setAuthMode("login"); closeModal("auth"); showToast("Đã cập nhật mật khẩu. Bạn có thể tiếp tục đăng nhập an toàn.", "success"); return; }
@@ -537,7 +587,7 @@ async function checkout() {
   if (!db) { showToast("Để tạo đơn hàng, hãy kết nối Supabase trong app.js.", "error"); return; }
   if (state.cart.some((item) => String(item.id).startsWith("demo-"))) { showToast("Catalog mẫu chỉ để xem giao diện. Hãy chạy supabase-schema.sql và kết nối Supabase để thanh toán.", "error"); return; }
   const delivery = getCheckoutDelivery({ customerName: els.checkoutCustomerName.value, customerPhone: els.checkoutCustomerPhone.value, shippingAddress: els.checkoutShippingAddress.value });
-  if (!delivery.valid) { showToast(delivery.message, "error"); els.checkoutShippingAddress.focus(); return; }
+  if (!delivery.valid) { showToast(delivery.message, "error"); (delivery.field === "address" ? els.checkoutShippingAddress : els.checkoutCustomerPhone).focus(); return; }
   setButtonLoading(els.checkoutButton, true, "Đang tạo đơn hàng");
   const pricing = cartPricing(); const total = pricing.total; const orderNumber = createOrderNumber();
   const items = state.cart.map((item) => ({ product_id: item.id, quantity: Number(item.quantity) }));
@@ -554,7 +604,7 @@ async function checkout() {
   setButtonLoading(els.checkoutButton, false);
   if (orderError) { showToast(`Không thể tạo đơn hàng: ${orderError.message}`, "error"); return; }
   state.lastOrder = { id: order.id, number: order.order_number, total: Number(order.total_amount), subtotal: Number(order.subtotal_amount), discount: Number(order.discount_amount || 0), saleCode: order.sale_code || "" };
-  state.cart = []; state.appliedSaleCode = ""; els.checkoutCustomerName.value = ""; els.checkoutCustomerPhone.value = ""; els.checkoutShippingAddress.value = ""; persistCart(); updateCartUI(); closeCart(); openPaymentModal(); showToast("Đã tạo đơn hàng. Vui lòng quét QR để thanh toán.", "success");
+  state.cart = []; state.appliedSaleCode = ""; els.checkoutCustomerName.value = ""; persistCart(); updateCartUI(); closeCart(); openPaymentModal(); showToast("Đã tạo đơn hàng. Vui lòng quét QR để thanh toán.", "success");
 }
 
 function openPaymentModal() { state.activePaymentMethod = "vietqr"; updatePaymentQR(); openModal("qr"); }

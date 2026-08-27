@@ -3,7 +3,11 @@ import { getCheckoutDelivery } from "./checkout-delivery.js";
 
 describe("checkout delivery details", () => {
   it("yêu cầu địa chỉ nhận hàng có nội dung", () => {
-    expect(getCheckoutDelivery({ shippingAddress: "   " })).toMatchObject({ valid: false, message: "Vui lòng nhập địa chỉ nhận hàng." });
+    expect(getCheckoutDelivery({ customerPhone: "0901234567", shippingAddress: "   " })).toMatchObject({ valid: false, message: "Vui lòng nhập địa chỉ nhận hàng." });
+  });
+
+  it("yêu cầu số điện thoại để giao đơn", () => {
+    expect(getCheckoutDelivery({ shippingAddress: "12 Nguyễn Huệ, Quận 1" })).toMatchObject({ valid: false, message: "Vui lòng nhập số điện thoại nhận hàng." });
   });
 
   it("chuẩn hóa thông tin nhận hàng trước khi tạo đơn", () => {

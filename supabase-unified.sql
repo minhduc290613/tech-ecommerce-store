@@ -441,6 +441,117 @@ $$;
 revoke all on function public.create_order_with_delivery(text, text, text, text, jsonb, text, text, text) from public, anon;
 grant execute on function public.create_order_with_delivery(text, text, text, text, jsonb, text, text, text) to authenticated;
 
+-- 30. Hồ sơ giao nhận bắt buộc cho tài khoản mới; chỉ dùng trong vận hành đơn hàng theo phân quyền.
+alter table public.customer_profiles add column if not exists delivery_phone text;
+alter table public.customer_profiles add column if not exists default_shipping_address text;
+alter table public.customer_profiles drop constraint if exists customer_profiles_delivery_phone_check;
+alter table public.customer_profiles add constraint customer_profiles_delivery_phone_check check (delivery_phone is null or length(trim(delivery_phone)) between 8 and 20);
+alter table public.customer_profiles drop constraint if exists customer_profiles_default_shipping_address_check;
+alter table public.customer_profiles add constraint customer_profiles_default_shipping_address_check check (default_shipping_address is null or length(trim(default_shipping_address)) between 8 and 500);
+
+create or replace function public.handle_auth_user_created()
+returns trigger language plpgsql security definer set search_path = public, auth
+as $$
+declare v_delivery_phone text := nullif(trim(new.raw_user_meta_data ->> 'delivery_phone'), ''); v_default_shipping_address text := nullif(trim(new.raw_user_meta_data ->> 'default_shipping_address'), '');
+begin
+  if v_delivery_phone is null or length(v_delivery_phone) not between 8 and 20 then raise exception 'Số điện thoại nhận hàng là bắt buộc.'; end if;
+  if v_default_shipping_address is null or length(v_default_shipping_address) not between 8 and 500 then raise exception 'Địa chỉ nhận hàng là bắt buộc.'; end if;
+  insert into public.customer_profiles (user_id, email, delivery_phone, default_shipping_address)
+  values (new.id, new.email, v_delivery_phone, v_default_shipping_address)
+  on conflict (user_id) do update set email = excluded.email, updated_at = now();
+  insert into public.wallet_accounts (user_id) values (new.id) on conflict (user_id) do nothing;
+  insert into public.user_roles (user_id, role) values (new.id, 'customer') on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+
+drop function if exists public.ensure_my_account(text, text);
+create function public.ensure_my_account(p_display_name text default null, p_username text default null, p_delivery_phone text default null, p_default_shipping_address text default null)
+returns public.customer_profiles language plpgsql security definer set search_path = public, auth
+as $$
+declare v_profile public.customer_profiles;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status in ('deletion_requested', 'deactivated')) then raise exception 'Tài khoản đang trong quy trình đóng.'; end if;
+  insert into public.customer_profiles (user_id, display_name, username, email, delivery_phone, default_shipping_address)
+  values (auth.uid(), nullif(trim(p_display_name), ''), nullif(lower(trim(p_username)), ''), auth.jwt() ->> 'email', nullif(trim(p_delivery_phone), ''), nullif(trim(p_default_shipping_address), ''))
+  on conflict (user_id) do update set email = excluded.email, delivery_phone = coalesce(excluded.delivery_phone, public.customer_profiles.delivery_phone), default_shipping_address = coalesce(excluded.default_shipping_address, public.customer_profiles.default_shipping_address), updated_at = now() where public.customer_profiles.account_status <> 'deactivated'
+  returning * into v_profile;
+  insert into public.wallet_accounts (user_id) values (auth.uid()) on conflict (user_id) do nothing;
+  return v_profile;
+end;
+$$;
+
+drop function if exists public.update_my_account(text, text);
+create function public.update_my_account(p_display_name text, p_username text, p_delivery_phone text, p_default_shipping_address text)
+returns public.customer_profiles language plpgsql security definer set search_path = public, auth
+as $$
+declare v_profile public.customer_profiles; v_phone text := nullif(trim(p_delivery_phone), ''); v_address text := nullif(trim(p_default_shipping_address), '');
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
+  if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status <> 'active') then raise exception 'Tài khoản hiện không thể cập nhật hồ sơ.'; end if;
+  if v_phone is null or length(v_phone) not between 8 and 20 then raise exception 'Số điện thoại nhận hàng cần từ 8 đến 20 ký tự.'; end if;
+  if v_address is null or length(v_address) not between 8 and 500 then raise exception 'Địa chỉ nhận hàng cần từ 8 đến 500 ký tự.'; end if;
+  perform public.ensure_my_account(null, null, null, null);
+  if p_username is not null and (length(trim(p_username)) < 3 or trim(p_username) !~ '^[a-zA-Z0-9_.-]+$') then raise exception 'Username chỉ gồm 3–40 ký tự chữ, số, dấu gạch ngang, gạch dưới hoặc dấu chấm.'; end if;
+  update public.customer_profiles set display_name = nullif(trim(p_display_name), ''), username = nullif(lower(trim(p_username)), ''), delivery_phone = v_phone, default_shipping_address = v_address, email = auth.jwt() ->> 'email', updated_at = now() where user_id = auth.uid() returning * into v_profile;
+  return v_profile;
+end;
+$$;
+
+create or replace function public.create_order_with_delivery(
+  p_order_number text, p_payment_method text, p_payment_note text, p_sale_code text, p_items jsonb,
+  p_customer_name text, p_customer_phone text, p_shipping_address text
+)
+returns public.orders language plpgsql security definer set search_path = public
+as $$
+declare
+  v_order public.orders; v_product public.products; v_campaign public.sale_campaigns; v_item jsonb;
+  v_quantity integer; v_subtotal numeric(12,0) := 0; v_discount numeric(12,0) := 0; v_total numeric(12,0) := 0;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập để tạo đơn hàng.'; end if;
+  if nullif(trim(p_customer_phone), '') is null then raise exception 'Vui lòng nhập số điện thoại nhận hàng.'; end if;
+  if length(trim(p_customer_phone)) not between 8 and 20 then raise exception 'Số điện thoại nhận hàng cần từ 8 đến 20 ký tự.'; end if;
+  if nullif(trim(p_shipping_address), '') is null then raise exception 'Vui lòng nhập địa chỉ nhận hàng.'; end if;
+  if length(trim(p_shipping_address)) > 500 then raise exception 'Địa chỉ nhận hàng tối đa 500 ký tự.'; end if;
+  if length(coalesce(trim(p_customer_name), '')) > 140 then raise exception 'Thông tin người nhận quá dài.'; end if;
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then raise exception 'Giỏ hàng không có sản phẩm hợp lệ.'; end if;
+  for v_item in select * from jsonb_array_elements(p_items) loop
+    v_quantity := (v_item ->> 'quantity')::integer;
+    select * into v_product from public.products where id = (v_item ->> 'product_id')::uuid and is_active = true;
+    if not found then raise exception 'Không tìm thấy hoặc sản phẩm đang ngừng bán.'; end if;
+    if v_quantity is null or v_quantity <= 0 then raise exception 'Số lượng sản phẩm không hợp lệ.'; end if;
+    if v_product.stock < v_quantity then raise exception 'Sản phẩm % không còn đủ tồn kho.', v_product.name; end if;
+    v_subtotal := v_subtotal + (v_product.price * v_quantity);
+  end loop;
+  if nullif(trim(p_sale_code), '') is not null then
+    select * into v_campaign from public.sale_campaigns where code = upper(trim(p_sale_code)) and is_active = true and starts_at <= now() and ends_at >= now() for update;
+    if not found then raise exception 'Mã săn sale không hợp lệ hoặc đã hết hạn.'; end if;
+    if v_campaign.usage_limit is not null and v_campaign.usage_count >= v_campaign.usage_limit then raise exception 'Mã săn sale đã hết lượt sử dụng.'; end if;
+    if v_subtotal < v_campaign.minimum_order_amount then raise exception 'Đơn cần tối thiểu % để áp dụng mã này.', v_campaign.minimum_order_amount; end if;
+    v_discount := case when v_campaign.discount_type = 'percent' then floor(v_subtotal * v_campaign.discount_value / 100) else v_campaign.discount_value end;
+    if v_campaign.maximum_discount_amount is not null then v_discount := least(v_discount, v_campaign.maximum_discount_amount); end if;
+    v_discount := least(v_discount, v_subtotal);
+    update public.sale_campaigns set usage_count = usage_count + 1, updated_at = now() where id = v_campaign.id;
+  end if;
+  v_total := v_subtotal - v_discount;
+  insert into public.orders (user_id, order_number, subtotal_amount, discount_amount, total_amount, sale_campaign_id, sale_code, status, payment_method, payment_note, customer_name, customer_phone, shipping_address)
+  values (auth.uid(), p_order_number, v_subtotal, v_discount, v_total, v_campaign.id, nullif(upper(trim(p_sale_code)), ''), 'pending_payment', p_payment_method, p_payment_note, nullif(trim(p_customer_name), ''), trim(p_customer_phone), trim(p_shipping_address)) returning * into v_order;
+  for v_item in select * from jsonb_array_elements(p_items) loop
+    v_quantity := (v_item ->> 'quantity')::integer;
+    select * into v_product from public.products where id = (v_item ->> 'product_id')::uuid;
+    insert into public.order_items (order_id, product_id, product_name, unit_price, quantity, subtotal) values (v_order.id, v_product.id, v_product.name, v_product.price, v_quantity, v_product.price * v_quantity);
+  end loop;
+  return v_order;
+end;
+$$;
+
+drop policy if exists "Shipment managers can read delivery orders" on public.orders;
+create policy "Shipment managers can read delivery orders" on public.orders for select to authenticated using (public.can_manage_shipments());
+
+revoke all on function public.ensure_my_account(text, text, text, text), public.update_my_account(text, text, text, text) from public, anon;
+grant execute on function public.ensure_my_account(text, text, text, text), public.update_my_account(text, text, text, text) to authenticated;
+
 -- --------------------------------------------------------------------------
 -- 5. ACCOUNT CENTER, SỔ CÁI SỐ DƯ VÀ KIỂM SOÁT TÀI KHOẢN
 -- --------------------------------------------------------------------------
@@ -506,31 +617,35 @@ create policy "Admins can read email delivery settings" on public.email_delivery
 drop policy if exists "Admins can read password recovery email template" on public.password_recovery_email_template;
 create policy "Admins can read password recovery email template" on public.password_recovery_email_template for select to authenticated using (public.is_admin());
 
-create or replace function public.ensure_my_account(p_display_name text default null, p_username text default null)
+drop function if exists public.ensure_my_account(text, text);
+create or replace function public.ensure_my_account(p_display_name text default null, p_username text default null, p_delivery_phone text default null, p_default_shipping_address text default null)
 returns public.customer_profiles language plpgsql security definer set search_path = public, auth
 as $$
 declare v_profile public.customer_profiles;
 begin
   if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
   if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status in ('deletion_requested', 'deactivated')) then raise exception 'Tài khoản đang trong quy trình đóng.'; end if;
-  insert into public.customer_profiles (user_id, display_name, username, email)
-  values (auth.uid(), nullif(trim(p_display_name), ''), nullif(lower(trim(p_username)), ''), auth.jwt() ->> 'email')
-  on conflict (user_id) do update set email = excluded.email, updated_at = now() where public.customer_profiles.account_status <> 'deactivated' returning * into v_profile;
+  insert into public.customer_profiles (user_id, display_name, username, email, delivery_phone, default_shipping_address)
+  values (auth.uid(), nullif(trim(p_display_name), ''), nullif(lower(trim(p_username)), ''), auth.jwt() ->> 'email', nullif(trim(p_delivery_phone), ''), nullif(trim(p_default_shipping_address), ''))
+  on conflict (user_id) do update set email = excluded.email, delivery_phone = coalesce(excluded.delivery_phone, public.customer_profiles.delivery_phone), default_shipping_address = coalesce(excluded.default_shipping_address, public.customer_profiles.default_shipping_address), updated_at = now() where public.customer_profiles.account_status <> 'deactivated' returning * into v_profile;
   insert into public.wallet_accounts (user_id) values (auth.uid()) on conflict (user_id) do nothing;
   return v_profile;
 end;
 $$;
 
-create or replace function public.update_my_account(p_display_name text, p_username text)
+drop function if exists public.update_my_account(text, text);
+create or replace function public.update_my_account(p_display_name text, p_username text, p_delivery_phone text, p_default_shipping_address text)
 returns public.customer_profiles language plpgsql security definer set search_path = public, auth
 as $$
-declare v_profile public.customer_profiles;
+declare v_profile public.customer_profiles; v_phone text := nullif(trim(p_delivery_phone), ''); v_address text := nullif(trim(p_default_shipping_address), '');
 begin
   if auth.uid() is null then raise exception 'Bạn cần đăng nhập.'; end if;
   if exists (select 1 from public.customer_profiles where user_id = auth.uid() and account_status <> 'active') then raise exception 'Tài khoản hiện không thể cập nhật hồ sơ.'; end if;
-  perform public.ensure_my_account(null, null);
+  if v_phone is null or length(v_phone) not between 8 and 20 then raise exception 'Số điện thoại nhận hàng cần từ 8 đến 20 ký tự.'; end if;
+  if v_address is null or length(v_address) not between 8 and 500 then raise exception 'Địa chỉ nhận hàng cần từ 8 đến 500 ký tự.'; end if;
+  perform public.ensure_my_account(null, null, null, null);
   if p_username is not null and (length(trim(p_username)) < 3 or trim(p_username) !~ '^[a-zA-Z0-9_.-]+$') then raise exception 'Username chỉ gồm 3–40 ký tự chữ, số, dấu gạch ngang, gạch dưới hoặc dấu chấm.'; end if;
-  update public.customer_profiles set display_name = nullif(trim(p_display_name), ''), username = nullif(lower(trim(p_username)), ''), email = auth.jwt() ->> 'email', updated_at = now() where user_id = auth.uid() returning * into v_profile;
+  update public.customer_profiles set display_name = nullif(trim(p_display_name), ''), username = nullif(lower(trim(p_username)), ''), delivery_phone = v_phone, default_shipping_address = v_address, email = auth.jwt() ->> 'email', updated_at = now() where user_id = auth.uid() returning * into v_profile;
   return v_profile;
 end;
 $$;
@@ -1313,9 +1428,12 @@ with check (bucket_id = 'nexora-brand-assets' and (storage.foldername(name))[1] 
 create or replace function public.handle_auth_user_created()
 returns trigger language plpgsql security definer set search_path = public, auth
 as $$
+declare v_delivery_phone text := nullif(trim(new.raw_user_meta_data ->> 'delivery_phone'), ''); v_default_shipping_address text := nullif(trim(new.raw_user_meta_data ->> 'default_shipping_address'), '');
 begin
-  insert into public.customer_profiles (user_id, email)
-  values (new.id, new.email)
+  if v_delivery_phone is null or length(v_delivery_phone) not between 8 and 20 then raise exception 'Số điện thoại nhận hàng là bắt buộc.'; end if;
+  if v_default_shipping_address is null or length(v_default_shipping_address) not between 8 and 500 then raise exception 'Địa chỉ nhận hàng là bắt buộc.'; end if;
+  insert into public.customer_profiles (user_id, email, delivery_phone, default_shipping_address)
+  values (new.id, new.email, v_delivery_phone, v_default_shipping_address)
   on conflict (user_id) do update set email = excluded.email, updated_at = now();
   insert into public.wallet_accounts (user_id) values (new.id) on conflict (user_id) do nothing;
   insert into public.user_roles (user_id, role) values (new.id, 'customer') on conflict (user_id) do nothing;
