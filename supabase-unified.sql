@@ -2039,3 +2039,7 @@ with check (bucket_id = 'nexora-brand-assets' and (storage.foldername(name))[1] 
 -- 38. Admin cần xem gallery của cả sản phẩm đang tạm ngừng bán để chỉnh sửa.
 drop policy if exists "Public reads product gallery" on public.product_images;
 create policy "Public reads product gallery" on public.product_images for select using (exists (select 1 from public.products p where p.id = product_id and (p.is_active or public.is_admin())));
+
+-- 39. RLS policy không thay thế quyền PostgreSQL: cấp đúng mức đọc/gọi hàm cho UI quản trị.
+grant select on table public.product_images to anon, authenticated;
+grant execute on function public.can_manage_shipments() to authenticated;

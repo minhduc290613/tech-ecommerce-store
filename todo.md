@@ -220,3 +220,4 @@
 - [x] Thêm xóa bài viết có xác nhận và sửa luồng tải lên/hiển thị ảnh bìa bài viết theo quyền.
 - [x] Thêm thư viện nhiều ảnh cho sản phẩm, chọn ảnh chính và hỗ trợ tải ảnh lên hoặc dán URL trong Admin.
 - [x] Bổ sung hủy đơn rõ ràng cho khách và hủy/xóa lưu trữ đơn có kiểm soát trong Admin.
+- [x] Khắc phục lỗi database khiến Command Deck không cập nhật được thông tin quản trị.
