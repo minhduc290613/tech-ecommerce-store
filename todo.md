@@ -226,3 +226,4 @@
 - [x] Thêm hộp xác nhận rõ ràng cho thao tác hủy và lưu trữ đơn trong Admin.
 - [x] Thêm bộ lọc đơn đã hủy trong khu vực quản lý đơn hàng.
 - [x] Thêm khu vực lịch sử đơn đã lưu trữ cho Admin.
+- [x] Khắc phục menu ba gạch mobile bị đẩy nội dung sang phải và tràn ngoài viewport.
