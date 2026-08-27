@@ -199,3 +199,4 @@
 - [ ] Kiểm thử và hướng dẫn kích hoạt nhà cung cấp CK tự động sau khi shop cung cấp thông tin kết nối hợp lệ.
 - [x] Hỗ trợ chọn một trong ba nhà cung cấp CK tự động: VietQR Host2Host, SePay hoặc Casso trong Command Deck.
 - [x] Hiển thị trạng thái secret CK tự động đã cấu hình/ chưa cấu hình và hướng dẫn thay thế an toàn, không lưu secret trong Admin hoặc database.
+- [x] Mở rộng khu vực Tài khoản & số dư trên màn hình desktop và giữ nguyên bố cục mobile.
