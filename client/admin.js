@@ -2,6 +2,9 @@
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 import { isAdminRole, resolveRoleCapabilities } from "./role-permissions.js";
 import { filterOrders } from "./order-filters.js";
+import { canAdminConfirmPayment, getManualTransferReviewQueue } from "./transfer-payment-review.js";
+import { getAdminAccessMessage } from "./admin-access-state.js";
+import "./admin-transfer-payments.css";
 import "./admin-accounts.js";
 import "./admin-email-delivery.js";
 import "./admin-roles-content.js";
@@ -17,6 +20,7 @@ const state = {
   user: null, role: "customer", roleDefinitions: [], capabilities: {}, products: [], orders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
   fulfillmentFilter: "all", paymentFilter: "all", orderQuery: "", carrierFilter: "all", activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null, editingSaleCampaignId: null,
 };
+let clearingExpiredAdminSession = false;
 
 const els = {
   gate: $("#adminGate"), gateMessage: $("#gateMessage"), loginForm: $("#adminLoginForm"), loginEmail: $("#adminEmail"), loginPassword: $("#adminPassword"), loginButton: $("#adminLoginButton"), app: $("#adminApp"),
@@ -35,9 +39,16 @@ async function init() {
     els.gateMessage.textContent = "Hãy điền SUPABASE_URL và SUPABASE_ANON_KEY trong supabase-config.js trước khi đăng nhập.";
     return;
   }
-  const { data } = await db.auth.getSession();
-  if (data.session?.user) await verifyAdmin(data.session.user);
-  db.auth.onAuthStateChange((_event, session) => { if (!session?.user) showGate("Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại."); });
+  const { data, error } = await db.auth.getSession();
+  if (error || !data.session?.user) {
+    clearingExpiredAdminSession = true;
+    await db.auth.signOut({ scope: "local" });
+    showGate(getAdminAccessMessage({ sessionError: error?.message || "no_session" }));
+  } else await verifyAdmin(data.session.user);
+  db.auth.onAuthStateChange((_event, session) => {
+    if (session?.user) { clearingExpiredAdminSession = false; return; }
+    showGate(clearingExpiredAdminSession ? getAdminAccessMessage({ sessionError: "expired" }) : getAdminAccessMessage());
+  });
 }
 
 function bindEvents() {
@@ -65,7 +76,9 @@ function bindEvents() {
     renderOrders();
   });
   els.paymentFilter.addEventListener("change", () => { state.paymentFilter = els.paymentFilter.value; renderOrders(); });
-  mountAdvancedOrderFilters();
+  mountAdvancedOrderFilters(); mountTransferPaymentReview();
+  $("#transferPaymentQueue")?.addEventListener("click", (event) => { const button = event.target.closest("[data-transfer-confirm]"); if (button) updatePaymentStatus(button.dataset.transferConfirm, "paid"); });
+  $("#focusTransferPaymentQueue")?.addEventListener("click", () => { state.paymentFilter = "pending_payment"; els.paymentFilter.value = "pending_payment"; renderOrders(); $("#transferPaymentReview")?.scrollIntoView({ behavior: "smooth", block: "start" }); });
   els.ordersBody.addEventListener("click", (event) => { const paymentButton = event.target.closest("[data-payment-action]"); if (paymentButton) { updatePaymentStatus(paymentButton.dataset.orderId, paymentButton.dataset.paymentAction); return; } const button = event.target.closest("[data-edit-order]"); if (button) openOrderModal(getOrder(button.dataset.editOrder)); });
   els.refreshOrders.addEventListener("click", loadData);
   $("#orderForm").addEventListener("submit", saveOrder);
@@ -103,6 +116,7 @@ async function login(event) {
   const email = els.loginEmail.value.trim(); const password = els.loginPassword.value;
   if (!email || !password) return toast("Nhập email và mật khẩu để tiếp tục.", "error");
   setLoading(els.loginButton, true, "Đang xác thực");
+  await db.auth.signOut({ scope: "local" });
   const { data, error } = await db.auth.signInWithPassword({ email, password });
   setLoading(els.loginButton, false);
   if (error) return toast(error.message, "error");
@@ -112,7 +126,7 @@ async function login(event) {
 async function verifyAdmin(user) {
   const [{ data: allowed, error }, { data: roleData }, { data: isAdmin }, roleDefinitionsResult] = await Promise.all([db.rpc("can_access_command_deck"), db.from("user_roles").select("role").eq("user_id", user.id).maybeSingle(), db.rpc("is_admin"), db.from("role_definitions").select("role_key,display_name,capabilities").order("role_key")]);
   const resolvedRole = roleData?.role || (isAdmin ? "admin" : "customer");
-  if (error || !allowed) { await db.auth.signOut(); return showGate("Tài khoản này chưa có capability mở Command Deck. Hãy nhờ admin cấp quyền commandDeck."); }
+  if (error || !allowed) { await db.auth.signOut({ scope: "local" }); return showGate(getAdminAccessMessage({ authorizationError: error?.message, allowed })); }
   state.user = user;
   state.role = resolvedRole;
   state.roleDefinitions = roleDefinitionsResult.data || [];
@@ -184,6 +198,23 @@ function renderOrders() {
   const rows = filterOrders(state.orders, { query: state.orderQuery, carrier: state.carrierFilter, fulfillment: state.fulfillmentFilter, payment: state.paymentFilter });
   $("#orderFilterCount").textContent = `${rows.length}/${state.orders.length} đơn`;
   els.ordersBody.innerHTML = rows.map(orderRow).join("") || emptyRow("Không tìm thấy đơn phù hợp với điều kiện tra cứu.", 8);
+  renderTransferPaymentQueue();
+}
+
+function mountTransferPaymentReview() {
+  if ($("#transferPaymentReview")) return;
+  const ordersPanel = els.ordersBody?.closest(".admin-panel"); if (!ordersPanel) return;
+  ordersPanel.insertAdjacentHTML("beforebegin", '<section class="admin-panel transfer-review-panel" id="transferPaymentReview"><div class="panel-top"><div><span class="panel-label">BANK TRANSFER REVIEW</span><h3>Xác nhận chuyển khoản</h3><p>Chỉ xác nhận sau khi đối chiếu giao dịch ngân hàng. Thanh toán số dư không xuất hiện ở đây vì phải trừ ví bằng luồng của khách.</p></div><div><span class="transfer-review-count" id="transferPaymentCount">0 CHỜ ĐỐI SOÁT</span><button class="quiet-button" id="focusTransferPaymentQueue" type="button"><i class="fa-solid fa-filter"></i> Lọc đơn chờ</button></div></div><div class="transfer-payment-queue" id="transferPaymentQueue"></div></section>');
+}
+
+function renderTransferPaymentQueue() {
+  const host = $("#transferPaymentQueue"); const count = $("#transferPaymentCount"); if (!host || !count) return;
+  const queue = getManualTransferReviewQueue(state.orders); count.textContent = `${queue.length} CHỜ ĐỐI SOÁT`;
+  host.innerHTML = queue.length ? queue.map((order) => {
+    const customer = order.customer_name || shortId(order.user_id); const method = order.payment_method === "momo" ? "MoMo" : "VietQR";
+    const requested = order.zalo_confirmation_requested_at ? `<span class="requested">KHÁCH ĐÃ GỬI YÊU CẦU · ${escapeHtml(formatDate(order.zalo_confirmation_requested_at))}</span>` : "<span>CHƯA CÓ YÊU CẦU ZALO</span>";
+    return `<article class="transfer-queue-card"><div><h4>${escapeHtml(order.order_number)} · ${currency(order.total_amount)}</h4><p>${escapeHtml(customer)} · ${escapeHtml(order.customer_phone || "Chưa có số liên hệ")}</p><div class="transfer-queue-meta"><span>${method}</span>${requested}<span>TẠO ${escapeHtml(formatDate(order.created_at))}</span></div></div><button class="transfer-confirm-button" data-transfer-confirm="${escapeHtml(order.id)}" type="button"><i class="fa-solid fa-circle-check"></i> Xác nhận đã nhận CK</button></article>`;
+  }).join("") : '<p class="transfer-queue-empty">Không có đơn chuyển khoản nào đang chờ đối soát.</p>';
 }
 
 function mountAdvancedOrderFilters() {
@@ -199,7 +230,8 @@ function refreshCarrierFilterOptions() { const select = $("#orderCarrierFilter")
 function orderRow(order) {
   const customerName = order.customer_name || shortId(order.user_id); const itemCount = order.order_items?.reduce((sum, item) => sum + Number(item.quantity), 0) || 0;
   const sale = Number(order.discount_amount || 0) > 0 ? `<small class="sale-status-live">${escapeHtml(order.sale_code || "SALE")} · -${currency(order.discount_amount)}</small>` : "";
-  return `<tr><td><b>${escapeHtml(order.order_number)}</b><br /><small class="customer-email">${escapeHtml(order.tracking_code || "Chưa có mã vận đơn")}</small></td><td><span class="order-customer"><b>${escapeHtml(customerName)}</b><small>${escapeHtml(order.customer_phone || "Chưa có số liên hệ")}</small></span></td><td>${formatDate(order.created_at)}</td><td><span class="status-pill status-${escapeHtml(order.status)}">${statusLabel(order.status)}</span></td><td><div class="payment-actions"><button class="payment-action pending ${order.status === "pending_payment" ? "active" : ""}" data-payment-action="pending_payment" data-order-id="${escapeHtml(order.id)}" type="button">Chưa TT</button><button class="payment-action paid ${order.status === "paid" ? "active" : ""}" data-payment-action="paid" data-order-id="${escapeHtml(order.id)}" type="button">Đã TT</button></div></td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td><td><b>${currency(order.total_amount)}</b><br />${sale}</td><td>${itemCount} SP</td><td><button class="row-action" data-edit-order="${escapeHtml(order.id)}" aria-label="Chỉnh sửa đơn ${escapeHtml(order.order_number)}"><i class="fa-solid fa-pen"></i></button></td></tr>`;
+  const confirmation = canAdminConfirmPayment(order) ? `<button class="payment-action transfer" data-payment-action="paid" data-order-id="${escapeHtml(order.id)}" type="button">Xác nhận CK</button>` : order.payment_method === "wallet" && order.status === "pending_payment" ? '<span class="customer-email">Chờ khách thanh toán ví</span>' : `<div class="payment-actions"><button class="payment-action pending ${order.status === "pending_payment" ? "active" : ""}" data-payment-action="pending_payment" data-order-id="${escapeHtml(order.id)}" type="button">Chưa TT</button><button class="payment-action paid ${order.status === "paid" ? "active" : ""}" data-payment-action="paid" data-order-id="${escapeHtml(order.id)}" type="button">Đã TT</button></div>`;
+  return `<tr><td><b>${escapeHtml(order.order_number)}</b><br /><small class="customer-email">${escapeHtml(order.tracking_code || "Chưa có mã vận đơn")}</small></td><td><span class="order-customer"><b>${escapeHtml(customerName)}</b><small>${escapeHtml(order.customer_phone || "Chưa có số liên hệ")}</small></span></td><td>${formatDate(order.created_at)}</td><td><span class="status-pill status-${escapeHtml(order.status)}">${statusLabel(order.status)}</span></td><td>${confirmation}</td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td><td><b>${currency(order.total_amount)}</b><br />${sale}</td><td>${itemCount} SP</td><td><button class="row-action" data-edit-order="${escapeHtml(order.id)}" aria-label="Chỉnh sửa đơn ${escapeHtml(order.order_number)}"><i class="fa-solid fa-pen"></i></button></td></tr>`;
 }
 
 function renderProducts() {
@@ -286,6 +318,8 @@ async function updateSalesState(productId, action) {
 async function updateOrderStatus(event) { const select = event.target.closest("[data-order-id]"); if (!select) return; const { error } = await db.from("orders").update({ status: select.value }).eq("id", select.dataset.orderId); if (error) return toast(error.message, "error"); const order = state.orders.find((item) => item.id === select.dataset.orderId); if (order) order.status = select.value; renderMetrics(); renderOrders(); renderRecentOrders(); toast("Đã cập nhật trạng thái đơn.", "success"); }
 async function updatePaymentStatus(orderId, status) {
   const order = getOrder(orderId); if (!order || order.status === status) return;
+  if (status === "paid" && order.payment_method === "wallet") return toast("Đơn ví chỉ được xác nhận qua thao tác thanh toán số dư của khách để bảo toàn sổ cái.", "error");
+  if (status === "paid" && canAdminConfirmPayment(order) && !window.confirm(`Xác nhận đã đối chiếu và nhận đủ ${currency(order.total_amount)} cho đơn ${order.order_number}? Thao tác này sẽ đánh dấu đơn Đã thanh toán.`)) return;
   const payload = { status, payment_confirmed_at: status === "paid" ? new Date().toISOString() : null, updated_at: new Date().toISOString() };
   const { error } = await db.from("orders").update(payload).eq("id", orderId);
   if (error) return toast(error.message, "error");

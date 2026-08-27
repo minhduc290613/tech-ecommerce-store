@@ -36,3 +36,7 @@ Sau khi đặt `hidden` là trạng thái CSS ưu tiên, preview storefront tả
 Kiểm thử điều khiển menu xác nhận nút ba gạch mở menu với `aria-expanded=true`, nav không còn hidden và scrim hoạt động; bấm scrim đóng lại, trả `aria-expanded=false` và `hidden=true`. Snapshot 390 px xác nhận khi đóng, header/menu không che hero content.
 
 Luồng thanh toán số dư chỉ tạo URL `/orders.html?paid=wallet&order=…` khi RPC trả đơn có `status=paid` và `payment_method=wallet`; không gọi RPC thanh toán thật trong kiểm thử để tránh thay đổi số dư. Đích Đơn hàng đã tải được với URL này. RPC yêu cầu xác nhận chuyển khoản chỉ ghi `zalo_confirmation_requested_at`, không cập nhật `status=paid`.
+
+Rà soát truy cập Command Deck ghi nhận backend/preview vẫn phục vụ trang; lỗi browser là `refresh_token_not_found` từ Supabase Auth. Luồng admin đã được cập nhật để dọn phiên cũ cục bộ trước khi đăng nhập lại và hiển thị thông báo phục hồi rõ hơn.
+
+Đã xử lý thêm thứ tự sự kiện sign-out: thông báo “phiên cũ không còn hợp lệ” không còn bị callback Supabase ghi đè thành thông báo chung sau khi local session được dọn.
