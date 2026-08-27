@@ -196,7 +196,7 @@
 - [x] Thêm nút sao chép nội dung chuyển khoản và số tài khoản dưới mã QR ZaloPay, có phản hồi trạng thái và hỗ trợ mobile.
 - [x] Rà soát và thiết kế phương thức CK tự động qua nhà cung cấp được ủy quyền, giữ đối soát thủ công làm phương án dự phòng.
 - [x] Bổ sung cấu hình quản trị CK tự động không lộ secret, webhook ký số và kiểm soát an toàn chống xác nhận sai đơn.
-- [ ] Kiểm thử và hướng dẫn kích hoạt nhà cung cấp CK tự động sau khi shop cung cấp thông tin kết nối hợp lệ.
+- [x] Hoãn kiểm thử và kích hoạt nhà cung cấp CK tự động theo quyết định người dùng; phương thức giữ tắt an toàn cho đến khi shop tự cấu hình sau.
 - [x] Hỗ trợ chọn một trong ba nhà cung cấp CK tự động: VietQR Host2Host, SePay hoặc Casso trong Command Deck.
 - [x] Hiển thị trạng thái secret CK tự động đã cấu hình/ chưa cấu hình và hướng dẫn thay thế an toàn, không lưu secret trong Admin hoặc database.
 - [x] Mở rộng khu vực Tài khoản & số dư trên màn hình desktop và giữ nguyên bố cục mobile.
