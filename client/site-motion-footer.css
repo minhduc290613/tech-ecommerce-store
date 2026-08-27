@@ -2,7 +2,7 @@
 .footer-status-admin { display: grid; gap: .68rem; margin-top: 1.15rem; padding: 1rem; border: 1px solid rgba(56, 189, 248, .24); background: linear-gradient(135deg, rgba(11, 31, 51, .64), rgba(24, 18, 54, .42)); }
 .footer-status-admin h4 { margin: 0; color: #e5f4ff; font: 700 1rem var(--font-display); }
 .footer-status-admin p { margin: -.25rem 0 .1rem; color: #8ba8c0; font-size: .68rem; line-height: 1.55; }
-.footer-personal a i, .footer-store a i { width: 1rem; color: var(--cyan); }
+.footer-quick-links a i { width: 1rem; color: var(--cyan); }
 .footer-signal.is-offline { color: #f2a7b1; }
 .footer-signal.is-offline i { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
 

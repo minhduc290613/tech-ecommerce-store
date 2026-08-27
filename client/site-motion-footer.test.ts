@@ -8,8 +8,9 @@ const css = readFileSync(new URL("./site-motion-footer.css", import.meta.url), "
 
 describe("footer settings and safe storefront motion", () => {
   it("tách lối vào đơn hàng và quản trị thành hai nhóm footer riêng", () => {
-    expect(html).toContain('class="footer-column footer-personal"');
-    expect(html).toContain('class="footer-column footer-store"');
+    expect(html).toContain('class="footer-column footer-quick-links"');
+    expect(html).toContain('class="footer-column footer-support"');
+    expect(html).toContain('href="/affiliate.html"');
     expect(html).toContain('href="/orders.html"');
     expect(html).toContain('href="/admin.html"');
   });
