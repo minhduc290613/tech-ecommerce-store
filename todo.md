@@ -208,3 +208,5 @@
 - [x] Bắt buộc thu thập số điện thoại và địa chỉ nhận hàng khi đăng ký; cho khách cập nhật trong Tài khoản.
 - [x] Hiển thị số điện thoại và địa chỉ giao nhận theo quyền cho Admin và Nhân viên kiểm hàng.
 - [x] Bổ sung chỉnh sửa và xóa đối tác giao hàng trong Command Deck, có phân quyền phù hợp.
+- [x] Tạo trang thống kê affiliate: lượt referral/click, đơn hàng thành công, hoa hồng theo trạng thái và tổng nhận được.
+- [x] Bảo đảm dashboard chỉ hiển thị dữ liệu của affiliate đang đăng nhập, có kiểm thử phân quyền và responsive.

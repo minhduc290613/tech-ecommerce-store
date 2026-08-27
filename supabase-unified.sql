@@ -1654,3 +1654,54 @@ revoke all on function public.guard_auto_transfer_paid_transition() from public,
 revoke all on function public.select_auto_transfer_payment(uuid), public.process_auto_transfer_webhook(text,text,numeric,text,text) from public, anon, authenticated;
 grant execute on function public.select_auto_transfer_payment(uuid) to authenticated;
 grant execute on function public.process_auto_transfer_webhook(text,text,numeric,text,text) to service_role;
+
+-- 31. Dashboard affiliate: ghi nhận lượt mở link ẩn danh và tổng hợp chỉ cho affiliate đang đăng nhập.
+create table if not exists public.affiliate_link_clicks (
+  id uuid primary key default gen_random_uuid(),
+  affiliate_user_id uuid not null references auth.users(id) on delete cascade,
+  referral_code text not null check (referral_code ~ '^[A-Z0-9]{6,18}$'),
+  visitor_token uuid not null,
+  product_id uuid references public.products(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists affiliate_link_clicks_unique_visitor_product on public.affiliate_link_clicks(affiliate_user_id, visitor_token, coalesce(product_id, '00000000-0000-0000-0000-000000000000'::uuid));
+create index if not exists affiliate_link_clicks_user_created_idx on public.affiliate_link_clicks(affiliate_user_id, created_at desc);
+alter table public.affiliate_link_clicks enable row level security;
+revoke all on table public.affiliate_link_clicks from anon, authenticated;
+
+create or replace function public.track_affiliate_link_click(p_referral_code text, p_visitor_token uuid, p_product_id uuid default null)
+returns void language plpgsql security definer set search_path = public, auth
+as $$
+declare v_affiliate_user_id uuid; v_code text := upper(trim(p_referral_code));
+begin
+  if v_code !~ '^[A-Z0-9]{6,18}$' or p_visitor_token is null then return; end if;
+  select user_id into v_affiliate_user_id from public.affiliate_profiles where referral_code = v_code and status = 'approved';
+  if not found then return; end if;
+  insert into public.affiliate_link_clicks(affiliate_user_id, referral_code, visitor_token, product_id)
+  values (v_affiliate_user_id, v_code, p_visitor_token, p_product_id)
+  on conflict (affiliate_user_id, visitor_token, coalesce(product_id, '00000000-0000-0000-0000-000000000000'::uuid)) do nothing;
+end;
+$$;
+
+create or replace function public.get_my_affiliate_dashboard()
+returns jsonb language plpgsql security definer set search_path = public, auth
+as $$
+declare v_profile public.affiliate_profiles; v_program public.affiliate_program_settings; v_clicks integer := 0; v_referrals integer := 0; v_successful_orders integer := 0; v_earned numeric(12,0) := 0; v_pending_reversal numeric(12,0) := 0; v_reversed numeric(12,0) := 0; v_recent jsonb := '[]'::jsonb;
+begin
+  if auth.uid() is null then raise exception 'Bạn cần đăng nhập để xem dashboard affiliate.'; end if;
+  select * into v_profile from public.affiliate_profiles where user_id = auth.uid();
+  select * into v_program from public.affiliate_program_settings where singleton = true;
+  if not found then return jsonb_build_object('status', coalesce(v_profile.status, 'not_registered'), 'program', jsonb_build_object('active', false), 'generated_at', now()); end if;
+  if v_profile is null or v_profile.status <> 'approved' then return jsonb_build_object('status', coalesce(v_profile.status, 'not_registered'), 'referral_code', coalesce(v_profile.referral_code, ''), 'program', jsonb_build_object('active', v_program.active, 'commission_rate', v_program.commission_rate, 'min_delivered_orders', v_program.min_delivered_orders, 'min_delivered_amount', v_program.min_delivered_amount), 'generated_at', now()); end if;
+  select count(*) into v_clicks from public.affiliate_link_clicks where affiliate_user_id = auth.uid();
+  select count(*) into v_referrals from public.affiliate_referrals where affiliate_user_id = auth.uid();
+  select count(*) into v_successful_orders from public.orders where affiliate_user_id = auth.uid() and fulfillment_status = 'delivered' and status in ('paid','processing','completed');
+  select coalesce(sum(amount) filter (where status = 'earned'), 0), coalesce(sum(amount) filter (where status = 'pending_reversal'), 0), coalesce(sum(amount) filter (where status = 'reversed'), 0) into v_earned, v_pending_reversal, v_reversed from public.affiliate_commissions where affiliate_user_id = auth.uid();
+  select coalesce(jsonb_agg(jsonb_build_object('order_number', recent.order_number, 'amount', recent.amount, 'rate', recent.rate, 'status', recent.status, 'created_at', recent.created_at) order by recent.created_at desc), '[]'::jsonb) into v_recent from (select o.order_number, c.amount, c.rate, c.status, c.created_at from public.affiliate_commissions c join public.orders o on o.id = c.order_id where c.affiliate_user_id = auth.uid() order by c.created_at desc limit 20) recent;
+  return jsonb_build_object('status', v_profile.status, 'referral_code', v_profile.referral_code, 'click_count', v_clicks, 'referral_count', v_referrals, 'successful_order_count', v_successful_orders, 'commission_earned', v_earned, 'commission_pending_reversal', v_pending_reversal, 'commission_reversed', v_reversed, 'recent_commissions', v_recent, 'program', jsonb_build_object('active', v_program.active, 'commission_rate', v_program.commission_rate, 'min_delivered_orders', v_program.min_delivered_orders, 'min_delivered_amount', v_program.min_delivered_amount), 'generated_at', now());
+end;
+$$;
+
+revoke all on function public.track_affiliate_link_click(text,uuid,uuid), public.get_my_affiliate_dashboard() from public;
+grant execute on function public.track_affiliate_link_click(text,uuid,uuid) to anon, authenticated;
+grant execute on function public.get_my_affiliate_dashboard() to authenticated;

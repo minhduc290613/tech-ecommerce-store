@@ -92,6 +92,7 @@ async function initializeApp() {
   startCountdown();
   try {
     await Promise.all([loadProducts(), loadMarketplaceCMS()]);
+    trackAffiliateLanding();
     await restoreSession();
   } finally {
     setPageLoading(false);
@@ -391,6 +392,22 @@ function openSharedProductFromUrl() {
   if (!product) return;
   state.sharedProductOpened = true;
   openQuickView(product);
+}
+
+function trackAffiliateLanding() {
+  const params = new URLSearchParams(window.location.search);
+  const referralCode = params.get("ref")?.trim().toUpperCase();
+  if (!db || !/^[A-Z0-9]{6,18}$/.test(referralCode || "")) return;
+  let visitorToken = localStorage.getItem("nexora-affiliate-visitor-token");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(visitorToken || "")) {
+    visitorToken = crypto.randomUUID();
+    localStorage.setItem("nexora-affiliate-visitor-token", visitorToken);
+  }
+  const productId = params.get("product");
+  const safeProductId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(productId || "") ? productId : null;
+  db.rpc("track_affiliate_link_click", { p_referral_code: referralCode, p_visitor_token: visitorToken, p_product_id: safeProductId }).then(({ error }) => {
+    if (error) console.warn("Không thể ghi nhận click affiliate:", error.message);
+  });
 }
 
 async function shareProduct(product) {

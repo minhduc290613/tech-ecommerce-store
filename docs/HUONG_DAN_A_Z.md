@@ -27,6 +27,7 @@ Tài liệu này hướng dẫn triển khai **NEXORA Tech Store** từ reposito
 | Khu vực | URL/entrypoint | Vai trò |
 | --- | --- | --- |
 | Storefront | `/` → `client/index.html` | Catalog, tìm kiếm, lọc, sale hunt, quick view, giỏ hàng, Auth và checkout QR. |
+| Affiliate Dashboard | `/affiliate.html` → `client/affiliate.html` | Chỉ số referral, click link, đơn hoàn tất và hoa hồng của affiliate đang đăng nhập. |
 | Command Deck | `/admin.html` → `client/admin.html` | Dashboard, sản phẩm, đơn hàng, giao nhận, CMS, FAQ, gian hàng và sale campaign. |
 | Trang thông tin | `/info.html` → `client/info.html` | Điều khoản, bảo mật, giao hàng/đổi trả, giới thiệu và liên hệ. |
 | Trang bài viết | `/article.html?slug=<slug>` → `client/article.html` | Chỉ hiển thị bài đã `published`, có trạng thái không tìm thấy an toàn. |
@@ -87,6 +88,7 @@ client/
 ├── app.js                     # Auth, catalog, cart, checkout, QR/Zalo
 ├── style.css                  # giao diện storefront
 ├── admin.html / admin.js      # Command Deck
+├── affiliate.html / affiliate.js # dashboard affiliate riêng tư
 ├── info.html                  # trang thông tin/chính sách
 ├── article.html / article.js  # trang đọc bài viết public
 └── supabase-config.js         # Project URL + publishable key
@@ -134,7 +136,7 @@ Schema tạo các thành phần sau:
 | Khuyến mại | `sale_campaigns`, mã sale và `create_order_with_sale`. |
 | Account Center | Hồ sơ khách, số dư, sổ cái, cảnh cáo, yêu cầu nạp tiền Zalo, số điện thoại/địa chỉ nhận hàng và audit log. |
 | Role & nội dung | `user_roles`, review/bình luận moderation, bài viết draft/pending/published và article reader. |
-| Affiliate & hoàn tiền | Referral được duyệt, hoa hồng 15% cấu hình được, `refund_requests`, hoàn wallet/manual và CSV quản trị. |
+| Affiliate & hoàn tiền | Referral được duyệt, click link ẩn danh chống trùng lặp, hoa hồng cấu hình được, `refund_requests`, hoàn wallet/manual và CSV quản trị. |
 | Bảo mật | RLS, policy catalog công khai, quyền user-own-order, giới hạn RPC checkout và kiểm tra trạng thái account. |
 
 > **Repository chỉ giữ một file SQL:** `supabase-unified.sql`. Nếu database đã có đơn hàng thật, không chạy lại toàn bộ file; hãy tạo thay đổi DDL có quản lý từ schema canonical sau khi sao lưu. Lệnh `pnpm check` và `pnpm build` tự chạy `scripts/check-single-sql.mjs` để dừng quy trình nếu repository xuất hiện thêm bất kỳ file `.sql` nào.
@@ -381,6 +383,20 @@ git push origin assets
 
 Tỷ lệ affiliate mặc định là 15%, nhưng **admin** có thể thay đổi trong **Cấu hình nâng cao** cùng điều kiện đơn delivered và yêu cầu duyệt. Hệ thống không áp dụng hồi tố lên commission đã được ghi; hãy đối soát trước khi điều chỉnh tỷ lệ trên store đang vận hành.
 
+### 10.1.1 Dashboard affiliate
+
+Affiliate có trạng thái **đã duyệt** mở **Tài khoản → Affiliate → Xem thống kê** hoặc trực tiếp `/affiliate.html`. Trang này không hiển thị tên, email, số điện thoại, địa chỉ hoặc bất kỳ dữ liệu định danh nào của khách được giới thiệu. RPC dashboard chỉ tổng hợp dữ liệu gắn với `auth.uid()` của affiliate đang đăng nhập.
+
+| Chỉ số | Cách tính | Không được hiểu là |
+| --- | --- | --- |
+| Lượt click | Một visitor token ẩn danh mở link referral; cùng token và cùng link sản phẩm chỉ tính một lần. | Lượt mua hàng hoặc hoa hồng. |
+| Referral | Số tài khoản đã được claim referral cho affiliate đó. | Số đơn thanh toán. |
+| Đơn thành công | Đơn có `affiliate_user_id` của chính affiliate, đã `delivered` và ở trạng thái thanh toán đủ điều kiện. | Mọi đơn do khách referral tạo trước khi giao thành công. |
+| Hoa hồng đã nhận | Tổng commission `earned` đã được ghi nhận theo trigger vận hành. | Hoa hồng tạo ra chỉ từ click/chia sẻ. |
+| Chờ hoàn/review, đã hoàn | Tổng commission ở trạng thái `pending_reversal` và `reversed`. | Số dư ví có thể rút ngay. |
+
+> Click chỉ là tín hiệu phân tích, không tạo commission và không lưu IP, email hay thông tin khách. Không tạo hoặc sửa đơn thanh toán thật để “làm số liệu đẹp”.
+
 ### 10.2 Quy trình xử lý đơn đề xuất
 
 1. Khách tạo đơn, trạng thái bắt đầu là `pending_payment`.
@@ -406,8 +422,8 @@ Không đánh dấu `paid` chỉ dựa vào nội dung tin nhắn; cần đối 
 | QR/Zalo | Kiểm tra cấu hình payment thật. | Thông tin người nhận, tổng tiền và mã đơn chính xác. |
 | RLS | Dùng user A thử truy cập đơn user B. | Không đọc/cập nhật được. |
 | Role/moderation | Dùng customer/moderator/admin tách biệt. | Customer bị chặn Command Deck; moderator không đổi `admin`; nội dung chỉ public sau duyệt. |
-| Affiliate/refund | Dùng tài khoản test và đơn không có tiền thật. | Hoa hồng đúng 15% khi delivered; refund wallet thay đổi ledger/balance đồng thời. |
-| Build | Chạy `pnpm build`. | Không có lỗi build; cả `/`, `/admin.html`, `/info.html`, `/article.html` mở được. |
+| Affiliate/refund | Dùng tài khoản test và đơn không có tiền thật. | Hoa hồng đúng theo tỷ lệ khi delivered; dashboard affiliate không lộ PII, click không tạo commission. |
+| Build | Chạy `pnpm build`. | Không có lỗi build; cả `/`, `/affiliate.html`, `/admin.html`, `/info.html`, `/article.html` mở được. |
 
 ## 12. Xử lý lỗi thường gặp
 
@@ -433,6 +449,7 @@ RLS và quyền database cần được kiểm thử cùng nhau: policy quyết 
 | RLS bật cho toàn bộ bảng public | Hoàn thành. |
 | `anon` không chạy được checkout RPC | Hoàn thành. |
 | Publishable key ở browser, không có service role | Hoàn thành. |
+| Dashboard affiliate chỉ tổng hợp dữ liệu của chính chủ, không lộ PII referral | Hoàn thành. |
 | Tài khoản admin không dùng password mặc định | Hoàn thành. |
 | Đặt rate limit/CAPTCHA nếu tắt Confirm email | Khuyến nghị mạnh. |
 | SMTP riêng nếu dùng email confirmation/reset production | Khuyến nghị mạnh. |

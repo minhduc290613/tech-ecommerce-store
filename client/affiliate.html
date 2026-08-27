@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#08111f" />
+    <title>NEXORA | Affiliate Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/affiliate-dashboard.css" />
+  </head>
+  <body>
+    <main class="affiliate-shell">
+      <header class="affiliate-header"><a class="affiliate-brand" href="/"><img src="/manus-storage/nexora-logo_3c03446b.png" alt="NEXORA" /><span>NEXORA</span></a><div class="affiliate-header-actions"><a href="/"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Storefront</a><button id="refreshAffiliateDashboard" type="button"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Làm mới</button></div></header>
+      <section class="affiliate-hero"><div><span class="affiliate-kicker"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> AFFILIATE SIGNAL</span><h1>Chỉ số giới thiệu<br /><em>rõ ràng theo thời gian.</em></h1><p>Theo dõi lượt click, tài khoản được giới thiệu, đơn đã hoàn tất và hoa hồng thuộc về bạn.</p></div><div class="affiliate-link-card" id="affiliateLinkCard"><span>LINK GIỚI THIỆU</span><strong>Đang đồng bộ…</strong><button id="copyAffiliateLink" type="button" disabled><i class="fa-regular fa-copy" aria-hidden="true"></i> Sao chép link</button></div></section>
+      <section id="affiliateAuthRequired" class="affiliate-empty" hidden><i class="fa-solid fa-lock" aria-hidden="true"></i><h2>Đăng nhập để xem chỉ số</h2><p>Dashboard chỉ hiển thị dữ liệu của tài khoản affiliate đang đăng nhập.</p><a href="/">Về storefront để đăng nhập</a></section>
+      <section id="affiliatePending" class="affiliate-empty" hidden><i class="fa-solid fa-user-clock" aria-hidden="true"></i><h2>Affiliate chưa được duyệt</h2><p>Hãy mở Tài khoản trên storefront để đăng ký hoặc xem trạng thái xét duyệt.</p><a href="/">Về storefront</a></section>
+      <section id="affiliateLoading" class="affiliate-loading" aria-live="polite"><i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i><span>Đang tổng hợp chỉ số affiliate…</span></section>
+      <section id="affiliateDashboard" hidden>
+        <div class="affiliate-status-row"><span id="affiliateStatus" class="affiliate-status">—</span><span id="affiliateUpdated">—</span></div>
+        <div class="affiliate-kpis"><article><span>LƯỢT CLICK</span><strong id="affiliateClicks">0</strong><small>Số lần mở link giới thiệu</small></article><article><span>REFERRAL</span><strong id="affiliateReferrals">0</strong><small id="affiliateConversion">0% chuyển đổi từ click</small></article><article><span>ĐƠN THÀNH CÔNG</span><strong id="affiliateSuccessfulOrders">0</strong><small>Đã giao và hợp lệ tính hoa hồng</small></article><article class="accent"><span>HOA HỒNG NHẬN ĐƯỢC</span><strong id="affiliateEarned">0đ</strong><small>Đã ghi nhận vào số dư</small></article></div>
+        <div class="affiliate-detail-grid"><section class="affiliate-panel"><span class="panel-label">COMMISSION LEDGER</span><h2>Trạng thái hoa hồng</h2><dl><div><dt>Đã nhận</dt><dd id="affiliateEarnedDetail">0đ</dd></div><div><dt>Chờ hoàn/review</dt><dd id="affiliatePendingReversal">0đ</dd></div><div><dt>Đã hoàn</dt><dd id="affiliateReversed">0đ</dd></div></dl><p>Hoa hồng chỉ được ghi nhận sau khi đơn referral đạt điều kiện hoàn tất đã cấu hình.</p></section><section class="affiliate-panel"><span class="panel-label">PROGRAM RULE</span><h2>Quy tắc hiện hành</h2><dl><div><dt>Tỷ lệ hoa hồng</dt><dd id="affiliateRate">—</dd></div><div><dt>Điều kiện tối thiểu</dt><dd id="affiliateRequirement">—</dd></div><div><dt>Trạng thái chương trình</dt><dd id="affiliateProgramStatus">—</dd></div></dl><p>Thay đổi điều kiện do quản trị viên cập nhật chỉ áp dụng theo quy tắc vận hành của shop.</p></section></div>
+        <section class="affiliate-panel affiliate-activity"><div class="activity-head"><div><span class="panel-label">RECENT COMMISSIONS</span><h2>Hoa hồng gần đây</h2></div><span id="affiliateCommissionCount">0 mục</span></div><div class="affiliate-table-wrap"><table><thead><tr><th>Đơn hàng</th><th>Thời gian</th><th>Tỷ lệ</th><th>Hoa hồng</th><th>Trạng thái</th></tr></thead><tbody id="affiliateCommissionRows"></tbody></table></div></section>
+      </section>
+    </main>
+    <div id="affiliateToast" class="affiliate-toast" aria-live="polite"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="/affiliate.js"></script>
+  </body>
+</html>
