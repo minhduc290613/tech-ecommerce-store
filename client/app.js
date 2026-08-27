@@ -262,7 +262,7 @@ async function loadProducts() {
 
 async function loadMarketplaceCMS() {
   if (db) {
-    const [settingsResult, faqsResult, shopsResult, saleResult, carriersResult] = await Promise.all([db.from("site_settings").select("*").eq("singleton", true).maybeSingle(), db.from("faqs").select("*").eq("is_published", true).order("sort_order"), db.from("shops").select("*").eq("is_active", true).order("created_at"), db.from("sale_campaigns").select("*").eq("is_hunt_featured", true).order("created_at", { ascending: false }), db.from("shipping_carriers").select("name,logo_url,note,tracking_url_template").eq("is_active", true).order("name")]);
+    const [settingsResult, faqsResult, shopsResult, saleResult, carriersResult] = await Promise.all([db.from("site_settings").select("*").eq("singleton", true).maybeSingle(), db.from("faqs").select("*").eq("is_published", true).order("sort_order"), db.from("shops").select("*").eq("is_active", true).order("created_at"), db.from("sale_campaigns").select("*").order("created_at", { ascending: false }), db.from("shipping_carriers").select("name,logo_url,note,tracking_url_template").eq("is_active", true).order("name")]);
     if (settingsResult.data) state.settings = { ...DEFAULT_SETTINGS, ...settingsResult.data }; if (faqsResult.data?.length) state.faqs = faqsResult.data; if (shopsResult.data?.length) state.shops = shopsResult.data; if (saleResult.data?.length) state.saleCampaigns = saleResult.data; state.carriers = carriersResult.data || [];
   }
   applySettings(); renderFAQs(); renderShops(); renderCarriers(); renderSaleHunt(); updateCartUI();
@@ -278,7 +278,7 @@ function renderShops() {
   }).join("");
 }
 function renderCarriers() { if (!els.carrierSection || !els.carrierGrid) return; els.carrierSection.hidden = !state.carriers.length; els.carrierGrid.innerHTML = state.carriers.map((carrier) => `<article class="carrier-storefront-card">${carrier.logo_url ? `<img src="${escapeHtml(carrier.logo_url)}" alt="${escapeHtml(carrier.name)}" loading="lazy" decoding="async" width="96" height="96" />` : '<i class="fa-solid fa-truck-fast" aria-hidden="true"></i>'}<div><span>DELIVERY PARTNER</span><h3>${escapeHtml(carrier.name)}</h3><p>${escapeHtml(carrier.note || "Hỗ trợ giao nhận và cập nhật hành trình đơn hàng.")}</p></div></article>`).join(""); }
-function renderSaleHunt() { const campaigns = state.saleCampaigns.filter(isCampaignActive); els.saleHuntGrid.innerHTML = campaigns.length ? campaigns.map((campaign) => `<article class="sale-hunt-card"><span class="sale-hunt-code">${escapeHtml(campaign.code)}</span><div><h3>${escapeHtml(campaign.title)}</h3><p>${escapeHtml(campaign.description)}</p></div><button data-sale-code="${escapeHtml(campaign.code)}" type="button">${t("useCode")}</button></article>`).join("") : `<p class="sale-hunt-empty">${t("noActiveSale")}</p>`; }
+function renderSaleHunt() { const campaigns = state.saleCampaigns.filter((campaign) => campaign.is_hunt_featured && isCampaignActive(campaign)); els.saleHuntGrid.innerHTML = campaigns.length ? campaigns.map((campaign) => `<article class="sale-hunt-card"><span class="sale-hunt-code">${escapeHtml(campaign.code)}</span><div><h3>${escapeHtml(campaign.title)}</h3><p>${escapeHtml(campaign.description)}</p></div><button data-sale-code="${escapeHtml(campaign.code)}" type="button">${t("useCode")}</button></article>`).join("") : `<p class="sale-hunt-empty">${t("noActiveSale")}</p>`; }
 function renderLoadingCards() {
   setBusyRegion(els.productsGrid, true);
   els.productCount.textContent = UI_TRANSLATIONS[state.locale].catalogLoading;

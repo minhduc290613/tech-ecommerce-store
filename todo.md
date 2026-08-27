@@ -230,3 +230,4 @@
 - [x] Bổ sung animation nhẹ, có hỗ trợ giảm chuyển động và không thay đổi luồng chức năng storefront.
 - [x] Cho phép Admin chỉnh credit và trạng thái website hoạt động hiển thị ở chân trang.
 - [x] Tách rõ liên kết Đơn hàng của tôi và Quản trị cửa hàng thành các mục riêng ở chân trang.
+- [x] Khắc phục mã ưu đãi không hiển thị hoặc không thể áp dụng nhất quán trên storefront.
