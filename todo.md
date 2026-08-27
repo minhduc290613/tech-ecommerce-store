@@ -227,3 +227,6 @@
 - [x] Thêm bộ lọc đơn đã hủy trong khu vực quản lý đơn hàng.
 - [x] Thêm khu vực lịch sử đơn đã lưu trữ cho Admin.
 - [x] Khắc phục menu ba gạch mobile bị đẩy nội dung sang phải và tràn ngoài viewport.
+- [x] Bổ sung animation nhẹ, có hỗ trợ giảm chuyển động và không thay đổi luồng chức năng storefront.
+- [x] Cho phép Admin chỉnh credit và trạng thái website hoạt động hiển thị ở chân trang.
+- [x] Tách rõ liên kết Đơn hàng của tôi và Quản trị cửa hàng thành các mục riêng ở chân trang.

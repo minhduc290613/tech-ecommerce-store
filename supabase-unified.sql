@@ -2043,3 +2043,12 @@ create policy "Public reads product gallery" on public.product_images for select
 -- 39. RLS policy không thay thế quyền PostgreSQL: cấp đúng mức đọc/gọi hàm cho UI quản trị.
 grant select on table public.product_images to anon, authenticated;
 grant execute on function public.can_manage_shipments() to authenticated;
+
+-- 40. Nội dung credit và tín hiệu trạng thái chỉ điều khiển phần hiển thị chân trang.
+alter table public.site_settings add column if not exists footer_credit_text text not null default '© 2026 NEXORA Tech Store';
+alter table public.site_settings add column if not exists footer_status_text text not null default 'WEBSITE ĐANG HOẠT ĐỘNG';
+alter table public.site_settings add column if not exists footer_status_online boolean not null default true;
+alter table public.site_settings drop constraint if exists site_settings_footer_credit_text_check;
+alter table public.site_settings add constraint site_settings_footer_credit_text_check check (length(trim(footer_credit_text)) between 1 and 160);
+alter table public.site_settings drop constraint if exists site_settings_footer_status_text_check;
+alter table public.site_settings add constraint site_settings_footer_status_text_check check (length(trim(footer_status_text)) between 1 and 80);

@@ -1,0 +1,51 @@
+/* Decorative motion only: all storefront actions and layout stay unchanged. */
+.footer-status-admin { display: grid; gap: .68rem; margin-top: 1.15rem; padding: 1rem; border: 1px solid rgba(56, 189, 248, .24); background: linear-gradient(135deg, rgba(11, 31, 51, .64), rgba(24, 18, 54, .42)); }
+.footer-status-admin h4 { margin: 0; color: #e5f4ff; font: 700 1rem var(--font-display); }
+.footer-status-admin p { margin: -.25rem 0 .1rem; color: #8ba8c0; font-size: .68rem; line-height: 1.55; }
+.footer-personal a i, .footer-store a i { width: 1rem; color: var(--cyan); }
+.footer-signal.is-offline { color: #f2a7b1; }
+.footer-signal.is-offline i { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+@media (min-width: 721px) {
+  .footer-main { grid-template-columns: 1.35fr .6fr .9fr .8fr .95fr; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-copy > *,
+  .hero-visual,
+  .section-heading,
+  .footer-column { animation: nexora-reveal 480ms var(--ease-out) both; }
+
+  .hero-copy > *:nth-child(2) { animation-delay: 45ms; }
+  .hero-copy > *:nth-child(3) { animation-delay: 90ms; }
+  .hero-copy > *:nth-child(4) { animation-delay: 135ms; }
+  .hero-copy > *:nth-child(5) { animation-delay: 180ms; }
+  .hero-visual { animation-delay: 95ms; }
+  .footer-column:nth-child(2) { animation-delay: 35ms; }
+  .footer-column:nth-child(3) { animation-delay: 70ms; }
+  .footer-column:nth-child(4) { animation-delay: 105ms; }
+  .footer-column:nth-child(5) { animation-delay: 140ms; }
+  .product-card,
+  .shop-card,
+  .info-card { transition: transform 180ms var(--ease-out), border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out); }
+  .product-card:hover,
+  .shop-card:hover,
+  .info-card:hover { transform: translateY(-3px); box-shadow: 0 14px 28px rgba(2, 10, 23, .2); }
+  .footer-column > a { transition: color 160ms var(--ease-out), transform 160ms var(--ease-out); }
+  .footer-column > a:hover { transform: translateX(3px); }
+  .footer-signal:not(.is-offline) i { animation: nexora-status-pulse 1.8s var(--ease-out) infinite; }
+}
+
+@keyframes nexora-reveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes nexora-status-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(54, 226, 161, .45), 0 0 8px var(--success); }
+  50% { box-shadow: 0 0 0 5px rgba(54, 226, 161, 0), 0 0 13px var(--success); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-signal i { animation: none !important; }
+}

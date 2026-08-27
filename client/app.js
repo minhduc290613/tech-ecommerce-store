@@ -47,6 +47,17 @@ const LOCAL_DEMO_PRODUCTS = [
 ];
 const DEFAULT_SETTINGS = { site_name: "NEXORA", site_tagline: "Thiết bị đúng chuẩn.\nMức giá đúng thời điểm.", announcement_text: "Freeship toàn quốc cho đơn từ 1.500.000đ", support_email: "support@nexora.vn", support_hours: "Thứ 2 — Thứ 7 / 09:00–18:00", address_text: "Việt Nam", zalo_phone: "", zalo_confirmation_message: "Tôi đã chuyển khoản đơn {order_number} với số tiền {total}. Nhờ shop xác nhận giúp tôi.", logo_url: "/manus-storage/nexora-logo_3c03446b.png", favicon_url: "/manus-storage/nexora-logo_3c03446b.png", hero_kicker: "CURATED TECH / 2026", hero_title: "Thiết bị đúng chuẩn.", hero_emphasis: "Mức giá đúng thời điểm.", hero_description: "Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.", hero_image_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg", seo_title: "NEXORA Tech Store | Thiết bị đúng chuẩn", seo_description: "Khám phá điện thoại, laptop và phụ kiện với mức giá đúng thời điểm.", seo_og_image_url: "/manus-storage/nexora-hero-tech_47c6b78f.jpg" };
 const ENGLISH_SETTING_FALLBACKS = { announcement_text: "Nationwide free shipping on orders from ₫1,500,000", site_tagline: "Curated technology.\nPricing at the right moment.", hero_kicker: "CURATED TECH / 2026", hero_title: "Technology,\ncarefully chosen.", hero_emphasis: "Priced for now.", hero_description: "Choose technology worth investing in, clearly categorized with transparent offers and ready for delivery.", seo_title: "NEXORA Tech Store | Curated technology", seo_description: "Explore phones, laptops and accessories with timely pricing." };
+
+function applyFooterSettings(settings = DEFAULT_SETTINGS) {
+  const credit = settings.footer_credit_text || `© ${new Date().getFullYear()} ${settings.site_name || "NEXORA"} Tech Store`;
+  const status = settings.footer_status_text || "WEBSITE ĐANG HOẠT ĐỘNG";
+  $("#footerCredit").textContent = credit;
+  $("#footerSiteStatus").textContent = status;
+  $("#footerSignal").classList.toggle("is-offline", settings.footer_status_online === false);
+  $("#footerSignal").setAttribute("aria-label", status);
+}
+
+window.addEventListener("nexora:settings", (event) => applyFooterSettings(event.detail));
 const DEFAULT_FAQS = [{ question: "Tôi có cần tạo tài khoản để đặt hàng không?", answer: "Bạn có thể xem catalog mà không cần đăng nhập. Để tạo đơn hàng và đồng bộ thanh toán, bạn cần đăng nhập bằng email." }, { question: "Giá sản phẩm có thể thay đổi không?", answer: "Giá và ưu đãi có thể thay đổi khi chương trình kết thúc hoặc tồn kho được cập nhật." }, { question: "Làm thế nào để thanh toán đơn hàng?", answer: "Sau khi tạo đơn, hãy quét VietQR hoặc MoMo và kiểm tra đúng mã đơn, số tiền trước khi xác nhận." }, { question: "Tôi muốn đổi trả hoặc bảo hành thì làm gì?", answer: "Gửi mã đơn, mô tả và hình ảnh liên quan đến kênh hỗ trợ để được hướng dẫn theo chính sách công bố." }];
 const LEGACY_FAQ_EN = new Map([
   ["Tôi có cần tạo tài khoản để đặt hàng không?", { question: "Do I need an account to place an order?", answer: "You may browse the catalog without an account. To create an order and sync payment, sign in with your email." }],
