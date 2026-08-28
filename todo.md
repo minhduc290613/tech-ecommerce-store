@@ -239,3 +239,7 @@
 - [x] Cho phép Admin chỉnh mẫu thông báo email cho hủy đơn, trả hàng và đơn đã giao.
 - [x] Thêm mục thông báo trong tài khoản khách cho các cập nhật đơn và hậu mãi.
 - [x] Giữ thông báo email ở chế độ không gửi cho đến khi kênh đã chọn có đủ secret máy chủ.
+- [x] Cải thiện lịch sử biến động số dư trong Tài khoản và Command Deck, hiển thị rõ cộng/trừ và số dư trước/sau.
+- [x] Bổ sung lọc lịch sử số dư theo loại giao dịch và thời gian mà không thay đổi dữ liệu thật.
+- [x] Kiểm thử quyền truy cập và responsive cho lịch sử biến động số dư.
+
