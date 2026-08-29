@@ -65,7 +65,7 @@ Thay placeholder bằng repository của bạn:
 
 ```bash
 git clone https://github.com/minhduc290613/tech-ecommerce-store.git
-cd <repository>
+cd tech-ecommerce-store
 ```
 
 Nếu repository đã có source local:
