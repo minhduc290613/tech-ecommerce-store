@@ -307,6 +307,15 @@ Check `transactional_enabled`, the template's `is_enabled`, event type, queue st
 - [ ] Email queue và audit log được theo dõi / Email queue and audit logs are monitored.
 - [ ] Có kế hoạch rotate secret / A secret-rotation plan exists.
 
+## 16. Fix lỗi nguy hiểm
+
+### Lỗi bị đẩy về localhost
+
+Đây là lỗi khi supabase chưa update được miền thật của website, để fix phải vào Authentication -> URL Configuration và thay Site URL thành domain của bạn
+
+This error occurs when Supabase has not yet updated the website's actual domain; to fix it, go to Authentication -> URL Configuration and change the Site URL to your domain.
+
+
 ## 16. Tài liệu tham khảo / References
 
 [1]: https://nodemailer.com/ Nodemailer Documentation — SMTP transport and mail sending.
@@ -316,6 +325,6 @@ Check `transactional_enabled`, the template's `is_enabled`, event type, queue st
 [5]: https://docs.cpanel.net/knowledge-base/web-services/how-to-install-a-node.js-application/ cPanel — How to install a Node.js application.
 [6]: https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site GitHub Pages — static hosting limitations and setup.
 
-**Tác giả / Author:** Manus AI  
+**Tác giả / Author:** Minhduc290613
 **Dự án / Project:** NEXORA Tech Store  
 **Cập nhật / Updated:** 2026-08-29
