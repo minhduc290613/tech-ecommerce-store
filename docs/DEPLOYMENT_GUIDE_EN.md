@@ -40,8 +40,8 @@ GitHub Pages, Netlify, Vercel static, Cloudflare Pages, and cPanel static hostin
 ### 4.1 Clone and install
 
 ```bash
-git clone https://github.com/<github-user>/<repository>.git
-cd <repository>
+git clone https://github.com/minhduc290613/tech-ecommerce-store.git
+cd tech-ecommerce-store
 pnpm install
 ```
 
