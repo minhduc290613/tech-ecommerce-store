@@ -8,6 +8,7 @@ NEXORA gồm storefront dành cho khách mua hàng và **NEXORA Command Deck** d
 
 > **Nguyên tắc bảo mật quan trọng:** publishable key/legacy anon key có thể xuất hiện trong frontend, nhưng `service_role`, secret key, JWT secret, SMTP password, API key thanh toán và thông tin tài khoản nhận tiền thật không được đưa vào GitHub, HTML, JavaScript trình duyệt hoặc file Markdown công khai. Supabase xác định publishable key là giá trị dành cho môi trường public; quyền thực tế vẫn phải được bảo vệ bởi Auth và RLS [1].
 
+
 ## 2. Các trang và tính năng
 
 | Khu vực | Đường dẫn | Chức năng chính |
@@ -130,7 +131,7 @@ Schema bao gồm catalog, đơn hàng, order items, customer profile, wallet/led
 
 ### 5.3 Kiểm tra Auth và RLS
 
-Trong Supabase vào **Authentication → Sign In / Providers**, bật Email. Trong **Authentication → URL Configuration**, đặt Site URL là domain production và thêm redirect URL cho local, preview và production. Supabase Auth dùng JWT để kết hợp với RLS; token của người dùng được gửi cùng SDK request để PostgreSQL áp dụng quyền theo từng dòng [3].
+Trong Supabase vào **Authentication → Sign In / Providers**, bật Email. Trong **Authentication → URL Configuration**, Thay localhost:3000 thành domain của bản chạy local thì dữ nguyên, preview và production. Supabase Auth dùng JWT để kết hợp với RLS; token của người dùng được gửi cùng SDK request để PostgreSQL áp dụng quyền theo từng dòng [3].
 
 Để test an toàn, tạo một tài khoản user thông thường trước. Kiểm tra user chỉ thấy đơn, địa chỉ, số dư và thông báo của chính mình. Sau đó cấp quyền Admin bằng `user_id`, không dùng mật khẩu mặc định:
 
