@@ -79,3 +79,7 @@ package.json                            # commands
 ```
 
 Xem hướng dẫn đầy đủ trong [docs/HUONG_DAN_A_Z.md](docs/HUONG_DAN_A_Z.md) hoặc [docs/DEPLOYMENT_GUIDE_EN.md](docs/DEPLOYMENT_GUIDE_EN.md).
+
+## License
+
+This project is licensed under the [MIT](LICENSE) license.
