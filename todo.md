@@ -291,3 +291,10 @@
 - [ ] Thiết lập Stripe integration an toàn theo cấu hình dự án. (Chờ người dùng nhập Stripe keys trong Project Settings → Payment.)
 - [x] Tạo Argon Dashboard Admin variant phụ tại route riêng, không thay thế các Admin hiện có.
 - [x] Kiểm tra giao diện theo ảnh tham chiếu, responsive và regression/build.
+
+## Currency settings
+
+- [ ] Bổ sung danh sách tiền tệ phổ biến và bật/tắt từng loại trong Admin.
+- [ ] Cho phép chọn tiền tệ mặc định và chỉnh tỷ giá với validation rõ ràng.
+- [ ] Lưu lựa chọn hiển thị an toàn, giữ số tiền thanh toán gốc không bị quy đổi nhầm.
+- [ ] Viết test và kiểm tra responsive/build cho Currency Settings.
