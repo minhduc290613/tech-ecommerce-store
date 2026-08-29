@@ -64,7 +64,7 @@ GitHub Pages, Netlify, Vercel static, Cloudflare Pages và cPanel static hosting
 Thay placeholder bằng repository của bạn:
 
 ```bash
-git clone https://github.com/<github-user>/<repository>.git
+git clone https://github.com/minhduc290613/tech-ecommerce-store.git
 cd <repository>
 ```
 
