@@ -2,7 +2,7 @@
 
 NEXORA là nền tảng thương mại điện tử công nghệ dark mode gồm storefront khách hàng, Account Center, trang Đơn hàng, Affiliate Dashboard và **NEXORA Command Deck**. Frontend dùng HTML5, CSS3 và Vanilla JavaScript ES Modules; Vite build đa trang; Supabase cung cấp Auth, PostgreSQL, RLS, Storage và RPC; Node.js/Express phục vụ bản production cùng các route backend.
 
-## Tài liệu chính
+## Tài liệu chính 
 
 | Ngôn ngữ | Tài liệu | Nội dung |
 | --- | --- | --- |
@@ -27,8 +27,8 @@ NEXORA là nền tảng thương mại điện tử công nghệ dark mode gồm
 
 ```bash
 # Clone
-git clone https://github.com/<github-user>/<repository>.git
-cd <repository>
+git clone https://github.com/minhduc290613/tech-ecommerce-store.git
+cd tech-ecommerce-store
 
 # Install and run locally
 pnpm install
