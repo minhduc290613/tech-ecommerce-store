@@ -1,4 +1,4 @@
-# Chỉ mục tài liệu NEXORA
+# Link tài liệu NEXORA
 
 Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hành cửa hàng và khôi phục hạ tầng. Các tài liệu được liên kết theo **mục đích sử dụng**, thay vì theo thứ tự tạo file.
 
