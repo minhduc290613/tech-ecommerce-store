@@ -1,495 +1,350 @@
-# NEXORA Tech Store — Hướng dẫn cài đặt, kết nối và vận hành từ A–Z
+# NEXORA Tech Store — Hướng dẫn triển khai và sử dụng từ A–Z
 
-Tài liệu này hướng dẫn triển khai **NEXORA Tech Store** từ repository GitHub đến storefront, Supabase, trang quản trị, thanh toán QR, media và vận hành hằng ngày. NEXORA là storefront công nghệ sử dụng HTML/CSS/JavaScript ES Modules ở browser, Vite để build và Supabase cho Auth, PostgreSQL, RLS và các RPC checkout.
+> **Phiên bản tài liệu:** 2026-08-29. Tài liệu áp dụng cho source hiện tại của NEXORA Tech Store, một ứng dụng thương mại điện tử đa trang dùng Vanilla JavaScript, Vite, Supabase và Node.js/Express. Tài liệu có thể đưa lên GitHub công khai vì toàn bộ giá trị bí mật đều được minh họa bằng placeholder.
 
-> **Đối tượng áp dụng:** người phát triển, chủ cửa hàng và quản trị viên có quyền truy cập repository cùng project Supabase. Tài liệu được thiết kế để có thể công khai trên GitHub; vì vậy các ví dụ chỉ dùng placeholder và **không chứa** mật khẩu, service role key, thông tin ngân hàng thật hay dữ liệu khách hàng.
+## 1. NEXORA là gì?
 
-## Mục lục
+NEXORA gồm storefront dành cho khách mua hàng và **NEXORA Command Deck** dành cho đội ngũ vận hành. Storefront chạy theo kiến trúc HTML5, CSS3 và JavaScript ES Modules; Supabase cung cấp Auth, PostgreSQL, RLS, Storage và RPC. Vite đóng gói nhiều entrypoint, còn server Node/Express phục vụ bản production và các route backend như tRPC, webhook thanh toán hoặc email giao dịch.
 
-1. [Bức tranh hệ thống](#1-bức-tranh-hệ-thống)
-2. [Yêu cầu trước khi bắt đầu](#2-yêu-cầu-trước-khi-bắt-đầu)
-3. [Lấy mã nguồn và chạy local](#3-lấy-mã-nguồn-và-chạy-local)
-4. [Kết nối Supabase từ đầu](#4-kết-nối-supabase-từ-đầu)
-5. [Cấu hình xác thực email](#5-cấu-hình-xác-thực-email)
-6. [Cấp quyền Command Deck](#6-cấp-quyền-command-deck)
-7. [Cấu hình thanh toán và Zalo](#7-cấu-hình-thanh-toán-và-zalo)
-8. [Media, GitHub và public repository](#8-media-github-và-public-repository)
-9. [Build và triển khai](#9-build-và-triển-khai)
-10. [Vận hành hằng ngày](#10-vận-hành-hằng-ngày)
-11. [Kiểm thử trước khi mở bán](#11-kiểm-thử-trước-khi-mở-bán)
-12. [Xử lý lỗi thường gặp](#12-xử-lý-lỗi-thường-gặp)
-13. [An toàn dữ liệu và checklist production](#13-an-toàn-dữ-liệu-và-checklist-production)
+> **Nguyên tắc bảo mật quan trọng:** publishable key/legacy anon key có thể xuất hiện trong frontend, nhưng `service_role`, secret key, JWT secret, SMTP password, API key thanh toán và thông tin tài khoản nhận tiền thật không được đưa vào GitHub, HTML, JavaScript trình duyệt hoặc file Markdown công khai. Supabase xác định publishable key là giá trị dành cho môi trường public; quyền thực tế vẫn phải được bảo vệ bởi Auth và RLS [1].
 
----
+## 2. Các trang và tính năng
 
-## 1. Bức tranh hệ thống
-
-| Khu vực | URL/entrypoint | Vai trò |
+| Khu vực | Đường dẫn | Chức năng chính |
 | --- | --- | --- |
-| Storefront | `/` → `client/index.html` | Catalog, tìm kiếm, lọc, sale hunt, quick view, giỏ hàng, Auth và checkout QR. |
-| Affiliate Dashboard | `/affiliate.html` → `client/affiliate.html` | Chỉ số referral, click link, đơn hoàn tất và hoa hồng của affiliate đang đăng nhập. |
-| Command Deck | `/admin.html` → `client/admin.html` | Dashboard, sản phẩm, đơn hàng, giao nhận, CMS, FAQ, gian hàng và sale campaign. |
-| Trang thông tin | `/info.html` → `client/info.html` | Điều khoản, bảo mật, giao hàng/đổi trả, giới thiệu và liên hệ. |
-| Trang bài viết | `/article.html?slug=<slug>` → `client/article.html` | Chỉ hiển thị bài đã `published`, có trạng thái không tìm thấy an toàn. |
-| Database/Auth | Supabase | PostgreSQL, Supabase Auth, RLS, RPC checkout và dữ liệu CMS. |
-| Schema chuẩn | `supabase-unified.sql` | Một file SQL canonical gồm 25 bảng public, policy, RPC, index, seed, Account Center, role/capability tùy chỉnh, moderation, affiliate và refund. |
-| Media source | GitHub `assets/media` + storage URL | Branch `assets` lưu backup binary; storefront dùng URL storage/CDN thay vì nhét media vào source build. |
+| Storefront | `/` | Catalog, tìm kiếm, lọc, Flash Sale, Săn sale, Quick View, gallery ảnh, giỏ hàng và checkout. |
+| Account Center | Mở từ nút tài khoản | Hồ sơ, username, mật khẩu, số điện thoại, sổ nhiều địa chỉ, số dư, sổ cái và thông báo. |
+| Đơn hàng | `/orders.html` | Danh sách, chi tiết, thanh toán, giao nhận, nhà vận chuyển, mã vận đơn, nơi hàng đã đến, hủy/trả hàng theo điều kiện. |
+| Affiliate | `/affiliate.html` | Link giới thiệu, lượt click, đơn đủ điều kiện và hoa hồng của affiliate đang đăng nhập. |
+| Nội dung | `/info.html` | Giới thiệu, FAQ, điều khoản, bảo mật, giao hàng, đổi trả và liên hệ. |
+| Bài viết | `/article.html?slug=<slug>` | Bài viết đã được duyệt xuất bản; quyền viết và kiểm duyệt phụ thuộc role. |
+| Command Deck | `/admin.html` | Dashboard, catalog, đơn hàng, tài khoản, role, CMS, giao nhận, sale, email, thông báo và xuất CSV. |
 
-Luồng mua hàng tiêu chuẩn là: **khách xem sản phẩm → thêm giỏ localStorage → đăng nhập → tạo đơn qua RPC → nhận QR/chỉ dẫn thanh toán → nhắn Zalo xác nhận (nếu được cấu hình) → admin đối soát và cập nhật đơn**.
+### 2.1 Storefront và checkout
 
-## 2. Yêu cầu trước khi bắt đầu
+Khách có thể duyệt sản phẩm mà không đăng nhập. Catalog hỗ trợ tìm kiếm, lọc danh mục, lọc khoảng giá, lọc sản phẩm sale, lazy loading ảnh và trạng thái retry khi mạng chậm. Giỏ hàng được lưu trên trình duyệt để giữ lại giữa các lần xem trang. Checkout yêu cầu đăng nhập, số điện thoại và địa chỉ giao hàng.
 
-| Thành phần | Yêu cầu khuyến nghị | Lý do |
+Khi tạo đơn, frontend gọi RPC checkout; database tự đọc lại giá, tồn kho và điều kiện sale thay vì tin vào số tiền do browser gửi. Thanh toán bằng số dư chỉ chuyển sang thành công khi RPC xác nhận đủ tiền. Chuyển khoản QR/ZaloPay là quy trình đối soát: khách quét mã, sao chép nội dung chuyển khoản, nhắn shop nếu được cấu hình, sau đó nhân viên hoặc Admin xác nhận trong Command Deck.
+
+### 2.2 Thông báo
+
+Header storefront có chuông và badge chưa đọc cạnh mục **Đơn hàng**. Trung tâm thông báo hợp nhất cập nhật đơn hàng với broadcast của cửa hàng; khách có thể mở từng mục, dùng CTA và đánh dấu đã đọc. Admin hoặc MKT có workspace **Phát thông báo** để gửi toàn server hoặc một người cụ thể. Broadcast toàn server luôn yêu cầu xác nhận trước khi gửi và lịch sử phát chỉ hiển thị metadata cần thiết.
+
+### 2.3 Command Deck và phân quyền
+
+| Role/capability | Phạm vi điển hình |
+| --- | --- |
+| Admin | Toàn bộ chức năng vận hành, role, CMS, tài khoản, tài chính nội bộ, thông báo broadcast và cấu hình hệ thống. |
+| Moderator | Kiểm duyệt bình luận/đánh giá, bài viết và các chức năng được Admin cấp. |
+| MKT/Marketing | Bài viết, chiến dịch sale và phát thông báo theo capability được cấp. |
+| Order manager | Duyệt/xử lý đơn trong phạm vi được cấp. |
+| Logistics/nhân viên kiểm hàng | Cập nhật nhà vận chuyển, mã vận đơn, timeline và điểm đến theo capability. |
+| Affiliate | Chia sẻ link affiliate và xem số liệu của chính mình sau khi đủ điều kiện. |
+| User | Mua hàng, quản lý tài khoản, địa chỉ, số dư, đơn hàng và thông báo của chính mình. |
+
+RLS và RPC là lớp bảo vệ bắt buộc. Không cấp quyền bằng cách chỉ ẩn nút frontend; mỗi thao tác nhạy cảm phải được kiểm tra lại ở PostgreSQL.
+
+## 3. Yêu cầu trước khi cài đặt
+
+| Thành phần | Khuyến nghị | Ghi chú |
 | --- | --- | --- |
-| Git | Bản ổn định mới | Clone/fork, quản lý nhánh và public source. |
-| Node.js | 20 LTS hoặc mới hơn | Chạy Vite và build dự án. |
-| pnpm | Theo `packageManager` trong `package.json` | Đồng bộ dependency lockfile. |
-| Supabase | Một project có quyền owner/admin | Tạo Auth, chạy schema và quản lý RLS. |
-| Domain | HTTPS trước khi mở bán | Cần cho Auth redirect, bảo mật trình duyệt và trải nghiệm thanh toán. |
+| Git | Bản mới | Dùng để clone và cập nhật source. |
+| Node.js | 20 LTS hoặc 22 LTS | Phù hợp với Vite, esbuild và server hiện tại. |
+| pnpm | Phiên bản tương thích lockfile | Dùng `pnpm install`, không trộn npm/yarn nếu không cần. |
+| Supabase | Một project riêng | Cần quyền tạo schema, Auth, Storage và RLS. |
+| Domain | HTTPS | Cần cho Auth redirect và production. |
+| Hosting | Static hoặc Node.js | Chọn theo việc có cần server route/email/webhook hay không. |
 
-Tạo repository public chỉ khi bạn đã kiểm tra secret. Dù **publishable/anon key** được thiết kế để xuất hiện ở client, RLS phải được bật và đúng policy; tuyệt đối không đưa `service_role key` lên GitHub hay vào JavaScript trình duyệt.[1]
+GitHub Pages, Netlify, Vercel static, Cloudflare Pages và cPanel static hosting phù hợp với bản `dist/public`. aaPanel, VPS Ubuntu và cPanel có Passenger phù hợp khi cần chạy Node server. GitHub Pages không chạy server-side PHP, Ruby hoặc Python; vì vậy không thể thay thế Node backend [2].
 
-## 3. Lấy mã nguồn và chạy local
+## 4. Clone GitHub và chạy local
 
-### 3.1 Clone và cài dependency
+### 4.1 Clone repository
+
+Thay placeholder bằng repository của bạn:
 
 ```bash
 git clone https://github.com/<github-user>/<repository>.git
 cd <repository>
-pnpm install
 ```
 
-Khởi động môi trường phát triển:
+Nếu repository đã có source local:
 
 ```bash
+git remote -v
+git pull origin main
+```
+
+### 4.2 Cài dependency và chạy development
+
+```bash
+pnpm install
 pnpm dev
 ```
 
-Sau khi Vite khởi động, mở `http://localhost:3000/` cho storefront, `http://localhost:3000/admin.html` cho Command Deck và `http://localhost:3000/info.html` cho trang nội dung.
+Mở các trang sau:
 
-### 3.2 Các lệnh chính
+| Trang | URL local |
+| --- | --- |
+| Storefront | `http://localhost:3000/` |
+| Command Deck | `http://localhost:3000/admin.html` |
+| Đơn hàng | `http://localhost:3000/orders.html` |
+| Affiliate | `http://localhost:3000/affiliate.html` |
+| Thông tin | `http://localhost:3000/info.html` |
 
-| Lệnh | Mục đích | Khi sử dụng |
-| --- | --- | --- |
-| `pnpm dev` | Chạy Vite có hot reload. | Phát triển giao diện. |
-| `pnpm build` | Build các entrypoint vào `dist/public`. | Bắt buộc trước khi phát hành. |
-| `pnpm preview` | Xem nhanh Vite build. | Rà soát static output. |
-| `pnpm start` | Phục vụ bản build bằng server Node đi kèm. | Chạy môi trường tương thích Node. |
-| `pnpm check` | Kiểm tra TypeScript của template. | Trước pull request/release. |
-| `pnpm format` | Format source bằng Prettier. | Trước khi commit thay đổi lớn. |
+Port mặc định là 3000, nhưng server có thể tự tìm port kế tiếp nếu port đó bận. Không hardcode port trong reverse proxy; hãy đọc port được hiển thị trong terminal.
 
-> `dist/public` là output production. Không commit `node_modules`, `dist`, `.env*`, log, cache hay file cấu hình cục bộ đã được `.gitignore` loại trừ.
+### 4.3 Các lệnh dự án
 
-### 3.3 Cấu trúc cần biết
+| Lệnh | Tác dụng |
+| --- | --- |
+| `pnpm dev` | Chạy Node/Express ở development và kết nối Vite hot reload. |
+| `pnpm test` | Chạy toàn bộ Vitest regression suite. |
+| `pnpm check` | Kiểm tra SQL layout và TypeScript. |
+| `pnpm build` | Kiểm tra SQL, build các trang vào `dist/public` và bundle server vào `dist/index.js`. |
+| `pnpm start` | Chạy bản production bằng Node từ `dist/index.js`. |
+| `pnpm format` | Format source bằng Prettier. |
 
-```text
-client/
-├── index.html                 # storefront
-├── app.js                     # Auth, catalog, cart, checkout, QR/Zalo
-├── style.css                  # giao diện storefront
-├── admin.html / admin.js      # Command Deck
-├── affiliate.html / affiliate.js # dashboard affiliate riêng tư
-├── info.html                  # trang thông tin/chính sách
-├── article.html / article.js  # trang đọc bài viết public
-└── supabase-config.js         # Project URL + publishable key
+Project hiện không cần `pnpm preview`; hãy dùng `pnpm start` để kiểm tra bản production có server hoặc mở trực tiếp thư mục `dist/public` trên static server.
 
-docs/                          # tài liệu vận hành public
-supabase-unified.sql           # schema canonical
-ASSET_MANIFEST.md              # inventory media và checksum
-vite.config.ts                 # multi-page Vite build
-```
+## 5. Kết nối Supabase
 
-## 4. Kết nối Supabase từ đầu
+### 5.1 Tạo project
 
-### 4.1 Tạo project và lấy thông tin public
+Tạo project tại [Supabase Dashboard](https://supabase.com/dashboard), vào **Project Settings → API Keys** và lấy Project URL cùng Publishable key. Với project cũ, legacy anon key vẫn có thể dùng trong frontend nếu RLS được cấu hình đúng. Supabase khuyến nghị dùng publishable key mới cho component public và chỉ dùng secret key ở backend được bảo vệ [1].
 
-Tạo một project tại [Supabase Dashboard](https://supabase.com/dashboard), chờ trạng thái hoạt động, rồi lấy hai giá trị ở **Project Settings → API**:
-
-| Giá trị | Dùng ở đâu | Có được public? |
-| --- | --- | --- |
-| Project URL | `client/supabase-config.js` | Có. |
-| Publishable key hoặc legacy anon key | `client/supabase-config.js` | Có, khi RLS đúng. |
-| Service role key | Chỉ backend bảo mật/quy trình quản trị chuyên biệt. | **Không.** |
-
-Điền URL và publishable key của **project riêng của bạn**:
+Mở `client/supabase-config.js` và thay placeholder:
 
 ```js
-// client/supabase-config.js
 export const SUPABASE_URL = "https://your-project-id.supabase.co";
 export const SUPABASE_ANON_KEY = "sb_publishable_your_public_key";
 ```
 
-Không đổi tên export nếu chưa đồng thời sửa `client/app.js` và `client/admin.js`.
+Không đặt `sb_secret_...`, `service_role`, SMTP password hoặc JWT secret vào file này. File này được bundle vào browser.
 
-### 4.2 Áp dụng schema canonical
+### 5.2 Áp dụng database schema
 
-Trên **project mới hoặc hoàn toàn trống**, mở **SQL Editor** của Supabase, dán toàn bộ nội dung file [`../supabase-unified.sql`](../supabase-unified.sql) và chạy **một lần**.
+Trên project Supabase mới hoặc hoàn toàn trống, mở **SQL Editor**, dán toàn bộ file `supabase-unified.sql` và chạy một lần. Repository chỉ giữ một file SQL canonical. Không chạy lại toàn bộ file trên database đã có đơn thật; hãy sao lưu trước và tạo migration có kiểm soát.
 
-Schema tạo các thành phần sau:
+Schema bao gồm catalog, đơn hàng, order items, customer profile, wallet/ledger, địa chỉ, role/capability, CMS, FAQ, bài viết, bình luận/đánh giá moderation, affiliate, sale campaign, giao nhận, hậu mãi, email giao dịch, customer notifications và platform notifications. Sau khi chạy, kiểm tra lỗi SQL, RLS và các RPC được cấp quyền.
 
-| Nhóm | Thành phần |
-| --- | --- |
-| Catalog | `products` với SKU, giá, sale, tồn kho, trạng thái bán và `technical_specs`. |
-| Đơn hàng | `orders`, `order_items`, trạng thái thanh toán, giao nhận, tracking và ghi chú. |
-| Quản trị | `admin_users`, hàm `is_admin()` và policy Command Deck. |
-| CMS | `site_settings`, `site_pages`, `faqs`, `shops`. |
-| Khuyến mại | `sale_campaigns`, mã sale và `create_order_with_sale`. |
-| Account Center | Hồ sơ khách, số dư, sổ cái, cảnh cáo, yêu cầu nạp tiền Zalo, số điện thoại/địa chỉ nhận hàng và audit log. |
-| Role & nội dung | `user_roles`, review/bình luận moderation, bài viết draft/pending/published và article reader. |
-| Affiliate & hoàn tiền | Referral được duyệt, click link ẩn danh chống trùng lặp, hoa hồng cấu hình được, `refund_requests`, hoàn wallet/manual và CSV quản trị. |
-| Bảo mật | RLS, policy catalog công khai, quyền user-own-order, giới hạn RPC checkout và kiểm tra trạng thái account. |
+### 5.3 Kiểm tra Auth và RLS
 
-> **Repository chỉ giữ một file SQL:** `supabase-unified.sql`. Nếu database đã có đơn hàng thật, không chạy lại toàn bộ file; hãy tạo thay đổi DDL có quản lý từ schema canonical sau khi sao lưu. Lệnh `pnpm check` và `pnpm build` tự chạy `scripts/check-single-sql.mjs` để dừng quy trình nếu repository xuất hiện thêm bất kỳ file `.sql` nào.
+Trong Supabase vào **Authentication → Sign In / Providers**, bật Email. Trong **Authentication → URL Configuration**, đặt Site URL là domain production và thêm redirect URL cho local, preview và production. Supabase Auth dùng JWT để kết hợp với RLS; token của người dùng được gửi cùng SDK request để PostgreSQL áp dụng quyền theo từng dòng [3].
 
-Sau khi áp dụng thành công, nên thấy **25 bảng public**. Seed mặc định gồm 6 product, 2 campaign, 1 site setting, 6 trang nội dung, 3 FAQ, 3 shop và các role hệ thống; các sản phẩm seed được gán vào `shop_id` theo gian hàng. Hãy thay dữ liệu demo trước khi kinh doanh.
-
-### 4.3 Kiểm tra RLS và checkout
-
-RLS áp dụng trong PostgreSQL ở mỗi lần truy cập dữ liệu; policy không phải là thay thế cho việc quản lý quyền database.[2] Đặc biệt:
-
-- Khách chưa đăng nhập chỉ đọc sản phẩm `is_active = true`, nội dung công khai, FAQ đã publish, shop đang hoạt động và sale đang diễn ra.
-- Người đã đăng nhập chỉ đọc đơn hàng của chính họ.
-- `create_order_with_sale` chạy transaction để lấy lại giá/tồn kho từ database thay vì tin giá do browser gửi lên.
-- RPC checkout chỉ dành cho `authenticated`; quyền `anon` đã bị thu hồi.
-
-Sau thay đổi RLS, hãy tải lại storefront ở chế độ ẩn danh, kiểm tra catalog có hiện và không có lỗi `42501` hoặc `permission denied`.
-
-## 5. Cấu hình xác thực email
-
-### 5.1 Bật Email/Password
-
-Vào **Authentication → Sign In / Providers** và kiểm tra **Email = Enabled**. Supabase hosted project hỗ trợ quyết định có yêu cầu xác nhận email trước lần đăng nhập đầu tiên hay không.[3]
-
-### 5.2 Chọn chính sách Confirm email
-
-| Chính sách | Cách thiết lập | Phù hợp khi | Lưu ý |
-| --- | --- | --- | --- |
-| Bắt buộc xác nhận email | Bật `Confirm email`. | Store chính thức, giảm rủi ro email giả. | Cần cấu hình redirect URL và SMTP production. |
-| Đăng ký dùng ngay | Tắt `Confirm email` rồi **Save changes**. | Demo, nội bộ hoặc cần onboarding thật nhanh. | Tăng rủi ro spam/tài khoản rác; cần rate limit và giám sát. |
-
-Thiết lập NEXORA hiện tại chọn **tắt Confirm email**, nên user mới có thể đăng ký và đăng nhập ngay. Nếu bật lại, bổ sung domain production vào **Authentication → URL Configuration** trước khi gửi email xác nhận/reset password. Supabase ghi nhận dịch vụ gửi email mặc định chỉ phù hợp để thử nghiệm, có giới hạn; production nên dùng SMTP riêng.[3]
-
-### 5.3 Luồng frontend
-
-Storefront dùng `supabase.auth.signUp()` để đăng ký, `supabase.auth.signInWithPassword()` để đăng nhập và `resetPasswordForEmail()` cho **Quên mật khẩu**. Khi không yêu cầu xác nhận email, session có thể được cấp ngay sau đăng ký nếu thông tin hợp lệ. Tài khoản mới phải chọn **username** dài 3–40 ký tự; chỉ dùng chữ thường/hoa, số, dấu chấm, gạch ngang hoặc gạch dưới, và username không được trùng. Không lưu mật khẩu, JWT hay service role key vào local file ngoài cơ chế session của Supabase Auth.
-
-### 5.3.1 Hồ sơ giao nhận, chia sẻ sản phẩm và affiliate
-
-Từ phiên bản hiện tại, khách tạo tài khoản phải nhập **số điện thoại nhận hàng** và **địa chỉ nhận hàng**. Trong **Tài khoản**, số điện thoại nằm ở tab **Bảo mật**; tab **Địa chỉ** là sổ địa chỉ riêng, cho phép thêm, sửa, xóa và đặt một địa chỉ làm **mặc định**. Địa chỉ mặc định được đồng bộ về `customer_profiles` để tự điền vào giỏ hàng. Mỗi tab hiển thị rõ trạng thái đã lưu hoặc chưa cập nhật cùng thời điểm cập nhật gần nhất.
-
-Người dùng có thể lưu số điện thoại hoặc địa chỉ độc lập. Tuy nhiên, khi tạo đơn, checkout vẫn kiểm tra lại và bắt buộc có **cả số điện thoại lẫn địa chỉ hợp lệ**, sau đó lưu bản sao vào đơn để lịch sử giao nhận không bị thay đổi khi khách chỉnh sổ địa chỉ về sau. Sổ địa chỉ không mở quyền đọc bảng trực tiếp; các RPC chỉ trả dữ liệu của người đang đăng nhập.
-
-### 5.3.2 Hủy đơn và tải ảnh trong Command Deck
-
-Khách chỉ thấy nút **Hủy đơn** khi đơn còn `pending_payment` và chưa vào giao nhận (`unfulfilled`). Người có quyền quản lý đơn cũng chỉ hủy được cùng điều kiện, phải nhập lý do và xác nhận thao tác. Hệ thống giữ lịch sử đơn, người thực hiện, thời điểm và lý do hủy; không xóa cứng đơn đã phát sinh để tránh mất đối soát. Đơn đã thanh toán hoặc đang chuẩn bị/giao cần được xử lý bằng quy trình hoàn tiền hoặc hỗ trợ đơn hàng phù hợp.
-
-Trong Command Deck, các trường logo, favicon, ảnh Open Graph, hero/banner, ảnh sản phẩm, banner gian hàng và logo đối tác giao nhận đều hỗ trợ **tải ảnh lên hoặc dán URL HTTPS công khai**. Nút tải ảnh chỉ nhận PNG, JPG, WEBP hoặc SVG tối đa 5 MB. Sau khi tải, URL được điền tự động; cần bấm nút **Lưu** của biểu mẫu tương ứng mới áp dụng thay đổi. Quyền upload được giới hạn theo capability quản trị thương hiệu hoặc giao nhận.
-
-Trong tab **Bài viết** của Account Center, tác giả có thể tải ảnh bìa PNG, JPG, WEBP hoặc SVG tối đa 5 MB, hoặc dán URL HTTPS công khai. Hệ thống hiển thị ảnh xem trước và thay biểu tượng dự phòng nếu URL không tải được ở trang chủ/trang đọc. Nút **Xóa bài viết** chỉ xóa bài do chính tài khoản đó tạo sau khi xác nhận; bài lập tức biến mất khỏi storefront và hệ thống lưu một bản ghi audit không chứa nội dung bài viết.
-
-Trong **Sản phẩm → Chỉnh sửa**, phần **Gallery ảnh sản phẩm** nhận tối đa 8 ảnh HTTPS. Quản trị viên có thể dán URL hoặc tải PNG, JPG, WEBP, SVG tối đa 5 MB; ảnh đầu tiên là ảnh chính và thumbnail trong Xem nhanh cho phép khách đổi ảnh đang xem. Khách có thể hủy đơn khi đơn còn chờ thanh toán/chưa vào giao nhận. Trong Command Deck, quản trị viên hủy đơn theo đúng điều kiện này, sau đó dùng nút **Xóa khỏi danh sách** để lưu trữ đơn hủy; dữ liệu không bị xóa cứng nhằm giữ lịch sử đối soát.
-
-Mỗi thẻ sản phẩm có nút chia sẻ. Với khách thường, hệ thống chia sẻ link sản phẩm; với affiliate đã được duyệt, link tự kèm `?ref=<mã>` để dùng luồng referral hiện có. Không tự tạo hoa hồng chỉ vì nhấn chia sẻ; hoa hồng vẫn phụ thuộc quy tắc affiliate và trạng thái đơn đã cấu hình.
-
-Số điện thoại/địa chỉ chỉ hiển thị trong **Quản lý khách hàng** cho Admin và trong **Kiểm hàng & giao nhận** cho vai trò có quyền logistics. Nhân viên kiểm hàng dùng thông tin đó để điều phối đơn; không sao chép hoặc công bố ngoài mục đích giao nhận. Ở cùng workspace này, dùng nút **Sửa** để chỉnh đối tác giao hàng, hoặc biểu tượng thùng rác để xóa. Hệ thống từ chối xóa đối tác đang được gắn với đơn hàng.
-
-### 5.4 Khắc phục link email trỏ về `localhost`
-
-> `localhost` chỉ phù hợp lúc phát triển. Email xác nhận, đổi email và Quên mật khẩu ở production phải quay về một origin HTTPS công khai đã được cho phép tại Supabase.[4]
-
-NEXORA có fallback production hiện tại là `https://nexorashop-gpjdasbm.manus.space`. Nếu đã có domain riêng, ví dụ `https://shop.example.vn`, admin vào **Command Deck → Email & Domain**, nhập URL đó rồi lưu. Workspace này đồng bộ giá trị public URL để frontend luôn truyền redirect production; nó từ chối `localhost`, preview `*.manus.computer`, HTTP không mã hóa và URL có thông tin đăng nhập.
-
-Sau đó bắt buộc mở Supabase Dashboard → **Authentication → URL Configuration** và đặt các giá trị tương ứng. Thay `shop.example.vn` bằng domain thật của bạn; với domain Manus hiện tại, dùng `nexorashop-gpjdasbm.manus.space`.
-
-| Trường trong Supabase | Giá trị ví dụ | Mục đích |
-| --- | --- | --- |
-| **Site URL** | `https://shop.example.vn` | URL mặc định cho các email Auth. |
-| **Redirect URLs** | `https://shop.example.vn/**` | Cho phép các callback tại website production. |
-| Redirect tạm thời khi chuyển domain | `https://nexorashop-gpjdasbm.manus.space/**` | Giữ link cũ còn hoạt động trong giai đoạn chuyển đổi. |
-| Không được dùng production | `http://localhost:3000/**` | Chỉ dùng local development, không đưa vào luồng email thật. |
-
-Sau khi lưu, mở website production, dùng **Quên mật khẩu**, rồi kiểm tra link trong email bắt đầu bằng domain đã chọn. Nếu Supabase báo `redirect_to is not allowed`, kiểm tra lại đúng protocol `https`, không có slash/domain khác và wildcard `/**` trong danh sách Redirect URLs.[4]
-
-### 5.5 Gắn domain thật vào website
-
-Trong trang quản trị hosting của Manus, mở **Settings → Domains**, thêm hoặc gán domain. Nhà cung cấp domain sẽ yêu cầu bản ghi DNS; thường là CNAME hoặc A/ALIAS tùy hướng dẫn hiển thị trong giao diện. Chờ DNS xác minh và chứng chỉ HTTPS được cấp trước khi dùng URL đó làm **Site URL**. Không xóa domain Manus mặc định cho đến khi thử thành công đăng nhập, Quên mật khẩu, đổi email và mở lại link từ một cửa sổ ẩn danh.
-
-Quy trình triển khai an toàn là: gắn domain → chờ HTTPS → nhập domain tại **Email & Domain** → cập nhật **Site URL/Redirect URLs** trong Supabase → gửi email test → chỉ sau đó công bố domain mới. Không cần sửa `SUPABASE_URL` hoặc anon key khi chỉ thay domain storefront.
-
-### 5.6 Custom SMTP qua Admin nhưng không lộ secret
-
-**Command Deck → Email & Domain** cho phép admin quản lý dữ liệu không bí mật: public URL, tên/email người gửi, provider, SMTP host/port và username. Mật khẩu SMTP, API key Resend/Postmark, `service_role key` và hook secret **không được nhập hoặc lưu trong form này**. Browser và `site_settings` không phải nơi an toàn cho secret.
-
-| Phương án | Cấu hình thực hiện | Khi dùng |
-| --- | --- | --- |
-| SMTP của Supabase | Supabase Dashboard → **Authentication → SMTP Settings**; điền host, port, username, password/app password và sender đã xác minh. | Muốn Supabase gửi email Auth trực tiếp. |
-| Resend/Postmark Send Email Hook | Deploy Edge Function dùng API key ở server secret, tạo `SEND_EMAIL_HOOK_SECRET`, rồi bật **Authentication → Hooks → Send Email**. | Muốn kiểm soát provider/template qua hook. |
-| Provider SMTP khác | Xác minh sender/DNS theo provider, cấu hình trong SMTP Settings, thử reset password. | Provider email doanh nghiệp riêng. |
-
-Với mọi provider, hoàn thành bản ghi DNS **SPF** và **DKIM** do provider cấp; cân nhắc thêm **DMARC** sau khi đã xác minh luồng gửi. Workspace hiển thị trạng thái “Chờ cấu hình secret/Dashboard” cho đến khi người vận hành hoàn tất thao tác này ngoài frontend. Không được tự đánh dấu đã gửi thành công khi chưa có một email test thực tế.[5]
-
-#### Kích hoạt SMTP nhanh với domain của bạn
-
-Người dùng khác chỉ cần thay mọi chỗ có `<YOUR_DOMAIN>` bằng domain HTTPS đã xác minh của họ, ví dụ `shop.example.vn`. Không dùng `localhost`, URL preview hoặc thêm đường dẫn vào biến domain.
-
-| Vị trí | Giá trị cần nhập |
-| --- | --- |
-| Command Deck → **Email & Domain** → URL website công khai | `https://<YOUR_DOMAIN>` |
-| Supabase → Authentication → URL Configuration → **Site URL** | `https://<YOUR_DOMAIN>` |
-| Supabase → Authentication → URL Configuration → **Redirect URLs** | `https://<YOUR_DOMAIN>/**` |
-| Supabase → Authentication → SMTP Settings → Sender email | `support@<YOUR_DOMAIN>` hoặc sender đã xác minh bởi provider |
-
-Sau đó bật **Enable Custom SMTP** trong **Authentication → SMTP Settings**, rồi nhập host, port (thường `587`), username và password/app password do provider cấp. Password chỉ nhập tại Supabase Dashboard; không nhập vào Command Deck hoặc commit vào GitHub. Cuối cùng, vào **Authentication → Email Templates → Reset Password**, dán HTML đã sao chép từ Command Deck rồi dùng **Quên mật khẩu** để gửi một email test. Nếu link vẫn sai domain, rà soát lại đúng ba giá trị `https://<YOUR_DOMAIN>` ở bảng trên.[4] [5]
-
-### 5.7 Chỉnh mẫu email Quên mật khẩu
-
-Admin mở **Command Deck → Email & Domain → Chỉnh form email Quên mật khẩu** để sửa subject, preheader, heading, nội dung, nhãn CTA và footer. Form có preview và nút **Sao chép HTML Supabase**. Sau khi lưu mẫu, sao chép HTML, mở **Supabase Dashboard → Authentication → Email Templates → Reset Password**, dán HTML và lưu.
-
-> Không xóa hoặc thay bằng URL tự tạo cho `{{ .ConfirmationURL }}`. Đây là placeholder do Supabase thay bằng link recovery đã ký; NEXORA luôn chèn nó vào nút CTA khi tạo HTML preview.[4]
-
-Mẫu được lưu có audit log và chỉ admin đọc/chỉnh sửa. Việc lưu mẫu trong Command Deck chưa tự xuất bản template vào Supabase Dashboard, vì thao tác đó thuộc cấu hình Auth bên ngoài browser và cần người vận hành xác nhận.
-
-### 5.8 Đóng và xóa tài khoản khách
-
-Supabase lưu mật khẩu dưới dạng băm; admin không thể xem hay khôi phục mật khẩu plaintext. Admin chỉ có thể gửi link reset, còn khách có nút **Quên mật khẩu** ở modal đăng nhập và đổi mật khẩu trong Account Center.
-
-Vì đơn hàng, sổ cái ví và yêu cầu nạp cần được giữ để đối soát, NEXORA dùng **đóng và ẩn danh hóa có kiểm tra** thay cho xóa cứng Auth. Khách gửi yêu cầu tại **Account Center → Bảo mật → Yêu cầu đóng tài khoản**; hệ thống khóa giao dịch ngay. Admin chỉ có thể đóng khi số dư bằng 0 và không còn đơn đang xử lý/giao nhận. Khi đủ điều kiện, profile được đổi sang `deactivated`, thông tin hiển thị/email storefront được ẩn danh và audit log được giữ lại.
-
-## 6. Cấp quyền Command Deck
-
-Không có tài khoản/mật khẩu admin mặc định. Quy trình an toàn là:
-
-1. Tạo tài khoản thật ở storefront bằng email và mật khẩu mạnh.
-2. Mở **Supabase SQL Editor**.
-3. Chạy câu lệnh dưới đây, thay email ví dụ bằng email vừa đăng ký.
-4. Đăng nhập bằng email đó tại `/admin.html`.
+Để test an toàn, tạo một tài khoản user thông thường trước. Kiểm tra user chỉ thấy đơn, địa chỉ, số dư và thông báo của chính mình. Sau đó cấp quyền Admin bằng `user_id`, không dùng mật khẩu mặc định:
 
 ```sql
 insert into public.admin_users (user_id)
-select id from auth.users where email = 'admin@yourdomain.com'
+select id from auth.users
+where email = 'admin@your-domain.example'
 on conflict (user_id) do nothing;
 ```
 
-Để thu hồi quyền, xóa user ID tương ứng khỏi `public.admin_users`; không xóa `auth.users` trừ khi bạn thực sự muốn vô hiệu hóa cả tài khoản khách. Xem thêm [Thiết lập admin](../ADMIN_SETUP.md).
+Nếu hệ thống role đã được bật, hãy sử dụng workspace quản lý role hoặc RPC quản trị tương ứng; không sửa hàng loạt role bằng frontend.
 
-## 7. Cấu hình thanh toán và Zalo
+## 6. Cấu hình thanh toán, email và media
 
-### 7.1 Payment config
+### 6.1 Thanh toán QR và ZaloPay
 
-Mở đầu file `client/app.js` có block sau:
+Thông tin nhận tiền được cấu hình trong phần thanh toán/CMS theo source hiện tại. Chỉ dùng tài khoản thật sau khi kiểm tra trên một đơn giá trị nhỏ. Đơn chuyển khoản không tự động thành đã thanh toán chỉ vì khách mở modal hoặc bấm “Đã thanh toán”. Nhân viên phải đối soát giao dịch rồi cập nhật trạng thái trong Command Deck.
 
-```js
-const PAYMENT_CONFIG = {
-  bankId: "MB",
-  accountNumber: "0123456789",
-  accountName: "NEXORA TECH STORE",
-  momoPhone: "0900000000",
-};
-```
+CK tự động qua VietQR Host2Host, SePay hoặc Casso được giữ tắt cho đến khi bạn nhập secret, webhook signing secret và endpoint production. Secret phải được nhập qua cơ chế secret của hosting/backend, không commit vào GitHub và không đưa vào `client/`.
 
-Thay placeholder bằng thông tin nhận tiền của đơn vị vận hành trước khi mở bán. Mỗi đơn được tạo trước, sau đó UI hiển thị QR VietQR, chỉ dẫn MoMo hoặc QR ZaloPay. Admin mới là người đối soát và chuyển payment status; website **không tự động xác minh giao dịch ngân hàng**.
+### 6.2 SMTP và email giao dịch
 
-### 7.1.1 ZaloPay QR thủ công
+Email giao dịch hỗ trợ kênh API hoặc SMTP ở backend. Admin có thể chỉnh mẫu email trong Command Deck nhưng không được xem lại secret sau khi lưu. Khi chưa đủ secret, hệ thống giữ trạng thái không gửi thật. Trước production cần xác minh sender domain, SPF, DKIM, redirect URL và test mailbox thật.
 
-Vào **Command Deck → Cấu hình nâng cao → Nhận tiền & Zalo**, dán **URL HTTPS của ảnh QR ZaloPay** do shop sở hữu vào trường **URL ảnh QR ZaloPay**, rồi lưu. Khách chọn tab **ZaloPay**, quét mã, nhập đúng số tiền/mã đơn và nhắn Zalo để shop đối soát. Admin xác nhận đơn tại queue **Xác nhận chuyển khoản**; thao tác này mới chuyển đơn sang `paid`.
+Các biến bí mật thường đặt trên server hosting gồm `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, hoặc secret API của provider theo tài liệu tích hợp hiện tại. Tên biến thực tế phải khớp `server/_core/env.ts` và tài liệu provider; không tự đoán tên khi triển khai.
 
-> Đây là QR/chuyển khoản thủ công, không phải tích hợp cổng thanh toán ZaloPay Merchant API. Không đưa App ID, Key1, Key2, callback key hoặc secret vào Admin, frontend hay GitHub.
+### 6.3 Ảnh, logo và storage
 
-> Nếu repository là public, không commit số tài khoản cá nhân hoặc dữ liệu thanh toán nhạy cảm nếu bạn không muốn nó hiển thị công khai. Với vận hành thật, nên chuyển thông tin này sang config riêng hoặc đọc từ CMS có RLS admin.
+Logo, favicon, OG image, banner, ảnh sản phẩm, ảnh bài viết và logo nhà vận chuyển có thể upload từ Command Deck hoặc nhập URL HTTPS công khai. Không commit ảnh lớn vào `client/public` nếu không cần. Asset production nên nằm trong Supabase Storage/CDN hoặc kho media đã được cấp URL ổn định. Không lưu byte file trực tiếp trong PostgreSQL.
 
-### 7.1.2 CK tự động: SePay, Casso và VietQR Host2Host
+## 7. Triển khai lên GitHub
 
-NEXORA hỗ trợ một phương thức checkout **CK tự động**. Admin vào **Command Deck → Cấu hình nâng cao → CK tự động**, bật phương thức rồi chọn đúng một nhà cung cấp đang vận hành: **SePay**, **Casso** hoặc **VietQR Host2Host**. Command Deck hiển thị URL webhook tương ứng và trạng thái **Đã cấu hình secret server / Chưa cấu hình secret server**; tuyệt đối không hiển thị, ghi lại hoặc cho nhập secret tại form quản trị.
-
-| Nhà cung cấp | URL cần khai báo tại dashboard đối tác | Secret ở server |
-| --- | --- | --- |
-| SePay | `https://<domain>/api/payments/webhooks/sepay` | `SEPAY_WEBHOOK_SECRET` |
-| Casso | `https://<domain>/api/payments/webhooks/casso` | `CASSO_WEBHOOK_SECURE_TOKEN` |
-| VietQR Host2Host | `https://<domain>/bank/api/transaction-sync` và `https://<domain>/api/token_generate` | Credential đối tác VietQR ở server |
-
-Backend cũng cần URL Supabase và service-role key **chỉ phía server** để gọi RPC đối soát. Không đặt bất kỳ giá trị nào trong `site_settings`, JavaScript browser, GitHub hoặc Command Deck. Khi cần thay key, vào **Settings → Secrets** của dự án để thay key rồi cập nhật cùng giá trị ở dashboard nhà cung cấp; giá trị cũ không thể xem lại từ Admin.
-
-Khi webhook đi vào, hệ thống chỉ đánh dấu `paid` nếu nhà cung cấp đang được bật, callback hợp lệ, giao dịch là tiền vào, mã đơn NEXORA và số tiền khớp tuyệt đối, đồng thời mã giao dịch chưa từng được xử lý. Các callback không đạt điều kiện được ghi nhận để đối soát, không xác nhận đơn. Đơn chọn **CK tự động** không có nút xác nhận thủ công hoặc CTA nhắn Zalo; khách chỉ cần giữ nguyên mã đơn khi chuyển khoản.
-
-### 7.2 Zalo xác nhận và liên hệ người bán
-
-Command Deck có phần CMS để quản lý `zalo_phone`, `zalo_confirmation_message`, `seller_zalo_phone`, nhãn CTA và thông tin liên hệ ở footer. Dùng số theo định dạng quốc tế mà URL Zalo yêu cầu, ví dụ `84xxxxxxxxx`, thay vì tự thêm số điện thoại vào HTML rải rác.
-
-## 8. Media, GitHub và public repository
-
-### 8.1 Quy ước asset
-
-| Nơi lưu | Nội dung | Quy tắc |
-| --- | --- | --- |
-| Nhánh `main` | Source, SQL, tài liệu. | Không đưa binary lớn vào code bundle. |
-| Nhánh `assets/media` | Backup ảnh/logo/category/product. | Cập nhật manifest và checksum khi thêm file. |
-| `/manus-storage/...` | URL mà storefront đang tham chiếu. | Tối ưu cho môi trường deploy hiện tại. |
-| CDN/Storage riêng | Lựa chọn khi deploy ngoài môi trường hiện tại. | Dùng URL HTTPS ổn định, có quyền truy cập công khai phù hợp. |
-
-Danh sách đầy đủ asset, SHA-256 và nguồn backup ở [Asset Manifest](../ASSET_MANIFEST.md). Không sao chép ảnh/video lớn vào `client/public` hoặc `client/src/assets`, vì chúng làm bundle và deployment nặng hơn.
-
-### 8.2 Checklist trước khi public GitHub
-
-- Kiểm tra `git status` và `.gitignore`; không commit `.env*`, `node_modules`, `dist/`, log hay file tải về cục bộ.
-- Chỉ giữ **publishable/anon key** ở client; xoay key ngay nếu lỡ đẩy `service_role`, access token, mật khẩu hoặc thông tin ngân hàng thật.
-- Xóa dữ liệu khách hàng, đơn hàng, email thật, token QR và bản export database khỏi repository.
-- Kiểm tra quyền dùng ảnh sản phẩm/logo; ảnh tham chiếu từ bên thứ ba cần tuân thủ license/điều khoản nguồn.
-- Thêm mô tả repo, license, screenshot không chứa dữ liệu cá nhân và link tới tài liệu này.
-
-## 9. Build và triển khai
-
-### 9.1 Kiểm tra build
+### 7.1 Đưa source lên repository
 
 ```bash
+git init
+git add .
+git commit -m "Initial NEXORA deployment"
+git branch -M main
+git remote add origin https://github.com/<github-user>/<repository>.git
+git push -u origin main
+```
+
+Trước khi push, kiểm tra:
+
+```bash
+git status
+git ls-files | grep -E '(^|/)(\.env|.*secret|service_role|credentials)' || true
+grep -RniE 'service_role|sb_secret_|SMTP_PASSWORD|JWT_SECRET' --exclude-dir=node_modules --exclude-dir=dist . || true
+```
+
+Nếu lệnh cuối phát hiện secret thật, thay/rotate secret ngay và xóa khỏi lịch sử Git trước khi repository public. `.gitignore` không làm mất secret đã commit trước đó.
+
+### 7.2 GitHub Pages cho bản static
+
+GitHub Pages phù hợp khi bạn deploy artifact `dist/public`. Có thể dùng GitHub Actions để chạy `pnpm install`, `pnpm build`, sau đó publish `dist/public`. Nếu chọn deploy từ branch/folder, entrypoint `index.html` phải nằm ở đầu thư mục publish; GitHub Pages hỗ trợ static files và custom domain, nhưng không chạy Node server [2].
+
+Ví dụ cấu hình Actions tối thiểu cần bảo đảm build output được upload từ `dist/public`. Không đặt secret backend trong workflow public. Với Auth, thêm domain GitHub Pages vào Supabase redirect URLs. Do GitHub Pages thường chạy dưới subpath `https://<user>.github.io/<repository>/`, hãy kiểm tra mọi link tuyệt đối `/admin.html`, `/orders.html` và asset path; nếu subpath gây lỗi, dùng custom domain hoặc static host phục vụ tại root domain.
+
+### 7.3 GitHub không phải nơi lưu database production
+
+GitHub chỉ lưu source, tài liệu và metadata asset. Database production nằm ở Supabase. Không đưa file export chứa customer PII, order thật, token, secret hoặc backup database chưa mã hóa lên repository.
+
+## 8. Triển khai static trên Netlify/Vercel/Cloudflare/cPanel
+
+Static deployment dùng quy trình chung:
+
+```bash
+pnpm install
+pnpm test
 pnpm check
 pnpm build
-pnpm preview
 ```
 
-Build thành công tạo `dist/public` với `index.html`, `admin.html`, `info.html`, `article.html` và asset đã bundle. Test tối thiểu cả bốn URL trước release.
+Đặt **Build command** là `pnpm build` và **Publish directory** là `dist/public`. Nếu host cần Node version, chọn Node 20 hoặc 22. Sau deploy, kiểm tra đủ các file `index.html`, `admin.html`, `orders.html`, `affiliate.html`, `info.html` và `article.html`.
 
-### 9.2 Lựa chọn hosting
+Static host phù hợp cho storefront và các chức năng gọi trực tiếp Supabase. Tuy nhiên, nếu bạn cần server route email, webhook thanh toán, tRPC hoặc xử lý secret, phải chạy thêm Node backend trên một dịch vụ server hoặc chuyển sang triển khai Node đầy đủ. Không đưa secret vào biến `VITE_*`, vì các biến này thường được bundle public.
 
-| Phương án | Phù hợp | Điều cần chú ý |
-| --- | --- | --- |
-| Manus built-in hosting | Production hiện tại của project. | Hỗ trợ workflow storage đang dùng, custom domain và auto-publish theo checkpoint. |
-| Static host có build | Cloudflare Pages, Netlify, GitHub Pages hoặc tương đương. | Build command: `pnpm build`; publish directory: `dist/public`. |
-| Node-capable host | Khi cần dùng `pnpm start`. | Build trước, rồi chạy process server. |
+## 9. Triển khai trên aaPanel Ubuntu
 
-GitHub là nơi public source, không tự thay thế storage proxy `/manus-storage`. Nếu đưa site sang host khác, hãy chuyển các URL media sang CDN/Storage công khai hoặc thay URL trong CMS/source trước khi phát hành. Cấu hình domain thật cũng phải được thêm vào Supabase **URL Configuration** nếu dùng email confirmation hoặc reset password.
+aaPanel có Node.js Project/PM2 để quản lý Node version, domain reverse proxy, SSL và log [4]. Quy trình sau áp dụng khi server của bạn có quyền root và đã cài aaPanel.
 
-### 9.3 Luồng commit khuyến nghị
+### 9.1 Chuẩn bị server
+
+Trong aaPanel, cài Node.js version manager, chọn Node 20 hoặc 22 LTS, cài Git và pnpm. Tạo website/domain trước, bật SSL và trỏ DNS A/AAAA về IP server. Kiểm tra bằng SSH:
 
 ```bash
-git checkout main
-git pull --ff-only
-git add README.md docs/ supabase-unified.sql client/
-git commit -m "docs: update deployment guide"
-git push origin main
+node -v
+pnpm -v
+git --version
 ```
 
-Media mới được commit riêng ở branch `assets` để không làm nặng nhánh source:
+### 9.2 Deploy bằng Node Project
+
+Trong **Website → Node Project → Add Node Project**, chọn một trong hai cách:
+
+| Trường | Giá trị gợi ý |
+| --- | --- |
+| Project path | `/www/wwwroot/nexora` |
+| Git repository | URL GitHub của repository |
+| Package manager | `pnpm` |
+| Install command | `pnpm install --frozen-lockfile` |
+| Build command | `pnpm build` |
+| Start command | `pnpm start` |
+| Port | Port do biến `PORT` hoặc panel cấp, ví dụ `3000` |
+| Run user | user giới hạn như `www`, không chạy production bằng root |
+| Domain | domain đã trỏ DNS |
+
+Nếu panel tách bước build và start, chạy build trước rồi start. Tạo biến môi trường server trong giao diện aaPanel, đặc biệt là `NODE_ENV=production`, `PORT`, database/server secret, SMTP và webhook secret. Không nhập publishable key server secret vào frontend nhầm tên; kiểm tra `server/_core/env.ts`.
+
+### 9.3 Deploy bằng PM2 hoặc terminal
 
 ```bash
-git checkout assets
-git add media/ ASSET_MANIFEST.md
-git commit -m "chore(assets): archive storefront media"
-git push origin assets
+cd /www/wwwroot/nexora
+git pull origin main
+pnpm install --frozen-lockfile
+pnpm test
+pnpm check
+pnpm build
+NODE_ENV=production PORT=3000 pnpm start
 ```
 
-## 10. Vận hành hằng ngày
+Nếu dùng PM2, tạo process theo command production của project, đặt working directory đúng và bật auto-start sau reboot. Trong aaPanel cấu hình reverse proxy từ domain HTTPS tới `127.0.0.1:<port>`; không mở port Node trực tiếp cho Internet nếu không cần. Khi cập nhật code, pull source, cài dependency nếu lockfile đổi, build lại và restart process.
 
-### 10.1 Command Deck
+### 9.4 Kiểm tra aaPanel
 
-| Khu vực | Việc quản trị viên có thể làm |
+Kiểm tra ba lớp: log process Node, access/error log của reverse proxy và browser console. Nếu domain trả 502, kiểm tra process có chạy, port proxy có trùng port thật và firewall có cho phép Nginx/Apache hay không. Nếu Auth quay về localhost, kiểm tra Supabase Site URL/redirect URL và domain hiện tại, không sửa bằng cách đưa secret vào client.
+
+## 10. Triển khai trên cPanel
+
+Có hai cách và cần phân biệt rõ.
+
+### 10.1 cPanel static hosting
+
+Nếu hosting chỉ có File Manager, upload file trong `dist/public` vào `public_html`. Cách này không chạy `pnpm start`, không chạy Node backend, email server route hoặc webhook. Nó phù hợp khi frontend gọi trực tiếp Supabase và bạn không cần backend Node riêng.
+
+Bật SSL, sau đó cập nhật Supabase Site URL/redirect URL bằng domain cPanel. Kiểm tra các entrypoint đa trang và các link absolute. Nếu host không hỗ trợ fallback, phải upload đúng `admin.html`, `orders.html`, `affiliate.html`, `info.html` và `article.html` cùng asset build.
+
+### 10.2 cPanel Node.js Application/Passenger
+
+cPanel Application Manager dùng Passenger làm application server/process manager/reverse proxy; nhà cung cấp phải bật Application Manager, Passenger, `mod_env` và Node version phù hợp [5]. cPanel khuyến nghị thao tác bằng user cPanel, không dùng root cho quy trình ứng dụng [6].
+
+Quy trình tổng quát:
+
+1. Dùng **Git Version Control** hoặc SSH để clone repository vào thư mục, ví dụ `/home/<cpanel-user>/nexora`.
+2. Chọn Node 20/22 theo những version host cung cấp.
+3. Chạy `pnpm install --frozen-lockfile` và `pnpm build` trong Terminal của cPanel.
+4. Trong **Software → Application Manager**, đăng ký application với domain/subdomain, application path tương đối với home directory, môi trường Production và biến môi trường cần thiết.
+5. Chọn startup file theo khả năng của host. Nếu Application Manager cho phép startup file tùy chỉnh, dùng entrypoint production tương ứng của project là `dist/index.js`; nếu Passenger chỉ tìm `app.js`, hỏi nhà cung cấp cách đặt `PassengerStartupFile` hoặc tạo wrapper `app.js` theo cấu hình ESM/Node của host. Không đoán wrapper khi chưa biết `package.json` và Passenger version.
+6. Deploy/restart application, mở domain HTTPS và kiểm tra log application. cPanel lưu log Node trong thư mục `logs/` theo cấu hình Application Manager [5].
+
+Passenger có thể reverse-bind port; không ép ứng dụng dùng port public cố định. Server hiện đọc `process.env.PORT`, do đó hãy dùng port do Passenger/cPanel cung cấp. Nếu application không khởi động, kiểm tra Node version, startup file, working directory, quyền đọc file, dependency và log trước khi đổi code.
+
+## 11. Quy trình sử dụng hằng ngày
+
+### 11.1 Khách hàng
+
+Khách đăng ký bằng email, username hợp lệ, số điện thoại và địa chỉ. Sau khi đăng nhập, khách có thể thêm nhiều địa chỉ, chọn địa chỉ mặc định, cập nhật bảo mật, theo dõi số dư, xem sổ cái, nhận thông báo và theo dõi đơn. Trước checkout cần kiểm tra lại số điện thoại và địa chỉ vì bản sao giao nhận được lưu cùng đơn để bảo toàn lịch sử.
+
+Khi đơn chuyển khoản được tạo, khách xem QR và nội dung chuyển khoản, sau đó liên hệ shop nếu shop yêu cầu. Khách chỉ nên coi đơn là hoàn tất sau khi trạng thái trong **Đơn hàng của tôi** được shop xác nhận. Yêu cầu hủy/trả hàng phải dùng đúng điều kiện hiển thị trên đơn; hệ thống không tự hoàn tiền chỉ vì khách gửi yêu cầu.
+
+### 11.2 Admin/MKT
+
+Admin đăng nhập `/admin.html`, kiểm tra **Tổng quan**, sau đó quản lý Catalog, Đơn hàng, Tài khoản, Role, CMS, Sale, Email, Logistics, Affiliate và Thông báo. MKT chỉ thấy workspace theo capability. Khi phát thông báo, chọn **Toàn server** hoặc **Một tài khoản cụ thể**, nhập tiêu đề/nội dung, kiểm tra CTA rồi xác nhận. Không gửi mật khẩu, token, thông tin thẻ, số dư chi tiết hoặc PII trong broadcast.
+
+Đối với đơn chuyển khoản, kiểm tra giao dịch ngoài hệ thống trước khi bấm đã thanh toán. Đối với hủy đơn, trả hàng hoặc hoàn tiền, nhập ghi chú đủ rõ để audit. Không xóa cứng đơn thật và không dùng fixture test trên dữ liệu khách.
+
+## 12. Checklist trước khi mở bán
+
+| Kiểm tra | Kết quả cần đạt |
 | --- | --- |
-| Tổng quan | Xem chỉ số đơn, doanh thu theo dữ liệu đơn và hoạt động gần đây. |
-| Sản phẩm | Tạo/sửa/xóa, thay SKU, giá, tồn kho, sale, featured, thông số kỹ thuật, trạng thái bán. |
-| Đơn hàng | Xem chi tiết, cập nhật thanh toán, fulfillment, carrier, tracking, ghi chú. |
-| Thương hiệu/CMS | Đổi tên site, banner, logo, contact, Zalo và hero. |
-| Nội dung & FAQ | Quản lý trang thông tin, FAQ, điều khoản, bảo mật và chính sách. |
-| Gian hàng/Sale | Quản lý shop, liên hệ shop và campaign giảm giá. |
-| Role & kiểm duyệt | Gán role theo phân cấp, duyệt affiliate, review, bình luận và bài viết. |
-| Hoàn tiền & CSV | Xử lý refund theo quy trình đối soát và xuất sổ cái/nạp tiền cho admin. |
-| Cấu hình nâng cao | Payment config, favicon và hiệu ứng tuyết/cánh hoa storefront. |
+| Schema | `supabase-unified.sql` chạy thành công trên database đích; không chạy lại trên production có dữ liệu nếu chưa backup. |
+| RLS | Bảng nhạy cảm bật RLS; user không đọc được dữ liệu người khác. |
+| Auth | Đăng ký, đăng nhập, đăng xuất, recovery và redirect production hoạt động. |
+| Catalog | Giá, tồn kho, sale, gallery và trạng thái bán hiển thị đúng. |
+| Checkout | Giá được database tính lại; thiếu địa chỉ/số điện thoại bị chặn; đơn tạo đúng. |
+| Payment | QR và thông tin nhận tiền đã thay placeholder; chuyển khoản chỉ được xác nhận sau đối soát. |
+| Email | SMTP/API chưa gửi thật khi thiếu secret; sender domain và mailbox đã test nếu bật. |
+| Admin | Admin login được; MKT/Moderator/Logistics chỉ có quyền đúng capability. |
+| Notification | Badge, mark-read, broadcast toàn server và target user hoạt động; không lộ nội dung nhạy cảm. |
+| Domain | HTTPS, Supabase Site URL, redirect URLs và callback không còn localhost. |
+| Build | `pnpm test`, `pnpm check`, `pnpm build` đều đạt. |
 
-Tỷ lệ affiliate mặc định là 15%, nhưng **admin** có thể thay đổi trong **Cấu hình nâng cao** cùng điều kiện đơn delivered và yêu cầu duyệt. Hệ thống không áp dụng hồi tố lên commission đã được ghi; hãy đối soát trước khi điều chỉnh tỷ lệ trên store đang vận hành.
+## 13. Khắc phục lỗi phổ biến
 
-### 10.1.1 Dashboard affiliate
-
-Affiliate có trạng thái **đã duyệt** mở **Tài khoản → Affiliate → Xem thống kê** hoặc trực tiếp `/affiliate.html`. Trang này không hiển thị tên, email, số điện thoại, địa chỉ hoặc bất kỳ dữ liệu định danh nào của khách được giới thiệu. RPC dashboard chỉ tổng hợp dữ liệu gắn với `auth.uid()` của affiliate đang đăng nhập.
-
-| Chỉ số | Cách tính | Không được hiểu là |
+| Lỗi | Nguyên nhân thường gặp | Cách xử lý |
 | --- | --- | --- |
-| Lượt click | Một visitor token ẩn danh mở link referral; cùng token và cùng link sản phẩm chỉ tính một lần. | Lượt mua hàng hoặc hoa hồng. |
-| Referral | Số tài khoản đã được claim referral cho affiliate đó. | Số đơn thanh toán. |
-| Đơn thành công | Đơn có `affiliate_user_id` của chính affiliate, đã `delivered` và ở trạng thái thanh toán đủ điều kiện. | Mọi đơn do khách referral tạo trước khi giao thành công. |
-| Hoa hồng đã nhận | Tổng commission `earned` đã được ghi nhận theo trigger vận hành. | Hoa hồng tạo ra chỉ từ click/chia sẻ. |
-| Chờ hoàn/review, đã hoàn | Tổng commission ở trạng thái `pending_reversal` và `reversed`. | Số dư ví có thể rút ngay. |
+| `pnpm: command not found` | Chưa cài pnpm hoặc PATH chưa đúng. | Cài pnpm theo Node version manager của máy/hosting rồi mở terminal mới. |
+| Catalog không tải | Sai URL/key, schema chưa chạy hoặc RLS chặn. | Kiểm tra `client/supabase-config.js`, project Supabase và browser console. |
+| Không vào Admin | User chưa có `admin_users`/role phù hợp hoặc session cũ. | Cấp quyền bằng SQL/RPC an toàn, đăng xuất rồi đăng nhập lại. |
+| Đơn không tạo | Chưa đăng nhập, thiếu địa chỉ/số điện thoại, tồn kho thiếu hoặc RPC lỗi. | Kiểm tra từng điều kiện; không sửa giá trong browser. |
+| QR sai | Placeholder, bank ID/số tài khoản sai hoặc cấu hình chưa lưu. | Cập nhật cấu hình, test QR trước khi chạy thật. |
+| Email ra localhost | Site URL/redirect URL vẫn dùng local hoặc biến môi trường production chưa được nạp. | Sửa URL trong Supabase và hosting, restart server, test recovery lại. |
+| aaPanel 502 | Process Node dừng, proxy sai port hoặc chưa build. | Xem PM2/Node log, kiểm tra `PORT`, build lại và restart. |
+| cPanel Passenger lỗi startup | Sai Node version, startup file hoặc application path. | Kiểm tra Application Manager, `logs/`, PassengerStartupFile và hỏi nhà cung cấp host. |
+| Badge thông báo không tăng | Chưa đăng nhập, RPC notification bị chặn hoặc browser cache cũ. | Kiểm tra session, RPC/RLS, Network tab và hard refresh. |
+| GitHub Pages trắng trang | Publish sai thư mục hoặc dùng subpath nhưng link absolute. | Publish `dist/public`, kiểm tra các entrypoint và dùng custom domain nếu cần. |
 
-> Click chỉ là tín hiệu phân tích, không tạo commission và không lưu IP, email hay thông tin khách. Không tạo hoặc sửa đơn thanh toán thật để “làm số liệu đẹp”.
+## 14. Bảo mật và sao lưu
 
-### 10.2 Quy trình xử lý đơn đề xuất
+Không commit `.env`, secret key, password, service role, SMTP credential, webhook signing secret, database export chứa PII hoặc tài khoản nhận tiền thật. Rotate ngay mọi secret đã lộ. Giới hạn quyền Supabase, bật RLS, xem Security Advisor, bật MFA cho tài khoản quản trị và dùng HTTPS.
 
-1. Khách tạo đơn, trạng thái bắt đầu là `pending_payment`.
-2. Khách chuyển khoản và gửi mã đơn qua Zalo nếu CTA đã được cấu hình.
-3. Admin đối soát số tiền, cập nhật `paid`/ghi chú xác nhận.
-4. Chuyển fulfillment lần lượt: `unfulfilled → preparing → ready_to_ship → shipped → delivered`.
-5. Cập nhật carrier/tracking code khi giao cho đơn vị vận chuyển.
-6. Nếu có hoàn trả, ghi rõ ghi chú và dùng trạng thái `returned` theo quy trình nội bộ.
+Sao lưu database theo chính sách của Supabase/nhà cung cấp, lưu backup ở nơi mã hóa và kiểm tra khả năng restore định kỳ. GitHub branch chỉ là backup source; nó không thay thế backup database, Storage hoặc Auth users.
 
-Không đánh dấu `paid` chỉ dựa vào nội dung tin nhắn; cần đối chiếu giao dịch thực tế.
+## 15. Tham khảo chính thức
 
-## 11. Kiểm thử trước khi mở bán
+[1] [Supabase — API Keys](https://supabase.com/docs/guides/getting-started/api-keys)
 
-| Hạng mục | Cách kiểm tra | Kết quả mong đợi |
-| --- | --- | --- |
-| Catalog ẩn danh | Mở storefront bằng cửa sổ ẩn danh. | Sản phẩm active, FAQ/shop published và sale hợp lệ hiển thị. |
-| Đăng ký/Auth | Đăng ký bằng email test. | Với Confirm email tắt, có thể đăng nhập ngay. |
-| Phân quyền | Dùng user thường mở `/admin.html`. | Bị chặn Command Deck. |
-| Admin | Cấp `admin_users`, đăng nhập lại. | Tải được dashboard và CRUD đúng phạm vi. |
-| Cart/checkout | Thêm sản phẩm có tồn kho, checkout. | Đơn tạo qua RPC, tổng tiền lấy từ database. |
-| Tồn kho | Thử số lượng vượt stock. | Database từ chối, không tạo đơn sai. |
-| Sale code | Thử mã còn hạn và mã sai/hết hạn. | Chỉ mã hợp lệ được giảm. |
-| QR/Zalo | Kiểm tra cấu hình payment thật. | Thông tin người nhận, tổng tiền và mã đơn chính xác. |
-| RLS | Dùng user A thử truy cập đơn user B. | Không đọc/cập nhật được. |
-| Role/moderation | Dùng customer/moderator/admin tách biệt. | Customer bị chặn Command Deck; moderator không đổi `admin`; nội dung chỉ public sau duyệt. |
-| Affiliate/refund | Dùng tài khoản test và đơn không có tiền thật. | Hoa hồng đúng theo tỷ lệ khi delivered; dashboard affiliate không lộ PII, click không tạo commission. |
-| Build | Chạy `pnpm build`. | Không có lỗi build; cả `/`, `/affiliate.html`, `/admin.html`, `/info.html`, `/article.html` mở được. |
+[2] [GitHub Docs — Creating a GitHub Pages site](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site)
 
-## 12. Xử lý lỗi thường gặp
+[3] [Supabase — Auth](https://supabase.com/docs/guides/auth)
 
-| Hiện tượng | Nguyên nhân thường gặp | Cách xử lý |
-| --- | --- | --- |
-| Storefront hiển thị demo/fallback | URL/key Supabase sai, RLS sai hoặc query bị chặn. | Kiểm tra `supabase-config.js`, Auth API URL, browser Network và policy `products`. |
-| `permission denied for function is_admin` | Policy public gọi hàm admin không phù hợp cho `anon`. | Dùng policy public chỉ kiểm tra `is_active = true`; giới hạn policy admin ở role `authenticated`. |
-| Không vào được Command Deck | User chưa có bản ghi trong `admin_users`. | Chạy câu lệnh cấp quyền ở mục 6 rồi đăng nhập lại. |
-| Đơn không tạo được | User chưa login, item hết hàng, sale code sai hoặc RPC chưa áp dụng. | Kiểm tra session, stock, campaign ngày/limit và `supabase-unified.sql`. |
-| Không xuất hiện QR | `PAYMENT_CONFIG` còn placeholder. | Điền dữ liệu thanh toán thật và refresh build/deploy. |
-| Xác nhận email không như ý | `Confirm email` không đúng trạng thái. | Vào Authentication → Sign In / Providers, đổi switch rồi Save changes. |
-| Ảnh mất khi deploy ngoài môi trường hiện tại | URL `/manus-storage` không có storage proxy trên host mới. | Chuyển ảnh sang CDN/Storage công khai và cập nhật CMS/source. |
-| Admin thấy số liệu bất thường | Đơn demo hoặc payment/fulfillment status chưa được cập nhật nhất quán. | Kiểm tra dữ liệu đơn, filter thời gian và trạng thái trong Command Deck. |
+[4] [aaPanel — Node.js Project](https://www.aapanel.com/docs/Function/Node.html)
 
-## 13. An toàn dữ liệu và checklist production
+[5] [cPanel — Application Manager](https://docs.cpanel.net/cpanel/software/application-manager/)
 
-### 13.1 Bảo mật tối thiểu
-
-RLS và quyền database cần được kiểm thử cùng nhau: policy quyết định dòng nào được phép, còn grant quyết định role có được thực hiện thao tác hay không.[2] Vì vậy, không tắt RLS chỉ để “sửa nhanh” lỗi frontend.
-
-| Việc bắt buộc | Trạng thái trước production |
-| --- | --- |
-| RLS bật cho toàn bộ bảng public | Hoàn thành. |
-| `anon` không chạy được checkout RPC | Hoàn thành. |
-| Publishable key ở browser, không có service role | Hoàn thành. |
-| Dashboard affiliate chỉ tổng hợp dữ liệu của chính chủ, không lộ PII referral | Hoàn thành. |
-| Tài khoản admin không dùng password mặc định | Hoàn thành. |
-| Đặt rate limit/CAPTCHA nếu tắt Confirm email | Khuyến nghị mạnh. |
-| SMTP riêng nếu dùng email confirmation/reset production | Khuyến nghị mạnh. |
-| Backup schema/data trước thay đổi DDL | Bắt buộc. |
-| Rà soát legal pages và chính sách thanh toán | Bắt buộc trước mở bán thật. |
-
-### 13.2 Bảo trì schema
-
-`supabase-unified.sql` là nguồn SQL chuẩn duy nhất cho **fresh install**. Với production có dữ liệu, tạo migration DDL có quản lý từ chênh lệch canonical và thử ở staging trước; không thêm file SQL rời vào repository.
-
-### 13.3 Tài liệu liên quan
-
-| Tài liệu | Mục đích |
-| --- | --- |
-| [README](../README.md) | Tổng quan kỹ thuật và lệnh nhanh. |
-| [Quy trình Supabase](SUPABASE.md) | Database, RLS, checkout và cấp admin. |
-| [Thiết lập admin](../ADMIN_SETUP.md) | Quy trình Command Deck ngắn gọn. |
-| [Vận hành Account & Wallet](ACCOUNT_WALLET.md) | Số dư, nạp tiền Zalo, khóa/cảnh cáo và audit log. |
-| [Role, Content & Affiliate](ROLE_CONTENT_AFFILIATE.md) | Ma trận quyền, moderation, affiliate 15%, hoàn tiền và CSV. |
-| [Asset Manifest](../ASSET_MANIFEST.md) | Media backup và checksum. |
-| [Chỉ mục tài liệu](INDEX.md) | Điểm điều hướng toàn bộ Markdown. |
-
----
-
-## Tài liệu tham khảo
-
-[1] [Supabase — API Keys](https://supabase.com/docs/guides/api/api-keys)
-
-[2] [Supabase — Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security)
-
-[3] [Supabase — Password-based Auth](https://supabase.com/docs/guides/auth/passwords)
+[6] [cPanel — How to Install a Node.js Application](https://docs.cpanel.net/knowledge-base/web-services/how-to-install-a-node.js-application/)

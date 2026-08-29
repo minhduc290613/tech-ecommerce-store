@@ -247,3 +247,10 @@
 - [x] Thêm workspace Admin/MKT phát thông báo toàn server hoặc một người cụ thể.
 - [x] Bổ sung trạng thái đọc, phân quyền và kiểm thử responsive cho trung tâm thông báo.
 
+
+## Tài liệu triển khai và sử dụng song ngữ
+
+- [x] Viết lại README tiếng Việt về cấu trúc, tính năng, cài đặt và vận hành NEXORA.
+- [x] Bổ sung hướng dẫn tiếng Anh tương đương, đồng bộ lệnh và cảnh báo bảo mật.
+- [x] Hướng dẫn triển khai local, GitHub, aaPanel, cPanel và hosting Node.js phù hợp.
+- [x] Rà soát liên kết tài liệu, lệnh cài đặt, biến môi trường và kiểm thử build sau cập nhật tài liệu.

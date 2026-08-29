@@ -5,7 +5,8 @@ Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hà
 | Nhu cầu | Tài liệu | Mô tả |
 | --- | --- | --- |
 | Hiểu nhanh và chạy project | [README](../README.md) | Công nghệ, lệnh local, build, storefront và Command Deck. |
-| Cài đặt và vận hành từ A–Z | [Hướng dẫn public GitHub](HUONG_DAN_A_Z.md) | Hướng dẫn đầy đủ từ clone, Supabase, admin, QR/Zalo, role, article, media, build đến checklist production. |
+| Cài đặt và vận hành từ A–Z | [Hướng dẫn tiếng Việt](HUONG_DAN_A_Z.md) | Hướng dẫn đầy đủ từ clone, Supabase, admin, QR/Zalo, role, article, media, local, GitHub, aaPanel, cPanel, static hosting và checklist production. |
+| English deployment and usage | [English Deployment Guide](DEPLOYMENT_GUIDE_EN.md) | English equivalent covering local setup, Supabase, GitHub Pages, static hosting, aaPanel, cPanel, roles, payments, email, notifications and troubleshooting. |
 | Kết nối/cài đặt cơ sở dữ liệu | [Hướng dẫn Supabase](SUPABASE.md) | Schema canonical 25 bảng, RLS, quy trình áp dụng một lần và xác minh. |
 | Vận hành tài khoản và số dư | [Account & Wallet](ACCOUNT_WALLET.md) | Sổ cái, nạp tiền Zalo, quản trị khách, RLS và quy trình đối soát. |
 | Role, nội dung và affiliate | [Role, Content & Affiliate](ROLE_CONTENT_AFFILIATE.md) | Ma trận role, moderation, article reader, referral 15%, hoàn tiền, CSV và mapping sản phẩm–gian hàng. |
@@ -16,7 +17,7 @@ Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hà
 | Xem kết quả kiểm tra UI | [Verification Notes](VERIFICATION_NOTES.md) | Ghi nhận kiểm tra Command Deck trước phát hành. |
 | Quy ước SQL | [Ghi chú schema](LEGACY_MIGRATIONS.md) | Repository chỉ giữ một schema canonical duy nhất. |
 
-> **Lộ trình dành cho người mới:** đọc [Hướng dẫn public GitHub](HUONG_DAN_A_Z.md), áp dụng `supabase-unified.sql`, cấu hình `client/supabase-config.js`, rồi làm theo Thiết lập admin.
+> **Lộ trình dành cho người mới:** đọc [Hướng dẫn tiếng Việt](HUONG_DAN_A_Z.md) hoặc [English Deployment Guide](DEPLOYMENT_GUIDE_EN.md), áp dụng `supabase-unified.sql`, cấu hình `client/supabase-config.js`, chạy test/build, rồi làm theo Thiết lập admin.
 
 ## Quy ước nguồn chuẩn
 
