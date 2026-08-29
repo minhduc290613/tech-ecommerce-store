@@ -15,6 +15,12 @@ describe("Mantis Admin variant", () => {
     expect(html).toContain('href="/admin-en.html"');
     expect(html).toContain('href="/admin.html"');
     expect(html).toContain('href="/admin-mantis.css"');
+    expect(html).toContain('data-mantis-view="products"');
+    expect(html).toContain('data-mantis-view="users"');
+    expect(html).toContain('id="mantisRevenueChart"');
+    expect(html).toContain('id="mantisLatestOrders"');
+    expect(html).toContain('id="mantisLanguageToggle"');
+    expect(html).toContain('id="mantisThemeToggle"');
   });
 
   it("uses the shared public Supabase config and protected authorization RPCs", () => {
@@ -25,6 +31,11 @@ describe("Mantis Admin variant", () => {
     expect(script).toContain("signInWithPassword");
     expect(script).toContain("signOut");
     expect(script).not.toContain("service_role");
+    expect(script).toContain('localStorage.getItem("nexora-mantis-language")');
+    expect(script).toContain('localStorage.getItem("nexora-mantis-theme")');
+    expect(script).toContain('customer_profiles');
+    expect(script).toContain('mantisRevenueChart');
+    expect(script).toContain('mantisLatestOrders');
   });
 
   it("registers the separate page in the production multipage build", () => {

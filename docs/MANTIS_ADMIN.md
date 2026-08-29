@@ -6,7 +6,9 @@ Mantis Admin là giao diện quản trị phụ, độc lập với `admin.html`
 
 Mantis Admin sử dụng cùng Supabase Auth, `client/supabase-config.js`, RPC `can_access_command_deck`, RPC `is_admin`, bảng role hiện có và RLS của NEXORA. Người dùng phải có quyền truy cập Command Deck; trang không cấp quyền, không tạo tài khoản Admin và không chứa service-role key. Nếu tài khoản không đủ quyền, trang sẽ từ chối truy cập.
 
-Dashboard Mantis hiển thị số liệu thực từ Supabase như doanh thu các đơn đã xác nhận, tổng đơn, số sản phẩm và role hiện tại. Các nút thao tác mở lại workspace đầy đủ trong `/admin-en.html`, nơi có CRUD sản phẩm, xử lý đơn, CMS, role, thông báo, sale và các module vận hành. Vì vậy Mantis Admin là dashboard/quick-launch phụ, không thay thế luồng quản trị hiện tại.
+Dashboard Mantis hiển thị số liệu thực từ Supabase như doanh thu các đơn đã xác nhận, tổng đơn, số sản phẩm, số hồ sơ người dùng và role hiện tại. Overview có biểu đồ doanh thu 7 ngày và bảng 6 đơn hàng mới nhất. Sidebar có các mục quản lý sản phẩm và người dùng; đây là các trang tổng quan/điểm mở nhanh, còn CRUD và thao tác tài khoản đầy đủ mở trong `/admin-en.html`. Vì vậy Mantis Admin là dashboard/quick-launch phụ, không thay thế luồng quản trị hiện tại.
+
+Nút chuyển ngôn ngữ trên topbar đổi giữa English và Tiếng Việt, lưu lựa chọn trong trình duyệt. Nút theme đổi giữa Light và Dark Mode, cũng lưu lựa chọn cục bộ; giao diện vẫn tôn trọng `prefers-reduced-motion`. Các số liệu và danh sách đều dùng dữ liệu thật theo phạm vi RLS của tài khoản hiện tại, không tạo dữ liệu mẫu.
 
 ### Cách sử dụng
 
@@ -25,7 +27,9 @@ Mantis Admin is a separate, optional administration surface. It does not replace
 
 The page uses the same Supabase Auth session, `client/supabase-config.js`, `can_access_command_deck` RPC, `is_admin` RPC, existing role model, and NEXORA RLS policies. It does not grant roles, create administrator accounts, or contain a service-role key. Accounts without Command Deck access are denied.
 
-The dashboard reads real Supabase data for confirmed revenue, total orders, product count, and the current role. Editing actions continue in the full `/admin-en.html` workspace, which contains product CRUD, order operations, CMS, roles, notifications, sale campaigns, and other management modules. Mantis Admin is therefore a dashboard and quick-launch surface, not a replacement for the existing Command Deck.
+The dashboard reads real Supabase data for confirmed revenue, total orders, product count, visible customer profiles, and the current role. The Overview includes a seven-day revenue chart and a six-row latest-orders table. The sidebar includes Product management and User management views; full CRUD and account actions continue in `/admin-en.html`, which contains product CRUD, order operations, CMS, roles, notifications, sale campaigns, and other management modules. Mantis Admin is therefore a dashboard and quick-launch surface, not a replacement for the existing Command Deck.
+
+The topbar language control switches between English and Vietnamese and persists the choice in local storage. The theme control switches between Light and Dark Mode and also persists locally; non-essential motion respects `prefers-reduced-motion`. Metrics and lists use real data within the current account's RLS scope and do not create demo data.
 
 ### How to use it
 

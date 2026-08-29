@@ -274,3 +274,12 @@
 - [x] Kết nối shell mới với Auth/Supabase và phân quyền hiện có, không lộ secret.
 - [x] Thêm liên kết điều hướng và tài liệu sử dụng Mantis Admin.
 - [x] Kiểm thử responsive, regression suite, check và build trước checkpoint.
+
+## Mantis Admin dashboard expansion
+
+- [x] Thêm sidebar và view quản lý sản phẩm vào Mantis Admin.
+- [x] Thêm sidebar và view quản lý người dùng với dữ liệu được bảo vệ bởi quyền hiện có.
+- [x] Thêm biểu đồ doanh thu và danh sách đơn hàng mới nhất dùng dữ liệu thật.
+- [x] Thêm chuyển đổi Tiếng Việt/Tiếng Anh và lưu lựa chọn ngôn ngữ.
+- [x] Thêm Dark Mode, lưu lựa chọn theme và hỗ trợ prefers-reduced-motion.
+- [x] Kiểm thử dữ liệu, responsive, regression suite, check và build production.

@@ -75,3 +75,25 @@ a { color: inherit; }
   .status-pill { display: none; }
   .mantis-footer { align-items: flex-start; flex-direction: column; }
 }
+
+body[data-theme="dark"] { --mantis-ink: #e8edf5; --mantis-muted: #a9b4c5; --mantis-surface: #182232; --mantis-subtle: #111927; --mantis-border: #2b3749; --mantis-shadow: 0 12px 28px rgba(0,0,0,.24); background: #0e1622; }
+body[data-theme="dark"] .mantis-topbar, body[data-theme="dark"] .card { color: var(--mantis-ink); background: var(--mantis-surface) !important; border-color: var(--mantis-border) !important; }
+body[data-theme="dark"] .text-secondary { color: var(--mantis-muted) !important; }
+body[data-theme="dark"] .table { --bs-table-color: var(--mantis-ink); --bs-table-border-color: var(--mantis-border); }
+body[data-theme="dark"] .launch-card { border-color: var(--mantis-border); }
+body[data-theme="dark"] .launch-card:hover, body[data-theme="dark"] .launch-card:focus-visible { background: rgba(70,128,255,.12); }
+body[data-theme="dark"] .btn-outline-secondary { color: #c9d4e5; border-color: #4b5a70; }
+body[data-theme="dark"] .btn-light { color: #e8edf5; background: #263449; border-color: #36455b; }
+body[data-theme="dark"] .mantis-footer { border-color: var(--mantis-border) !important; }
+
+.mantis-chart { min-height: 170px; display: flex; align-items: flex-end; gap: .7rem; padding: 1.25rem .25rem .25rem; margin-top: 1rem; border-bottom: 1px solid var(--mantis-border); background: repeating-linear-gradient(to top, transparent 0, transparent 41px, rgba(105,117,134,.1) 42px); }
+.revenue-column { height: 150px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .55rem; min-width: 0; }
+.revenue-column > span { max-width: 100%; overflow: hidden; color: var(--mantis-muted); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+.revenue-bar { width: min(100%, 28px); min-height: 4px; border-radius: .45rem .45rem .2rem .2rem; background: linear-gradient(180deg, #5b9bff, var(--mantis-primary)); box-shadow: 0 5px 12px rgba(70,128,255,.18); transition: height .3s cubic-bezier(.23,1,.32,1), opacity .18s ease; }
+.revenue-bar:hover { opacity: .75; }
+.badge.status-pending_payment { color: #9a6700; background: #fff4cc; }
+.badge.status-paid, .badge.status-processing, .badge.status-completed { color: #13795b; background: #d8f5e8; }
+.badge.status-cancelled { color: #a61e2a; background: #ffe0e3; }
+body[data-theme="dark"] .badge.status-pending_payment { color: #ffd875; background: rgba(255,196,64,.16); }
+body[data-theme="dark"] .badge.status-paid, body[data-theme="dark"] .badge.status-processing, body[data-theme="dark"] .badge.status-completed { color: #78e2bb; background: rgba(44,168,127,.16); }
+body[data-theme="dark"] .badge.status-cancelled { color: #ff9aa4; background: rgba(220,53,69,.16); }
