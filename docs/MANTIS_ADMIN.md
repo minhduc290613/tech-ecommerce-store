@@ -1,0 +1,39 @@
+# NEXORA Mantis Admin Variant
+
+## Tiếng Việt
+
+Mantis Admin là giao diện quản trị phụ, độc lập với `admin.html` và `admin-en.html`. Mở giao diện tại `/admin-mantis.html`; bản online là `https://nexorashop-gpjdasbm.manus.space/admin-mantis.html`. Giao diện này dùng bố cục sidebar, topbar, card và responsive drawer theo phong cách Mantis Bootstrap, nhưng được viết thành entrypoint riêng trong NEXORA.
+
+Mantis Admin sử dụng cùng Supabase Auth, `client/supabase-config.js`, RPC `can_access_command_deck`, RPC `is_admin`, bảng role hiện có và RLS của NEXORA. Người dùng phải có quyền truy cập Command Deck; trang không cấp quyền, không tạo tài khoản Admin và không chứa service-role key. Nếu tài khoản không đủ quyền, trang sẽ từ chối truy cập.
+
+Dashboard Mantis hiển thị số liệu thực từ Supabase như doanh thu các đơn đã xác nhận, tổng đơn, số sản phẩm và role hiện tại. Các nút thao tác mở lại workspace đầy đủ trong `/admin-en.html`, nơi có CRUD sản phẩm, xử lý đơn, CMS, role, thông báo, sale và các module vận hành. Vì vậy Mantis Admin là dashboard/quick-launch phụ, không thay thế luồng quản trị hiện tại.
+
+### Cách sử dụng
+
+1. Đăng nhập bằng tài khoản đã được cấp role phù hợp.
+2. Dùng sidebar để xem Overview, Catalog snapshot, Order operations hoặc Access & links.
+3. Chọn Full English Admin để thực hiện chỉnh sửa dữ liệu thật.
+4. Dùng Sign out khi kết thúc phiên, đặc biệt trên máy dùng chung.
+
+### License và tài sản
+
+Repository tham khảo là [Mantis Free Bootstrap Admin Template](https://github.com/codedthemes/mantis-free-bootstrap-admin-template), được phát hành theo MIT License. NEXORA chỉ sử dụng pattern bố cục và Bootstrap CDN trong variant này; không đưa asset build của repository vào storefront. Thông báo license được giữ trong `client/admin-mantis.html` và footer của trang.
+
+## English
+
+Mantis Admin is a separate, optional administration surface. It does not replace `admin.html` or `admin-en.html`. Open it at `/admin-mantis.html`; the live URL is `https://nexorashop-gpjdasbm.manus.space/admin-mantis.html`. The page follows the Mantis Bootstrap layout pattern with a sidebar, topbar, cards, and responsive navigation drawer, while remaining a standalone NEXORA entrypoint.
+
+The page uses the same Supabase Auth session, `client/supabase-config.js`, `can_access_command_deck` RPC, `is_admin` RPC, existing role model, and NEXORA RLS policies. It does not grant roles, create administrator accounts, or contain a service-role key. Accounts without Command Deck access are denied.
+
+The dashboard reads real Supabase data for confirmed revenue, total orders, product count, and the current role. Editing actions continue in the full `/admin-en.html` workspace, which contains product CRUD, order operations, CMS, roles, notifications, sale campaigns, and other management modules. Mantis Admin is therefore a dashboard and quick-launch surface, not a replacement for the existing Command Deck.
+
+### How to use it
+
+1. Sign in with an account that has an appropriate NEXORA role.
+2. Use the sidebar to open Overview, Catalog snapshot, Order operations, or Access & links.
+3. Select Full English Admin when you need to edit real data.
+4. Select Sign out when finished, especially on a shared computer.
+
+### License and assets
+
+The reference repository is [Mantis Free Bootstrap Admin Template](https://github.com/codedthemes/mantis-free-bootstrap-admin-template), released under the MIT License. NEXORA uses the layout pattern and Bootstrap CDN for this variant; it does not copy the repository build assets into the storefront. The license notice is retained in `client/admin-mantis.html` and the page footer.

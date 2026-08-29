@@ -1,0 +1,144 @@
+<!doctype html>
+<!--
+  NEXORA Mantis Admin Variant
+  The shell follows the Mantis Bootstrap Free Admin Template layout patterns.
+  Mantis is MIT licensed: https://github.com/codedthemes/mantis-free-bootstrap-admin-template
+  This variant is intentionally separate from admin.html and admin-en.html.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#f8f9fa" />
+    <title>NEXORA Mantis Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="icon" type="image/png" href="/manus-storage/nexora-logo_3c03446b.png" />
+    <link rel="stylesheet" href="/admin-mantis.css" />
+  </head>
+  <body>
+    <div class="mantis-gate" id="mantisGate">
+      <div class="gate-orb gate-orb-one"></div>
+      <div class="gate-orb gate-orb-two"></div>
+      <div class="gate-card card border-0 shadow-lg">
+        <a class="gate-logo" href="/" aria-label="Back to NEXORA Store">
+          <img src="/manus-storage/nexora-logo_3c03446b.png" alt="" />
+          <span>NEX<span>O</span>RA</span>
+        </a>
+        <span class="badge text-bg-primary-subtle text-primary-emphasis mb-3">MANTIS ADMIN VARIANT</span>
+        <h1 class="h3 fw-bold mb-2">Welcome back</h1>
+        <p class="text-secondary mb-4" id="mantisGateMessage">Sign in with an authorized NEXORA account to continue.</p>
+        <form id="mantisLoginForm" novalidate>
+          <div class="mb-3">
+            <label class="form-label" for="mantisEmail">Email</label>
+            <input class="form-control form-control-lg" id="mantisEmail" type="email" autocomplete="email" placeholder="admin@yourdomain.com" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="mantisPassword">Password</label>
+            <input class="form-control form-control-lg" id="mantisPassword" type="password" autocomplete="current-password" placeholder="Your password" required />
+          </div>
+          <button class="btn btn-primary btn-lg w-100" id="mantisLoginButton" type="submit">
+            <span>Sign in to Command Deck</span><i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
+          </button>
+        </form>
+        <div class="small text-secondary mt-4 d-flex gap-2 align-items-start">
+          <i class="bi bi-shield-check text-primary" aria-hidden="true"></i>
+          <span>Access is checked by Supabase Auth, RLS, role and capability rules. This page does not create or expose credentials.</span>
+        </div>
+        <a class="small text-decoration-none mt-4 d-inline-flex align-items-center gap-2" href="/admin-en.html">
+          <i class="bi bi-grid-1x2" aria-hidden="true"></i> Open the full English Command Deck
+        </a>
+      </div>
+    </div>
+
+    <div class="mantis-app d-none" id="mantisApp">
+      <div class="mantis-backdrop" id="mantisBackdrop"></div>
+      <aside class="mantis-sidebar" id="mantisSidebar" aria-label="Mantis admin navigation">
+        <div class="sidebar-brand">
+          <a href="/" class="d-flex align-items-center gap-2 text-decoration-none">
+            <img src="/manus-storage/nexora-logo_3c03446b.png" alt="" />
+            <span>NEX<span>O</span>RA</span>
+          </a>
+          <button class="btn btn-sm btn-light d-lg-none" id="closeMantisSidebar" type="button" aria-label="Close navigation"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="sidebar-section-label">NAVIGATION</div>
+        <nav class="nav flex-column mantis-nav" id="mantisNav">
+          <button class="nav-link active" type="button" data-mantis-view="overview"><i class="bi bi-grid-1x2-fill"></i><span>Overview</span></button>
+          <button class="nav-link" type="button" data-mantis-view="catalog"><i class="bi bi-box-seam"></i><span>Catalog snapshot</span></button>
+          <button class="nav-link" type="button" data-mantis-view="operations"><i class="bi bi-receipt"></i><span>Order operations</span></button>
+          <button class="nav-link" type="button" data-mantis-view="access"><i class="bi bi-shield-lock"></i><span>Access & links</span></button>
+        </nav>
+        <div class="sidebar-footer mt-auto">
+          <div class="operator-card d-flex align-items-center gap-2">
+            <span class="operator-avatar" id="mantisOperatorInitial">A</span>
+            <div class="text-truncate"><strong class="d-block text-truncate" id="mantisOperatorName">Operator</strong><small id="mantisOperatorRole">AUTHORIZED</small></div>
+          </div>
+          <button class="btn btn-light w-100 text-start mt-3" id="mantisSignOut" type="button"><i class="bi bi-box-arrow-right me-2"></i>Sign out</button>
+        </div>
+      </aside>
+
+      <main class="mantis-main">
+        <header class="mantis-topbar navbar navbar-expand bg-white border-bottom">
+          <div class="container-fluid px-3 px-lg-4">
+            <button class="btn btn-light d-lg-none me-2" id="openMantisSidebar" type="button" aria-label="Open navigation"><i class="bi bi-list"></i></button>
+            <div>
+              <span class="text-uppercase small text-primary fw-semibold letter-spacing-1">NEXORA / MANTIS</span>
+              <h1 class="h5 mb-0" id="mantisViewTitle">Operations overview</h1>
+            </div>
+            <div class="ms-auto d-flex align-items-center gap-2">
+              <span class="status-pill"><span class="status-dot"></span> Supabase synced</span>
+              <a class="btn btn-outline-secondary btn-sm" href="/" title="Open storefront"><i class="bi bi-box-arrow-up-right"></i><span class="d-none d-md-inline ms-1">Storefront</span></a>
+            </div>
+          </div>
+        </header>
+
+        <div class="container-fluid p-3 p-lg-4">
+          <div class="alert alert-primary-subtle border-0 d-flex align-items-start gap-2 mb-4" role="status">
+            <i class="bi bi-info-circle-fill mt-1"></i>
+            <div><strong>Separate admin interface.</strong> This Mantis variant is a dashboard shell and quick-launch surface. Full editing workspaces remain available in the original Command Deck.</div>
+          </div>
+
+          <section class="mantis-view active" data-mantis-panel="overview">
+            <div class="row g-3 mb-4">
+              <div class="col-sm-6 col-xl-3"><article class="metric-card card border-0 h-100"><div class="card-body"><div class="metric-icon bg-primary-subtle text-primary"><i class="bi bi-currency-dollar"></i></div><p class="text-secondary mb-1 mt-3">Confirmed revenue</p><h2 class="h4 mb-0" id="mantisRevenue">—</h2><small class="text-secondary">Paid, processing and completed orders</small></div></article></div>
+              <div class="col-sm-6 col-xl-3"><article class="metric-card card border-0 h-100"><div class="card-body"><div class="metric-icon bg-success-subtle text-success"><i class="bi bi-receipt"></i></div><p class="text-secondary mb-1 mt-3">Total orders</p><h2 class="h4 mb-0" id="mantisOrders">—</h2><small class="text-secondary" id="mantisPending">Loading payment status...</small></div></article></div>
+              <div class="col-sm-6 col-xl-3"><article class="metric-card card border-0 h-100"><div class="card-body"><div class="metric-icon bg-warning-subtle text-warning"><i class="bi bi-box-seam"></i></div><p class="text-secondary mb-1 mt-3">Catalog products</p><h2 class="h4 mb-0" id="mantisProducts">—</h2><small class="text-secondary">Rows visible to the authorized operator</small></div></article></div>
+              <div class="col-sm-6 col-xl-3"><article class="metric-card card border-0 h-100"><div class="card-body"><div class="metric-icon bg-info-subtle text-info"><i class="bi bi-person-check"></i></div><p class="text-secondary mb-1 mt-3">Current access</p><h2 class="h4 mb-0 text-capitalize" id="mantisRoleMetric">—</h2><small class="text-secondary">Supabase role and capability check</small></div></article></div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-xl-8"><article class="card border-0 h-100"><div class="card-body"><div class="d-flex justify-content-between align-items-start gap-3"><div><h2 class="h5 mb-1">Command center</h2><p class="text-secondary mb-0">Launch the appropriate NEXORA workspace without changing the existing admin route.</p></div><span class="badge rounded-pill text-bg-success-subtle text-success-emphasis">LIVE</span></div><div class="row g-3 mt-2"><div class="col-md-4"><a class="launch-card" href="/admin-en.html"><i class="bi bi-sliders2-vertical"></i><strong>Full English Admin</strong><small>CMS, products, orders, roles and notifications.</small></a></div><div class="col-md-4"><a class="launch-card" href="/admin.html"><i class="bi bi-translate"></i><strong>Vietnamese Admin</strong><small>Original Command Deck with all existing modules.</small></a></div><div class="col-md-4"><a class="launch-card" href="/orders.html"><i class="bi bi-truck"></i><strong>Customer orders</strong><small>Review the customer-facing order experience.</small></a></div></div></div></article></div>
+              <div class="col-xl-4"><article class="card border-0 h-100"><div class="card-body"><h2 class="h5 mb-3">System status</h2><div class="status-row"><span><span class="status-dot"></span>Auth session</span><strong class="text-success" id="mantisAuthStatus">Verified</strong></div><div class="status-row"><span><span class="status-dot"></span>Database</span><strong class="text-success" id="mantisDbStatus">Connected</strong></div><div class="status-row"><span><span class="status-dot"></span>Permissions</span><strong class="text-success" id="mantisPermissionStatus">Checked</strong></div><hr /><p class="small text-secondary mb-0" id="mantisLastSync">Last sync: —</p></div></article></div>
+            </div>
+          </section>
+
+          <section class="mantis-view" data-mantis-panel="catalog" hidden>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div><h2 class="h4 mb-1">Catalog snapshot</h2><p class="text-secondary mb-0">A read-only health view for the current catalog.</p></div><a class="btn btn-primary" href="/admin-en.html"><i class="bi bi-pencil-square me-2"></i>Open product manager</a></div>
+            <div class="row g-3"><div class="col-md-4"><article class="card border-0"><div class="card-body"><span class="text-secondary">Catalog rows</span><strong class="display-6 d-block mt-2" id="mantisCatalogRows">—</strong></div></article></div><div class="col-md-4"><article class="card border-0"><div class="card-body"><span class="text-secondary">Data source</span><strong class="d-block mt-3">Supabase PostgreSQL</strong><small class="text-secondary">RLS-protected query</small></div></article></div><div class="col-md-4"><article class="card border-0"><div class="card-body"><span class="text-secondary">Editing mode</span><strong class="d-block mt-3">Full Command Deck</strong><small class="text-secondary">Use the button above to edit safely.</small></div></article></div></div>
+          </section>
+
+          <section class="mantis-view" data-mantis-panel="operations" hidden>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div><h2 class="h4 mb-1">Order operations</h2><p class="text-secondary mb-0">Open the existing operational workspace for payment and fulfillment actions.</p></div><a class="btn btn-primary" href="/admin-en.html"><i class="bi bi-receipt me-2"></i>Open order manager</a></div>
+            <div class="card border-0"><div class="card-body"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Operational area</th><th>Available in NEXORA</th><th>Open</th></tr></thead><tbody><tr><td><i class="bi bi-credit-card text-primary me-2"></i>Payment confirmation</td><td>Bank transfer, balance and manual confirmation workflows.</td><td><a href="/admin-en.html" class="btn btn-sm btn-outline-primary">Manage</a></td></tr><tr><td><i class="bi bi-truck text-primary me-2"></i>Fulfillment</td><td>Carrier, tracking code, delivery status and shipment notes.</td><td><a href="/admin-en.html" class="btn btn-sm btn-outline-primary">Manage</a></td></tr><tr><td><i class="bi bi-megaphone text-primary me-2"></i>Notifications</td><td>Customer notification center and Admin/MKT broadcasts.</td><td><a href="/admin-en.html" class="btn btn-sm btn-outline-primary">Manage</a></td></tr></tbody></table></div></div></div>
+          </section>
+
+          <section class="mantis-view" data-mantis-panel="access" hidden>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div><h2 class="h4 mb-1">Access & links</h2><p class="text-secondary mb-0">Use the same account and permission model across all NEXORA admin surfaces.</p></div><span class="badge text-bg-success-subtle text-success-emphasis" id="mantisCapabilityBadge">Capability check passed</span></div>
+            <div class="row g-3"><div class="col-lg-7"><article class="card border-0"><div class="card-body"><h3 class="h5">Authorized operator</h3><dl class="row mb-0 mt-3"><dt class="col-sm-4 text-secondary">Email</dt><dd class="col-sm-8" id="mantisAccessEmail">—</dd><dt class="col-sm-4 text-secondary">Role</dt><dd class="col-sm-8 text-capitalize" id="mantisAccessRole">—</dd><dt class="col-sm-4 text-secondary">Admin access</dt><dd class="col-sm-8" id="mantisAccessPermission">Verified by RPC</dd></dl></div></article></div><div class="col-lg-5"><article class="card border-0"><div class="card-body"><h3 class="h5">Quick links</h3><div class="d-grid gap-2 mt-3"><a class="btn btn-outline-primary text-start" href="/admin-en.html"><i class="bi bi-grid-1x2 me-2"></i>Full English Command Deck</a><a class="btn btn-outline-secondary text-start" href="/admin.html"><i class="bi bi-translate me-2"></i>Vietnamese Command Deck</a><a class="btn btn-outline-secondary text-start" href="/info.html?page=contact"><i class="bi bi-life-preserver me-2"></i>Support center</a></div></div></article></div></div>
+          </section>
+
+          <footer class="mantis-footer small text-secondary mt-4 pt-3 border-top d-flex flex-wrap justify-content-between gap-2"><span>NEXORA Mantis Admin Variant</span><span>UI pattern adapted from Mantis Bootstrap Free Admin Template · MIT License</span></footer>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="mantisToastRegion" aria-live="polite"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/admin-mantis.js"></script>
+  </body>
+</html>

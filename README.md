@@ -9,7 +9,7 @@ NEXORA là nền tảng thương mại điện tử công nghệ dark mode gồm
 | Tiếng Việt | [Hướng dẫn triển khai và sử dụng A–Z](docs/HUONG_DAN_A_Z.md) | Cài local, kết nối Supabase, GitHub, static hosting, aaPanel Ubuntu, cPanel, vận hành, thanh toán, email, thông báo và xử lý lỗi. |
 | English | [README_EN](README_EN.md) · [Deployment and User Guide](docs/DEPLOYMENT_GUIDE_EN.md) | README và tài liệu triển khai đầy đủ bằng tiếng Anh. |
 | Chỉ mục | [Tài liệu dự án](docs/INDEX.md) | Các tài liệu role, wallet, Supabase, thanh toán tự động, asset và verification. |
-| Admin | [Thiết lập quyền Admin](ADMIN_SETUP.md) · [Command Deck English](/admin-en.html) | Cách cấp quyền Admin an toàn và truy cập giao diện quản trị tiếng Anh. |
+| Admin | [Thiết lập quyền Admin](ADMIN_SETUP.md) · [Command Deck English](/admin-en.html) · [Mantis Admin](docs/MANTIS_ADMIN.md) | Cấp quyền an toàn, Admin tiếng Anh và dashboard Mantis riêng. |
 
 ## Tính năng nổi bật
 
@@ -35,7 +35,7 @@ pnpm install
 pnpm dev
 ```
 
-Mở `http://localhost:3000/`. Các entrypoint chính là `/admin.html` (Vietnamese Admin), `/admin-en.html` (English Admin), `/orders.html`, `/affiliate.html`, `/info.html` và `/article.html`. Trước khi phát hành, chạy:
+Mở `http://localhost:3000/`. Các entrypoint chính là `/admin.html` (Vietnamese Admin), `/admin-en.html` (English Admin), `/admin-mantis.html` (Mantis Admin variant), `/orders.html`, `/affiliate.html`, `/info.html` và `/article.html`. Trước khi phát hành, chạy:
 
 ```bash
 pnpm test
@@ -67,7 +67,8 @@ Chỉ đặt Project URL và publishable/anon key trong `client/supabase-config.
 client/
 ├── index.html, app.js, style.css       # storefront
 ├── admin.html, admin-en.html            # Command Deck Vietnamese/English
-├── admin.js, admin-i18n.js              # shared admin logic and English presentation layer
+├── admin-mantis.html                     # optional Mantis-style Admin variant
+├── admin.js, admin-i18n.js, admin-mantis.js # admin runtimes
 ├── orders.html, orders.js              # đơn hàng khách
 ├── affiliate.html, affiliate.js        # affiliate dashboard
 ├── info.html, article.html             # nội dung public

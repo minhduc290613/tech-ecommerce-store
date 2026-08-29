@@ -266,3 +266,11 @@
 
 - [x] Thêm liên kết English Admin vào mục Liên kết nhanh ở footer storefront.
 - [x] Kiểm tra link hoạt động trên desktop/mobile và chạy regression/build.
+
+## Mantis Admin variant
+
+- [x] Nhập và rà soát Mantis Bootstrap template, license và tài sản cần thiết.
+- [x] Tạo Admin Page Mantis riêng tại route mới, không thay thế admin.html/admin-en.html.
+- [x] Kết nối shell mới với Auth/Supabase và phân quyền hiện có, không lộ secret.
+- [x] Thêm liên kết điều hướng và tài liệu sử dụng Mantis Admin.
+- [x] Kiểm thử responsive, regression suite, check và build trước checkpoint.

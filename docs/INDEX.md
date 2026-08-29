@@ -11,6 +11,7 @@ Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hà
 | Vận hành tài khoản và số dư | [Account & Wallet](ACCOUNT_WALLET.md) | Sổ cái, nạp tiền Zalo, quản trị khách, RLS và quy trình đối soát. |
 | Role, nội dung và affiliate | [Role, Content & Affiliate](ROLE_CONTENT_AFFILIATE.md) | Ma trận role, moderation, article reader, referral 15%, hoàn tiền, CSV và mapping sản phẩm–gian hàng. |
 | Cấp quyền Command Deck | [Thiết lập admin](../ADMIN_SETUP.md) · [English Admin](/admin-en.html) | Tạo Supabase Auth user, cấp quyền an toàn và mở Command Deck bằng tiếng Anh. |
+| Mantis Admin variant | [Hướng dẫn Mantis](MANTIS_ADMIN.md) · [Mantis Admin](/admin-mantis.html) | Dashboard Bootstrap/Mantis riêng, dùng chung Auth/Supabase và không thay thế Command Deck. |
 | Kiểm kê media GitHub | [Asset Manifest](../ASSET_MANIFEST.md) | Nguồn lưu asset, đường dẫn nhánh `assets` và checksum. |
 | Xem định hướng thiết kế | [Design brief](../ideas.md) | Hệ thống Circuit Atelier và những quyết định giao diện. |
 | Theo dõi việc còn lại | [Checklist dự án](../todo.md) | Các hạng mục đã hoàn tất và việc cần làm tiếp theo. |

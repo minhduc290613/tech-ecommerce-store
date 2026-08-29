@@ -20,13 +20,14 @@ NEXORA is a dark-mode technology e-commerce platform with a public storefront, c
 | Affiliate Dashboard | `/affiliate.html` | Personal referral clicks, qualifying orders, and commissions. |
 | Information | `/info.html` | About, FAQ, terms, privacy, delivery, returns, and contact pages. |
 | Command Deck | `/admin.html` | Vietnamese administration interface. |
-| Command Deck English | `/admin-en.html` | English administration interface using the same Auth, Supabase, RLS, role, and management logic. |
+| Command Deck English | `/admin-en.html` | Full English administration interface using the same Auth, Supabase, RLS, role, and management logic. |
+| Mantis Admin variant | `/admin-mantis.html` | Optional Bootstrap/Mantis-style dashboard and quick-launch surface; full editing remains in the Command Deck. |
 
 ## Main capabilities
 
 The platform supports product catalog management, pricing and sale campaigns, inventory and product galleries, customer accounts, multiple shipping addresses, wallet and ledger history, manual QR/ZaloPay payment confirmation, logistics tracking, cancellation and return workflows, article publishing, review/comment moderation, affiliate referrals, email templates, customer notifications, platform broadcasts, CSV reports, and role-based administration.
 
-The English Command Deck is a presentation layer over the same secure application logic. Admins and authorized staff use the same credentials and permissions at `/admin-en.html`; changing the language does not bypass RLS, capability checks, payment confirmation rules, or audit behavior.
+The English Command Deck is a presentation layer over the same secure application logic. The optional Mantis Admin variant is documented in [docs/MANTIS_ADMIN.md](docs/MANTIS_ADMIN.md) and provides a separate dashboard shell without replacing the full Command Deck. Admins and authorized staff use the same credentials and permissions at `/admin-en.html`; changing the language does not bypass RLS, capability checks, payment confirmation rules, or audit behavior.
 
 ## Quick start
 
