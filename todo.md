@@ -284,17 +284,23 @@
 - [x] Thêm Dark Mode, lưu lựa chọn theme và hỗ trợ prefers-reduced-motion.
 - [x] Kiểm thử dữ liệu, responsive, regression suite, check và build production.
 
-## Mantis fixes, currencies, Stripe and Argon variant
+## Mantis fixes, currencies and Argon variant
 
 - [x] Sửa icon/header và lỗi trạng thái ẩn/hiện trong Mantis Admin.
 - [x] Bổ sung tiền tệ quốc tế và cấu hình tiền tệ trong Admin.
-- [ ] Thiết lập Stripe integration an toàn theo cấu hình dự án. (Chờ người dùng nhập Stripe keys trong Project Settings → Payment.)
+- [x] Không tích hợp Stripe theo yêu cầu người dùng; giữ các phương thức thanh toán hiện tại.
 - [x] Tạo Argon Dashboard Admin variant phụ tại route riêng, không thay thế các Admin hiện có.
 - [x] Kiểm tra giao diện theo ảnh tham chiếu, responsive và regression/build.
 
 ## Currency settings
 
-- [ ] Bổ sung danh sách tiền tệ phổ biến và bật/tắt từng loại trong Admin.
-- [ ] Cho phép chọn tiền tệ mặc định và chỉnh tỷ giá với validation rõ ràng.
-- [ ] Lưu lựa chọn hiển thị an toàn, giữ số tiền thanh toán gốc không bị quy đổi nhầm.
-- [ ] Viết test và kiểm tra responsive/build cho Currency Settings.
+- [x] Bổ sung danh sách tiền tệ phổ biến và bật/tắt từng loại trong Admin.
+- [x] Cho phép chọn tiền tệ mặc định và chỉnh tỷ giá với validation rõ ràng.
+- [x] Lưu lựa chọn hiển thị an toàn, giữ số tiền thanh toán gốc không bị quy đổi nhầm.
+- [x] Viết test và kiểm tra responsive/build cho Currency Settings.
+
+## Remove Stripe
+
+- [x] Xóa các dấu vết Stripe chưa kích hoạt khỏi TODO, README và tài liệu vận hành.
+- [x] Xác minh package/config/route hiện tại không có Stripe và các phương thức thanh toán cũ vẫn giữ nguyên.
+- [x] Chạy regression suite, check và build sau khi dọn tài liệu.
