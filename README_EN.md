@@ -107,3 +107,7 @@ package.json                            # development and release commands
 [4] [aaPanel Node.js Project](https://www.aapanel.com/docs/Function/Node.html)
 
 [5] [cPanel Application Manager](https://docs.cpanel.net/cpanel/software/application-manager/)
+
+## License
+
+This project is licensed under the [MIT](LICENSE) license.
