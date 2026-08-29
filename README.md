@@ -10,6 +10,7 @@ NEXORA là nền tảng thương mại điện tử công nghệ dark mode gồm
 | English | [README_EN](README_EN.md) · [Deployment and User Guide](docs/DEPLOYMENT_GUIDE_EN.md) | README và tài liệu triển khai đầy đủ bằng tiếng Anh. |
 | Chỉ mục | [Tài liệu dự án](docs/INDEX.md) | Các tài liệu role, wallet, Supabase, thanh toán tự động, asset và verification. |
 | Admin | [Thiết lập quyền Admin](ADMIN_SETUP.md) · [Command Deck English](/admin-en.html) · [Mantis Admin](docs/MANTIS_ADMIN.md) | Cấp quyền an toàn, Admin tiếng Anh và dashboard Mantis riêng. |
+| Lỗi | [Fix lỗi](docs/Error.md) | Fix lỗi nguy hiểm nên đọc |
 
 ## Tính năng nổi bật
 
