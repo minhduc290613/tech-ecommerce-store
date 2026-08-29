@@ -304,3 +304,10 @@
 - [x] Xóa các dấu vết Stripe chưa kích hoạt khỏi TODO, README và tài liệu vận hành.
 - [x] Xác minh package/config/route hiện tại không có Stripe và các phương thức thanh toán cũ vẫn giữ nguyên.
 - [x] Chạy regression suite, check và build sau khi dọn tài liệu.
+
+## Bilingual SMTP guide
+
+- [x] Rà soát cấu hình SMTP/API email, secret names, templates và luồng reset password hiện có.
+- [x] Viết một file Markdown song ngữ Anh–Việt hướng dẫn SMTP/API email từ A–Z.
+- [x] Bổ sung DNS/domain, Admin settings, testing, security và troubleshooting checklist.
+- [x] Cập nhật docs index, kiểm tra liên kết và lưu tài liệu vào checkpoint.

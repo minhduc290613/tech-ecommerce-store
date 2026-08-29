@@ -7,6 +7,7 @@ Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hà
 | Hiểu nhanh và chạy project | [README tiếng Việt](../README.md) · [README English](../README_EN.md) | Công nghệ, lệnh local, build, storefront và Command Deck. |
 | Cài đặt và vận hành từ A–Z | [Hướng dẫn tiếng Việt](HUONG_DAN_A_Z.md) | Hướng dẫn đầy đủ từ clone, Supabase, admin, QR/Zalo, role, article, media, local, GitHub, aaPanel, cPanel, static hosting và checklist production. |
 | English deployment and usage | [English Deployment Guide](DEPLOYMENT_GUIDE_EN.md) | English equivalent covering local setup, Supabase, GitHub Pages, static hosting, aaPanel, cPanel, roles, payments, email, notifications and troubleshooting. |
+| SMTP/API email song ngữ | [SMTP Setup Bilingual](SMTP_SETUP_BILINGUAL.md) | Cài đặt SMTP hoặc Resend API, domain/DNS, biến môi trường, Admin templates, reset password, local, aaPanel, cPanel, bảo mật và xử lý lỗi bằng tiếng Việt và tiếng Anh. |
 | Kết nối/cài đặt cơ sở dữ liệu | [Hướng dẫn Supabase](SUPABASE.md) | Schema canonical 25 bảng, RLS, quy trình áp dụng một lần và xác minh. |
 | Vận hành tài khoản và số dư | [Account & Wallet](ACCOUNT_WALLET.md) | Sổ cái, nạp tiền Zalo, quản trị khách, RLS và quy trình đối soát. |
 | Role, nội dung và affiliate | [Role, Content & Affiliate](ROLE_CONTENT_AFFILIATE.md) | Ma trận role, moderation, article reader, referral 15%, hoàn tiền, CSV và mapping sản phẩm–gian hàng. |
