@@ -79,7 +79,12 @@
           <a class="profile-button orders-shortcut" href="/orders.html" aria-label="Xem đơn hàng của tôi">
             <i class="fa-solid fa-box-open" aria-hidden="true"></i>
             <span>Đơn hàng</span>
+            <span class="header-notification-badge" id="ordersNotificationBadge" hidden>0</span>
           </a>
+          <button class="icon-button notification-button" id="notificationButton" type="button" aria-label="Mở thông báo" aria-haspopup="dialog" aria-expanded="false">
+            <i class="fa-regular fa-bell" aria-hidden="true"></i>
+            <span class="header-notification-badge" id="notificationBadge" hidden>0</span>
+          </button>
           <button class="profile-button" id="authButton" type="button" aria-haspopup="dialog">
             <i class="fa-regular fa-user" aria-hidden="true"></i>
             <span>Đăng nhập</span>
@@ -335,6 +340,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="/app.js"></script>
+    <script type="module" src="/notification-center.js"></script>
     <script type="module" src="/account-center.js"></script>
     <script type="module" src="/community-features.js"></script>
   </body>

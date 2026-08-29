@@ -2279,3 +2279,96 @@ $$;
 
 revoke all on function public.enqueue_order_notification(uuid,uuid,uuid,text,text,text,text), public.admin_update_transactional_email_settings(text,boolean), public.admin_update_transactional_email_template(text,boolean,text,text,text,text,text,text) from public, anon;
 grant execute on function public.admin_update_transactional_email_settings(text,boolean), public.admin_update_transactional_email_template(text,boolean,text,text,text,text,text,text) to authenticated;
+
+-- 41. Thông báo vận hành: broadcast toàn server hoặc gửi một tài khoản cụ thể
+create table if not exists public.platform_notifications (
+  id uuid primary key default gen_random_uuid(),
+  audience_type text not null check (audience_type in ('all','user')),
+  target_user_id uuid references auth.users(id) on delete restrict,
+  title text not null check (length(trim(title)) between 1 and 180),
+  body text not null check (length(trim(body)) between 1 and 2000),
+  cta_label text not null default '',
+  cta_url text not null default '',
+  created_by uuid not null references auth.users(id) on delete restrict,
+  created_at timestamptz not null default now(),
+  constraint platform_notifications_target_check check ((audience_type = 'all' and target_user_id is null) or (audience_type = 'user' and target_user_id is not null))
+);
+create table if not exists public.platform_notification_reads (
+  notification_id uuid not null references public.platform_notifications(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  read_at timestamptz not null default now(),
+  primary key (notification_id, user_id)
+);
+create index if not exists platform_notifications_created_idx on public.platform_notifications(created_at desc);
+create index if not exists platform_notifications_target_idx on public.platform_notifications(target_user_id, created_at desc);
+
+alter table public.platform_notifications enable row level security;
+alter table public.platform_notification_reads enable row level security;
+revoke all on table public.platform_notifications, public.platform_notification_reads from anon, authenticated;
+drop policy if exists platform_notification_reads_owner_all on public.platform_notification_reads;
+create policy platform_notification_reads_owner_all on public.platform_notification_reads for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+create or replace function public.get_my_notifications(p_limit integer default 50)
+returns table (id uuid, source text, event_type text, title text, body text, cta_label text, cta_url text, created_at timestamptz, is_read boolean)
+language sql stable security definer set search_path = public, auth
+as $$
+  select id, 'customer'::text, event_type, title, body, 'Xem đơn hàng'::text, '/orders.html'::text, created_at, is_read
+  from public.customer_notifications
+  where user_id = auth.uid()
+  union all
+  select n.id, 'platform'::text, 'platform'::text, n.title, n.body, n.cta_label, n.cta_url, n.created_at, (r.notification_id is not null)
+  from public.platform_notifications n
+  left join public.platform_notification_reads r on r.notification_id = n.id and r.user_id = auth.uid()
+  where n.audience_type = 'all' or n.target_user_id = auth.uid()
+  order by created_at desc
+  limit greatest(1, least(coalesce(p_limit, 50), 100));
+$$;
+
+create or replace function public.mark_platform_notification_read(p_notification_id uuid)
+returns void language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  if not exists (select 1 from public.platform_notifications where id = p_notification_id and (audience_type = 'all' or target_user_id = auth.uid())) then raise exception 'Thông báo không tồn tại hoặc không thuộc tài khoản.'; end if;
+  insert into public.platform_notification_reads(notification_id, user_id) values (p_notification_id, auth.uid()) on conflict (notification_id, user_id) do update set read_at = now();
+end;
+$$;
+
+create or replace function public.mark_customer_notification_read(p_notification_id uuid)
+returns void language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  update public.customer_notifications set is_read = true where id = p_notification_id and user_id = auth.uid();
+end;
+$$;
+
+create or replace function public.publish_platform_notification(p_audience_type text, p_target_user_id uuid, p_title text, p_body text, p_cta_label text default '', p_cta_url text default '')
+returns public.platform_notifications language plpgsql security definer set search_path = public, auth
+as $$
+declare v_notice public.platform_notifications; v_cta_url text := trim(coalesce(p_cta_url, ''));
+begin
+  if not public.is_admin() and not public.has_role('marketing') then raise exception 'Chỉ Admin hoặc MKT được phát thông báo.'; end if;
+  if p_audience_type not in ('all','user') then raise exception 'Phạm vi thông báo không hợp lệ.'; end if;
+  if p_audience_type = 'all' and p_target_user_id is not null then raise exception 'Broadcast toàn server không nhận tài khoản đích.'; end if;
+  if p_audience_type = 'user' and p_target_user_id is null then raise exception 'Thông báo cá nhân cần tài khoản đích.'; end if;
+  if nullif(trim(p_title), '') is null or nullif(trim(p_body), '') is null then raise exception 'Tiêu đề và nội dung không được để trống.'; end if;
+  if v_cta_url <> '' and v_cta_url !~* '^(https://|/)' then raise exception 'URL liên kết chỉ được là HTTPS hoặc đường dẫn nội bộ.'; end if;
+  insert into public.platform_notifications(audience_type, target_user_id, title, body, cta_label, cta_url, created_by) values (p_audience_type, p_target_user_id, trim(p_title), trim(p_body), trim(coalesce(p_cta_label, '')), v_cta_url, auth.uid()) returning * into v_notice;
+  insert into public.account_audit_log(actor_user_id, action, metadata) values (auth.uid(), 'platform_notification_published', jsonb_build_object('audience_type', p_audience_type, 'target_user_id', p_target_user_id, 'title', trim(p_title)));
+  return v_notice;
+end;
+$$;
+
+create or replace function public.list_platform_notifications(p_limit integer default 50)
+returns table (id uuid, audience_type text, target_user_id uuid, title text, body text, cta_label text, cta_url text, created_by uuid, created_at timestamptz)
+language sql security definer set search_path = public, auth
+as $$
+  select n.id, n.audience_type, n.target_user_id, n.title, n.body, n.cta_label, n.cta_url, n.created_by, n.created_at
+  from public.platform_notifications n
+  where public.is_admin() or public.has_role('marketing')
+  order by n.created_at desc
+  limit greatest(1, least(coalesce(p_limit, 50), 100));
+$$;
+
+revoke all on function public.get_my_notifications(integer), public.mark_platform_notification_read(uuid), public.mark_customer_notification_read(uuid), public.publish_platform_notification(text,uuid,text,text,text,text), public.list_platform_notifications(integer) from public, anon;
+grant execute on function public.get_my_notifications(integer), public.mark_platform_notification_read(uuid), public.mark_customer_notification_read(uuid) to authenticated;
+grant execute on function public.publish_platform_notification(text,uuid,text,text,text,text), public.list_platform_notifications(integer) to authenticated;

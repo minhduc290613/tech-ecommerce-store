@@ -243,3 +243,7 @@
 - [x] Bổ sung lọc lịch sử số dư theo loại giao dịch và thời gian mà không thay đổi dữ liệu thật.
 - [x] Kiểm thử quyền truy cập và responsive cho lịch sử biến động số dư.
 
+- [x] Thêm badge/thông báo trên thanh đầu và cạnh mục Đơn hàng cho khách.
+- [x] Thêm workspace Admin/MKT phát thông báo toàn server hoặc một người cụ thể.
+- [x] Bổ sung trạng thái đọc, phân quyền và kiểm thử responsive cho trung tâm thông báo.
+
