@@ -261,3 +261,8 @@
 - [x] Bổ sung phiên bản Command Deck tiếng Anh, bao gồm giao diện tĩnh và nội dung render động chính.
 - [x] Thêm liên kết truy cập Admin English, giữ nguyên Auth, Supabase, role/capability và thao tác quản trị.
 - [x] Kiểm thử English Admin desktop/mobile, regression suite, check và build production.
+
+## English Admin footer link
+
+- [x] Thêm liên kết English Admin vào mục Liên kết nhanh ở footer storefront.
+- [x] Kiểm tra link hoạt động trên desktop/mobile và chạy regression/build.
