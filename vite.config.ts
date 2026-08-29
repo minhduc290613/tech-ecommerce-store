@@ -173,6 +173,7 @@ export default defineConfig({
         orders: path.resolve(import.meta.dirname, "client", "orders.html"),
         affiliate: path.resolve(import.meta.dirname, "client", "affiliate.html"),
         admin: path.resolve(import.meta.dirname, "client", "admin.html"),
+        adminEnglish: path.resolve(import.meta.dirname, "client", "admin-en.html"),
         information: path.resolve(import.meta.dirname, "client", "info.html"),
         article: path.resolve(import.meta.dirname, "client", "article.html"),
       },

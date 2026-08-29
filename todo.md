@@ -254,3 +254,10 @@
 - [x] Bổ sung hướng dẫn tiếng Anh tương đương, đồng bộ lệnh và cảnh báo bảo mật.
 - [x] Hướng dẫn triển khai local, GitHub, aaPanel, cPanel và hosting Node.js phù hợp.
 - [x] Rà soát liên kết tài liệu, lệnh cài đặt, biến môi trường và kiểm thử build sau cập nhật tài liệu.
+
+## English README and Command Deck
+
+- [x] Tạo README tiếng Anh riêng, đồng bộ tính năng và quy trình triển khai hiện tại.
+- [x] Bổ sung phiên bản Command Deck tiếng Anh, bao gồm giao diện tĩnh và nội dung render động chính.
+- [x] Thêm liên kết truy cập Admin English, giữ nguyên Auth, Supabase, role/capability và thao tác quản trị.
+- [x] Kiểm thử English Admin desktop/mobile, regression suite, check và build production.
