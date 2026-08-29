@@ -17,6 +17,10 @@ Nút chuyển ngôn ngữ trên topbar đổi giữa English và Tiếng Việt,
 3. Chọn Full English Admin để thực hiện chỉnh sửa dữ liệu thật.
 4. Dùng Sign out khi kết thúc phiên, đặc biệt trên máy dùng chung.
 
+### Argon Admin phụ
+
+Argon Admin mở tại `/admin-argon.html` và là variant phụ độc lập dựa trên layout tham khảo của [Argon Dashboard](https://github.com/creativetimofficial/argon-dashboard). Variant này dùng chung Supabase Auth, RLS, dashboard metrics và bộ chọn ngôn ngữ/theme; không thay thế `admin.html`, `admin-en.html` hoặc `admin-mantis.html`. Bộ chọn tiền tệ hỗ trợ VND, USD, EUR, GBP, JPY, CNY, KRW, SGD, THB, AUD và CAD cho mục đích hiển thị dashboard. Giá trị thanh toán gốc của NEXORA vẫn cần được xác nhận theo VND cho đến khi cấu hình cổng thanh toán đa tiền tệ hoàn tất.
+
 ### License và tài sản
 
 Repository tham khảo là [Mantis Free Bootstrap Admin Template](https://github.com/codedthemes/mantis-free-bootstrap-admin-template), được phát hành theo MIT License. NEXORA chỉ sử dụng pattern bố cục và Bootstrap CDN trong variant này; không đưa asset build của repository vào storefront. Thông báo license được giữ trong `client/admin-mantis.html` và footer của trang.
@@ -37,6 +41,10 @@ The topbar language control switches between English and Vietnamese and persists
 2. Use the sidebar to open Overview, Catalog snapshot, Order operations, or Access & links.
 3. Select Full English Admin when you need to edit real data.
 4. Select Sign out when finished, especially on a shared computer.
+
+### Argon Admin variant
+
+Argon Admin is available at `/admin-argon.html` as a separate optional surface based on the [Argon Dashboard](https://github.com/creativetimofficial/argon-dashboard) layout reference. It shares Supabase Auth, RLS, dashboard metrics, language and theme controls, but does not replace `admin.html`, `admin-en.html`, or `admin-mantis.html`. Its currency selector supports VND, USD, EUR, GBP, JPY, CNY, KRW, SGD, THB, AUD and CAD for dashboard display. NEXORA payment amounts should still be confirmed in VND until a multi-currency payment provider is configured.
 
 ### License and assets
 

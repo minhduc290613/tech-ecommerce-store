@@ -283,3 +283,11 @@
 - [x] Thêm chuyển đổi Tiếng Việt/Tiếng Anh và lưu lựa chọn ngôn ngữ.
 - [x] Thêm Dark Mode, lưu lựa chọn theme và hỗ trợ prefers-reduced-motion.
 - [x] Kiểm thử dữ liệu, responsive, regression suite, check và build production.
+
+## Mantis fixes, currencies, Stripe and Argon variant
+
+- [x] Sửa icon/header và lỗi trạng thái ẩn/hiện trong Mantis Admin.
+- [x] Bổ sung tiền tệ quốc tế và cấu hình tiền tệ trong Admin.
+- [ ] Thiết lập Stripe integration an toàn theo cấu hình dự án. (Chờ người dùng nhập Stripe keys trong Project Settings → Payment.)
+- [x] Tạo Argon Dashboard Admin variant phụ tại route riêng, không thay thế các Admin hiện có.
+- [x] Kiểm tra giao diện theo ảnh tham chiếu, responsive và regression/build.

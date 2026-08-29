@@ -21,6 +21,9 @@ describe("Mantis Admin variant", () => {
     expect(html).toContain('id="mantisLatestOrders"');
     expect(html).toContain('id="mantisLanguageToggle"');
     expect(html).toContain('id="mantisThemeToggle"');
+    expect(html).toContain('id="mantisCurrencySelect"');
+    expect(html).toContain('option value="USD"');
+    expect(html).toContain('option value="JPY"');
   });
 
   it("uses the shared public Supabase config and protected authorization RPCs", () => {
@@ -36,9 +39,14 @@ describe("Mantis Admin variant", () => {
     expect(script).toContain('customer_profiles');
     expect(script).toContain('mantisRevenueChart');
     expect(script).toContain('mantisLatestOrders');
+    expect(script).toContain('CURRENCY_RATES');
+    expect(script).toContain('nexora-currency');
   });
 
   it("registers the separate page in the production multipage build", () => {
     expect(read("vite.config.ts")).toContain('adminMantis: path.resolve(import.meta.dirname, "client", "admin-mantis.html")');
+    expect(read("vite.config.ts")).toContain('adminArgon: path.resolve(import.meta.dirname, "client", "admin-argon.html")');
+    expect(existsSync(resolve(projectRoot, "client/admin-argon.html"))).toBe(true);
+    expect(read("client/admin-argon.html")).toContain("Argon Dashboard");
   });
 });
