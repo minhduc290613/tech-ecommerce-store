@@ -10,6 +10,8 @@ NEXORA is a dark-mode technology e-commerce platform with a public storefront, c
 | Vietnamese | [Hướng dẫn triển khai và sử dụng A–Z](docs/HUONG_DAN_A_Z.md) |
 | Documentation index | [docs/INDEX.md](docs/INDEX.md) |
 | Admin setup | [ADMIN_SETUP.md](ADMIN_SETUP.md) |
+| Error | [Fix error](docs/Error.md) | Critical fix—please read |
+
 
 ## Applications
 
