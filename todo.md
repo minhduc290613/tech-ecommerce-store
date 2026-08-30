@@ -311,3 +311,12 @@
 - [x] Viết một file Markdown song ngữ Anh–Việt hướng dẫn SMTP/API email từ A–Z.
 - [x] Bổ sung DNS/domain, Admin settings, testing, security và troubleshooting checklist.
 - [x] Cập nhật docs index, kiểm tra liên kết và lưu tài liệu vào checkpoint.
+
+## Tawk, warning banner and international payments
+
+- [x] Dừng/đánh dấu hạng mục reset-password redirect theo yêu cầu mới, không tiếp tục triển khai.
+- [x] Thêm Tawk.to widget với cấu hình site/property ID an toàn và bật/tắt trong Admin.
+- [x] Thêm banner cảnh báo storefront có thể bật/tắt, chỉnh nội dung, màu và mức độ trong Admin.
+- [x] Thêm danh sách payment providers quốc tế với trạng thái manual/automatic và secret gating.
+- [x] Thêm cấu hình các hạng mục trên vào Admin variants theo quyền phù hợp.
+- [x] Viết test, kiểm tra responsive, bảo mật secret và build production.

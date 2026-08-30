@@ -21,6 +21,10 @@ Nút chuyển ngôn ngữ trên topbar đổi giữa English và Tiếng Việt,
 
 Argon Admin mở tại `/admin-argon.html` và là variant phụ độc lập dựa trên layout tham khảo của [Argon Dashboard](https://github.com/creativetimofficial/argon-dashboard). Variant này dùng chung Supabase Auth, RLS, dashboard metrics và bộ chọn ngôn ngữ/theme; không thay thế `admin.html`, `admin-en.html` hoặc `admin-mantis.html`. Bộ chọn tiền tệ hỗ trợ VND, USD, EUR, GBP, JPY, CNY, KRW, SGD, THB, AUD và CAD cho mục đích hiển thị dashboard. Giá trị thanh toán gốc của NEXORA vẫn cần được xác nhận theo VND cho đến khi cấu hình cổng thanh toán đa tiền tệ hoàn tất.
 
+### Tawk, banner và thanh toán quốc tế
+
+Panel **Tích hợp** cho phép bật Tawk.to bằng Property ID và Widget ID công khai, tạo banner cảnh báo song ngữ với mức độ/màu tùy chỉnh, và quản lý trạng thái các phương thức PayPal, Wise, Alipay, Apple Pay và Google Pay. Secret key không nhập vào browser và trạng thái tự động vẫn bị khóa cho tới khi có secret server, webhook và xác minh chữ ký. Các phương thức thủ công hiện tại không bị thay đổi.
+
 ### License và tài sản
 
 Repository tham khảo là [Mantis Free Bootstrap Admin Template](https://github.com/codedthemes/mantis-free-bootstrap-admin-template), được phát hành theo MIT License. NEXORA chỉ sử dụng pattern bố cục và Bootstrap CDN trong variant này; không đưa asset build của repository vào storefront. Thông báo license được giữ trong `client/admin-mantis.html` và footer của trang.
@@ -45,6 +49,10 @@ The topbar language control switches between English and Vietnamese and persists
 ### Argon Admin variant
 
 Argon Admin is available at `/admin-argon.html` as a separate optional surface based on the [Argon Dashboard](https://github.com/creativetimofficial/argon-dashboard) layout reference. It shares Supabase Auth, RLS, dashboard metrics, language and theme controls, but does not replace `admin.html`, `admin-en.html`, or `admin-mantis.html`. Its currency selector supports VND, USD, EUR, GBP, JPY, CNY, KRW, SGD, THB, AUD and CAD for dashboard display. NEXORA payment amounts should still be confirmed in VND until a multi-currency payment provider is configured.
+
+### Tawk, warning banner and international payments
+
+The **Integrations** panel can enable Tawk.to with public Property ID and Widget ID, configure a bilingual storefront warning banner with level/color controls, and manage PayPal, Wise, Alipay, Apple Pay and Google Pay readiness. Secret keys are not entered into the browser, and automatic processing remains locked until server secrets, a webhook and signature verification are configured. Existing manual methods are unchanged.
 
 ### License and assets
 

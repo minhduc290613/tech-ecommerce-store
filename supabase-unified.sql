@@ -186,6 +186,16 @@ create table if not exists public.site_settings (
   updated_at timestamptz not null default now()
 );
 alter table public.site_settings add column if not exists public_site_url text not null default 'https://nexorashop-gpjdasbm.manus.space';
+alter table public.site_settings add column if not exists tawk_enabled boolean not null default false;
+alter table public.site_settings add column if not exists tawk_property_id text;
+alter table public.site_settings add column if not exists tawk_widget_id text;
+alter table public.site_settings add column if not exists tawk_locale text not null default 'en';
+alter table public.site_settings add column if not exists warning_banner_enabled boolean not null default false;
+alter table public.site_settings add column if not exists warning_banner_text text;
+alter table public.site_settings add column if not exists warning_banner_text_en text;
+alter table public.site_settings add column if not exists warning_banner_level text not null default 'info' check (warning_banner_level in ('info', 'success', 'warning', 'danger'));
+alter table public.site_settings add column if not exists warning_banner_color text;
+alter table public.site_settings add column if not exists international_payment_settings jsonb not null default '{}'::jsonb;
 
 create table if not exists public.email_delivery_settings (
   singleton boolean primary key default true check (singleton),
