@@ -2,6 +2,11 @@
 
 NEXORA is a dark-mode technology e-commerce platform with a public storefront, customer Account Center, order tracking, Affiliate Dashboard, and the protected **NEXORA Command Deck**. The frontend uses HTML5, CSS3, Vanilla JavaScript ES Modules, and Vite. Supabase provides Authentication, PostgreSQL, Row Level Security, Storage, and RPCs. The Node.js/Express server serves the production build and handles backend routes such as tRPC, payment webhooks, storage proxy, and transactional email.
 
+## DEMO Website
+Main Page: [Main Page](https://nexorashop-gpjdasbm.manus.space) <br/>
+Command Deck Page: [Command Deck Page](https://nexorashop-gpjdasbm.manus.space/admin.html) <br/>
+DEMO Admin Account: Not Allowed
+
 ## Documentation
 
 | Language | Guide |
