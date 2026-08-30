@@ -3,8 +3,8 @@
 NEXORA là nền tảng thương mại điện tử công nghệ dark mode gồm storefront khách hàng, Account Center, trang Đơn hàng, Affiliate Dashboard và **NEXORA Command Deck**. Frontend dùng HTML5, CSS3 và Vanilla JavaScript ES Modules; Vite build đa trang; Supabase cung cấp Auth, PostgreSQL, RLS, Storage và RPC; Node.js/Express phục vụ bản production cùng các route backend.
 
 ## DEMO Website
-[https://nexorashop-gpjdasbm.manus.space](Trang chính)
-[https://nexorashop-gpjdasbm.manus.space/admin.html](Trang Command Deck)
+Trang Chính: [Trang chính](https://nexorashop-gpjdasbm.manus.space)
+Trang Command Deck: [Trang Command Deck](https://nexorashop-gpjdasbm.manus.space/admin.html)
 Account Admin DEMO: Không Cho
 
 ## Tài liệu chính 
