@@ -117,8 +117,8 @@ Tạo project tại [Supabase Dashboard](https://supabase.com/dashboard), vào *
 Mở `client/supabase-config.js` và thay placeholder:
 
 ```js
-export const SUPABASE_URL = "https://your-project-id.supabase.co";
-export const SUPABASE_ANON_KEY = "sb_publishable_your_public_key";
+export const SUPABASE_URL = " Thay bằng supabase url của bạn (có thể bạn sé thấy cái url nào đó vì đằng admin đi test nhưng up ko xóa đi)";
+export const SUPABASE_ANON_KEY = "Thay bằng supabase anon key của bạn (có thể bạn sé thấy cái key nào đó vì đằng admin đi test nhưng up ko xóa đi)";
 ```
 
 Không đặt `sb_secret_...`, `service_role`, SMTP password hoặc JWT secret vào file này. File này được bundle vào browser.
