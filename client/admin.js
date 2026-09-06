@@ -24,6 +24,8 @@ const db = configured && window.supabase ? window.supabase.createClient(SUPABASE
 window.nexoraAdminDb = db;
 const $ = (selector, parent = document) => parent.querySelector(selector);
 const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
+const REVENUE_STATUSES = new Set(["paid", "processing", "completed"]);
+const isRevenueOrder = order => REVENUE_STATUSES.has(order?.status) && Number(order?.total_amount || 0) > 0;
 
 const state = {
   user: null, role: "customer", isAdmin: false, roleDefinitions: [], capabilities: {}, products: [], productImages: [], editingProductGallery: [], orders: [], archivedOrders: [], saleUsageOrders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
@@ -53,7 +55,9 @@ async function init() {
     clearingExpiredAdminSession = true;
     await db.auth.signOut({ scope: "local" });
     showGate(getAdminAccessMessage({ sessionError: error?.message || "no_session" }));
-  } else await verifyAdmin(data.session.user);
+  } else     await verifyAdmin(data.session.user);
+  subscribeOrdersRealtime();
+  window.setInterval(() => { if (!document.hidden && state.user) loadData(); }, 30000);
   db.auth.onAuthStateChange((_event, session) => {
     if (session?.user) { clearingExpiredAdminSession = false; return; }
     showGate(clearingExpiredAdminSession ? getAdminAccessMessage({ sessionError: "expired" }) : getAdminAccessMessage());
@@ -181,6 +185,14 @@ function applyRoleVisibility() {
 async function signOut() { if (db) await db.auth.signOut(); showGate("Bạn đã đăng xuất khỏi Command Deck."); }
 function showGate(message) { state.user = null; state.isAdmin = false; state.archivedOrders = []; state.pendingOrderAction = null; els.app.hidden = true; els.gate.hidden = false; els.gateMessage.textContent = message; els.loginPassword.value = ""; }
 
+function subscribeOrdersRealtime() {
+  if (!db) return;
+  if (window.nexoraCommandDeckOrdersChannel) db.removeChannel(window.nexoraCommandDeckOrdersChannel);
+  window.nexoraCommandDeckOrdersChannel = db.channel("command-deck-orders").on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+    if (state.user) loadData();
+  }).subscribe();
+}
+
 async function loadData() {
   setTableLoading();
   const [productsResult, productImagesResult, ordersResult, archivedOrdersResult, saleUsageOrdersResult, settingsResult, pagesResult, faqsResult, shopsResult, campaignsResult] = await Promise.all([
@@ -203,13 +215,13 @@ async function loadData() {
 }
 
 function renderMetrics() {
-  const revenue = state.orders.filter((order) => ["paid", "processing", "completed"].includes(order.status)).reduce((sum, order) => sum + Number(order.total_amount), 0);
+  const revenue = state.orders.filter(isRevenueOrder).reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
   const pending = state.orders.filter((order) => order.status === "pending_payment").length;
   const sale = state.products.filter((product) => product.is_sale).length;
   els.metricRevenue.textContent = currency(revenue); els.metricOrders.textContent = String(state.orders.length).padStart(2, "0"); els.metricProducts.textContent = String(state.products.length).padStart(2, "0"); els.metricPending.textContent = `${pending} đơn chờ thanh toán`; els.metricSale.textContent = `${sale} sản phẩm có ưu đãi`;
 }
 function renderOperationsMetrics() {
-  const paid = state.orders.filter((order) => ["paid", "processing", "completed"].includes(order.status));
+  const paid = state.orders.filter(isRevenueOrder);
   const revenue7d = paid.filter((order) => Date.now() - new Date(order.created_at).getTime() <= 7 * 86400000).reduce((sum, order) => sum + Number(order.total_amount), 0);
   const ready = state.orders.filter((order) => ["preparing", "ready_to_ship"].includes(order.fulfillment_status || "unfulfilled")).length;
   const delivered = state.orders.filter((order) => (order.fulfillment_status || "unfulfilled") === "delivered").length;
@@ -217,10 +229,10 @@ function renderOperationsMetrics() {
 }
 function renderRevenueChart() {
   const days = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - (6 - index)); return { key: date.toISOString().slice(0, 10), label: new Intl.DateTimeFormat("vi-VN", { weekday: "short" }).format(date), value: 0 }; });
-  state.orders.filter((order) => ["paid", "processing", "completed"].includes(order.status)).forEach((order) => { const bucket = days.find((day) => day.key === new Date(order.created_at).toISOString().slice(0, 10)); if (bucket) bucket.value += Number(order.total_amount); });
+  state.orders.filter(isRevenueOrder).forEach((order) => { const bucket = days.find((day) => day.key === new Date(order.created_at).toISOString().slice(0, 10)); if (bucket) bucket.value += Number(order.total_amount); });
   const max = Math.max(1, ...days.map((day) => day.value)); const total = days.reduce((sum, day) => sum + day.value, 0);
   $("#revenueChart").innerHTML = days.map((day) => `<div class="chart-bar-wrap"><div class="chart-bar ${day.value ? "" : "zero"}" style="height:${Math.max(2, Math.round((day.value / max) * 100))}%" title="${escapeHtml(day.label)}: ${currency(day.value)}"></div><span class="chart-bar-label">${escapeHtml(day.label)}</span></div>`).join("");
-  $("#revenueWindowTotal").textContent = currency(total); $("#revenueWindowCaption").textContent = total ? `Ghi nhận từ ${state.orders.filter((order) => ["paid", "processing", "completed"].includes(order.status)).length} đơn đã xác nhận trong cửa sổ 7 ngày.` : "Chưa có đơn thanh toán trong 7 ngày gần nhất.";
+  $("#revenueWindowTotal").textContent = currency(total); $("#revenueWindowCaption").textContent = total ? `Ghi nhận từ ${state.orders.filter(isRevenueOrder).length} đơn đã xác nhận trong cửa sổ 7 ngày.` : "Chưa có đơn thanh toán trong 7 ngày gần nhất.";
 }
 function renderRecentOrders() { els.recentOrders.innerHTML = state.orders.slice(0, 5).map(compactOrderRow).join("") || emptyRow("Chưa có đơn hàng nào.", 5); }
 function compactOrderRow(order) { const label = order.payment_method === "momo" ? "MoMo" : order.payment_method === "zalopay" ? "ZaloPay" : order.payment_method === "wallet" ? "Số dư" : order.payment_method === "auto_transfer" ? `CK tự động · ${{ sepay: "SePay", casso: "Casso", vietqr: "VietQR" }[order.auto_transfer_provider] || "—"}` : "VietQR"; return `<tr><td><b>${escapeHtml(order.order_number)}</b></td><td>${formatDate(order.created_at)}</td><td>${label}</td><td><b>${currency(order.total_amount)}</b></td><td><span class="fulfillment-pill fulfillment-${escapeHtml(order.fulfillment_status || "unfulfilled")}">${fulfillmentLabel(order.fulfillment_status)}</span></td></tr>`; }

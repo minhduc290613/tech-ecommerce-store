@@ -320,3 +320,10 @@
 - [x] Thêm danh sách payment providers quốc tế với trạng thái manual/automatic và secret gating.
 - [x] Thêm cấu hình các hạng mục trên vào Admin variants theo quyền phù hợp.
 - [x] Viết test, kiểm tra responsive, bảo mật secret và build production.
+
+## Command Deck revenue fix
+
+- [x] Rà soát vì sao doanh thu Command Deck không tăng sau khi đơn được thanh toán.
+- [x] Sửa bộ lọc trạng thái thanh toán và refresh/realtime dữ liệu doanh thu.
+- [x] Thêm regression test để đơn chưa thanh toán không bị cộng và đơn đã xác nhận được cộng đúng.
+- [x] Kiểm thử Command Deck, check/build và lưu checkpoint.
