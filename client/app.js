@@ -648,7 +648,26 @@ async function checkout() {
 }
 
 function openPaymentModal() { state.activePaymentMethod = "vietqr"; updatePaymentQR(); openModal("qr"); }
+async function startPayOSCheckout() {
+  if (!db || !state.user || !state.lastOrder) return;
+  const previousMethod = state.activePaymentMethod;
+  state.activePaymentMethod = "payos"; updatePaymentQR();
+  try {
+    const { data: sessionData } = await db.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    const response = await fetch("/api/payments/payos/create", { method: "POST", headers: { "Content-Type": "application/json", ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) }, body: JSON.stringify({ orderId: state.lastOrder.id }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.checkoutUrl) throw new Error(payload.message || "Không thể tạo liên kết PayOS.");
+    window.location.assign(payload.checkoutUrl);
+  } catch (error) {
+    state.activePaymentMethod = previousMethod; updatePaymentQR(); showToast(error?.message || "Không thể kết nối PayOS.", "error");
+  }
+}
 async function setPaymentMethod(method) {
+  if (method === "payos") {
+    await startPayOSCheckout();
+    return;
+  }
   if (method === "wallet") {
     if (!db || !state.user || !state.lastOrder) return;
     const previousMethod = state.activePaymentMethod;
@@ -692,6 +711,9 @@ function updatePaymentQR() {
   els.zaloConfirmation.hidden = state.activePaymentMethod === "auto_transfer";
   if (state.activePaymentMethod === "wallet") {
     els.qrImage.hidden = true; showQRState("Đơn đã được thanh toán bằng số dư NEXORA."); els.qrStateMessage.textContent = "Số dư đã được trừ và giao dịch được ghi vào Account Center."; els.paymentInstruction.textContent = "Bạn có thể xem số dư và sổ cái bằng nút tài khoản trên header."; return;
+  }
+  if (state.activePaymentMethod === "payos") {
+    els.qrImage.hidden = true; showQRState("Đang chuyển đến cổng thanh toán PayOS…"); els.qrStateMessage.textContent = "Bạn sẽ được chuyển sang trang PayOS để thanh toán an toàn. Không đóng cửa sổ trong lúc xử lý."; els.paymentInstruction.textContent = "PayOS sẽ tự động gửi kết quả thanh toán về NEXORA sau khi giao dịch hoàn tất."; return;
   }
   if (state.activePaymentMethod === "auto_transfer") {
     if (!autoTransfer.ready) { showQRState("CK tự động chưa sẵn sàng. Vui lòng chọn phương thức khác."); return; }

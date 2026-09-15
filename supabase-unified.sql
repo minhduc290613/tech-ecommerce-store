@@ -128,7 +128,7 @@ create table if not exists public.orders (
   sale_campaign_id uuid references public.sale_campaigns(id) on delete set null,
   sale_code text,
   status text not null default 'pending_payment' check (status in ('pending_payment', 'paid', 'processing', 'completed', 'cancelled')),
-  payment_method text not null default 'vietqr' check (payment_method in ('vietqr', 'momo', 'zalopay', 'wallet')),
+  payment_method text not null default 'vietqr' check (payment_method in ('vietqr', 'momo', 'zalopay', 'wallet', 'payos')),
   payment_note text,
   payment_confirmed_at timestamptz,
   payment_confirmation_note text,
@@ -1568,7 +1568,7 @@ grant execute on function public.can_manage_shipments(), public.request_order_pa
 
 -- 28. CK tự động đa nhà cung cấp. Credential luôn ở server environment, không nằm trong site_settings.
 alter table public.orders drop constraint if exists orders_payment_method_check;
-alter table public.orders add constraint orders_payment_method_check check (payment_method in ('vietqr', 'momo', 'zalopay', 'wallet', 'auto_transfer'));
+alter table public.orders add constraint orders_payment_method_check check (payment_method in ('vietqr', 'momo', 'zalopay', 'wallet', 'auto_transfer', 'payos'));
 alter table public.orders add column if not exists auto_transfer_provider text check (auto_transfer_provider in ('sepay', 'casso', 'vietqr'));
 alter table public.orders add column if not exists auto_transfer_reference text;
 alter table public.orders drop constraint if exists orders_auto_transfer_provider_check;

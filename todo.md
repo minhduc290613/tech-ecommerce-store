@@ -327,3 +327,22 @@
 - [x] Sửa bộ lọc trạng thái thanh toán và refresh/realtime dữ liệu doanh thu.
 - [x] Thêm regression test để đơn chưa thanh toán không bị cộng và đơn đã xác nhận được cộng đúng.
 - [x] Kiểm thử Command Deck, check/build và lưu checkpoint.
+
+## PayOS integration
+
+- [x] Xác minh API tạo payment link, QR và webhook PayOS từ tài liệu chính thức.
+- [x] Thiết kế secret gating; không lưu Client ID, API Key hoặc Checksum Key ở frontend/database.
+- [x] Thêm server endpoint tạo PayOS checkout và webhook xác thực cập nhật đơn.
+- [x] Thêm PayOS vào phương thức thanh toán storefront và cấu hình trạng thái trong Admin.
+- [x] Viết test bảo mật/trạng thái, cập nhật tài liệu và chạy check/build.
+
+## Tích hợp PayOS.vn
+
+- [x] Mở rộng constraint `orders.payment_method` để chấp nhận `payos` trong schema canonical và Supabase.
+- [x] Cài và kết nối SDK `@payos/node` trong server.
+- [x] Tạo endpoint server-side kiểm tra cấu hình và tạo PayOS checkout URL có ràng buộc user/order.
+- [x] Tạo webhook PayOS xác thực chữ ký, kiểm tra mã đơn/số tiền và cập nhật trạng thái paid idempotent.
+- [x] Thêm PayOS vào payment tabs storefront và tự động chuyển hướng sang checkout.
+- [x] Thêm PayOS vào Integrations của Mantis Admin; không lưu Client ID/API key/Checksum key ở frontend hoặc database.
+- [x] Chạy typecheck, test hiện có và production build.
+- [ ] Nhập `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `SUPABASE_SERVICE_ROLE_KEY` và `PUBLIC_SITE_URL` trong môi trường production rồi kiểm thử giao dịch thật/sandbox.
