@@ -346,3 +346,11 @@
 - [x] Thêm PayOS vào Integrations của Mantis Admin; không lưu Client ID/API key/Checksum key ở frontend hoặc database.
 - [x] Chạy typecheck, test hiện có và production build.
 - [ ] Nhập `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `SUPABASE_SERVICE_ROLE_KEY` và `PUBLIC_SITE_URL` trong môi trường production rồi kiểm thử giao dịch thật/sandbox.
+
+## Hệ thống “Ghi sau”
+
+- [ ] Thiết kế bảng backlog cho các yêu cầu được đánh dấu “ghi sau”, có trạng thái, ưu tiên, nguồn yêu cầu và ghi chú.
+- [ ] Thêm mục “Ghi sau” trong Admin với danh sách, bộ lọc, tạo, sửa, đánh dấu hoàn thành và lưu trữ.
+- [ ] Áp dụng quyền truy cập phù hợp: admin quản lý toàn bộ; moderator/MKT chỉ xem hoặc cập nhật mục được cấp quyền nếu mô hình hiện tại cho phép.
+- [ ] Tạo skill `deferred-work-notes` để tự động chuyển yêu cầu có ý “ghi sau” thành mục backlog và hiển thị trong Admin.
+- [ ] Cập nhật schema canonical, tài liệu, test, typecheck và build.

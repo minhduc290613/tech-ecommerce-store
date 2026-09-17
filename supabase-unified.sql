@@ -159,6 +159,26 @@ create table if not exists public.order_items (
   created_at timestamptz not null default now()
 );
 
+-- Backlog “Ghi sau”: chỉ nhân sự có capability deferredWork mới được truy cập.
+create table if not exists public.deferred_work_items (
+  id uuid primary key default gen_random_uuid(),
+  title text not null check (length(trim(title)) between 3 and 240),
+  details text not null default '',
+  category text not null default 'general' check (category in ('general', 'feature', 'bug', 'content', 'operations', 'payment', 'documentation')),
+  priority text not null default 'normal' check (priority in ('low', 'normal', 'high', 'urgent')),
+  status text not null default 'backlog' check (status in ('backlog', 'in_progress', 'blocked', 'completed', 'archived')),
+  source text not null default 'chat',
+  source_message text,
+  due_at timestamptz,
+  created_by uuid references auth.users(id) on delete set null,
+  assigned_to uuid references auth.users(id) on delete set null,
+  completed_by uuid references auth.users(id) on delete set null,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check ((status = 'completed') = (completed_at is not null))
+);
+
 -- --------------------------------------------------------------------------
 -- 2. CMS: NHẬN DIỆN, NỘI DUNG, FAQ VÀ GIAN HÀNG
 -- --------------------------------------------------------------------------
@@ -272,6 +292,9 @@ create index if not exists orders_fulfillment_status_idx on public.orders(fulfil
 create index if not exists orders_status_created_at_idx on public.orders(status, created_at desc);
 create index if not exists orders_sale_campaign_idx on public.orders(sale_campaign_id);
 create index if not exists order_items_order_id_idx on public.order_items(order_id);
+create index if not exists deferred_work_items_status_priority_idx on public.deferred_work_items(status, priority, updated_at desc);
+create index if not exists deferred_work_items_assigned_to_idx on public.deferred_work_items(assigned_to, status);
+
 create index if not exists sale_campaigns_active_dates_idx on public.sale_campaigns(is_active, starts_at, ends_at);
 create index if not exists faqs_published_order_idx on public.faqs(is_published, sort_order);
 create index if not exists shops_active_category_idx on public.shops(is_active, category);
@@ -928,12 +951,12 @@ create table if not exists public.role_definitions (
 );
 
 insert into public.role_definitions (role_key, display_name, description, capabilities, is_system, assignable_by_moderator) values
-  ('customer', 'Khách hàng', 'Quyền mua hàng cơ bản.', '{"commandDeck":false,"articles":false,"moderation":false,"orders":false,"roles":false,"siteSettings":false}'::jsonb, true, true),
-  ('affiliate', 'Affiliate', 'Được tạo bài viết sau khi được duyệt affiliate.', '{"commandDeck":false,"articles":true,"moderation":false,"orders":false,"roles":false,"siteSettings":false}'::jsonb, true, true),
-  ('marketing', 'Marketing', 'Quản lý và tạo nội dung bài viết.', '{"commandDeck":true,"articles":true,"moderation":false,"orders":false,"roles":false,"siteSettings":false}'::jsonb, true, true),
-  ('order_manager', 'Quản lý đơn hàng', 'Quản lý đơn, hoàn tiền và vận hành giao nhận.', '{"commandDeck":true,"articles":false,"moderation":false,"orders":true,"roles":false,"siteSettings":false}'::jsonb, true, true),
-  ('moderator', 'Moderator', 'Kiểm duyệt nội dung và phân role không phải admin.', '{"commandDeck":true,"articles":true,"moderation":true,"orders":false,"roles":true,"siteSettings":false}'::jsonb, true, true),
-  ('admin', 'Quản trị viên', 'Toàn quyền vận hành và cấu hình hệ thống.', '{"commandDeck":true,"articles":true,"moderation":true,"orders":true,"roles":true,"siteSettings":true}'::jsonb, true, false)
+  ('customer', 'Khách hàng', 'Quyền mua hàng cơ bản.', '{"commandDeck":false,"articles":false,"moderation":false,"orders":false,"roles":false,"siteSettings":false,"deferredWork":false}'::jsonb, true, true),
+  ('affiliate', 'Affiliate', 'Được tạo bài viết sau khi được duyệt affiliate.', '{"commandDeck":false,"articles":true,"moderation":false,"orders":false,"roles":false,"siteSettings":false,"deferredWork":false}'::jsonb, true, true),
+  ('marketing', 'Marketing', 'Quản lý và tạo nội dung bài viết.', '{"commandDeck":true,"articles":true,"moderation":false,"orders":false,"roles":false,"siteSettings":false,"deferredWork":true}'::jsonb, true, true),
+  ('order_manager', 'Quản lý đơn hàng', 'Quản lý đơn, hoàn tiền và vận hành giao nhận.', '{"commandDeck":true,"articles":false,"moderation":false,"orders":true,"roles":false,"siteSettings":false,"deferredWork":false}'::jsonb, true, true),
+  ('moderator', 'Moderator', 'Kiểm duyệt nội dung và phân role không phải admin.', '{"commandDeck":true,"articles":true,"moderation":true,"orders":false,"roles":true,"siteSettings":false,"deferredWork":true}'::jsonb, true, true),
+  ('admin', 'Quản trị viên', 'Toàn quyền vận hành và cấu hình hệ thống.', '{"commandDeck":true,"articles":true,"moderation":true,"orders":true,"roles":true,"siteSettings":true,"deferredWork":true}'::jsonb, true, false)
 on conflict (role_key) do nothing;
 
 alter table public.user_roles drop constraint if exists user_roles_role_check;
@@ -1001,6 +1024,20 @@ as $$ select public.has_role_capability('articles'); $$;
 create or replace function public.can_access_command_deck()
 returns boolean language sql stable security definer set search_path = public, auth
 as $$ select public.has_role_capability('commandDeck'); $$;
+
+create or replace function public.can_manage_deferred_work()
+returns boolean language sql stable security definer set search_path = public, auth
+as $$ select public.has_role_capability('deferredWork'); $$;
+
+alter table public.deferred_work_items enable row level security;
+drop policy if exists "Deferred work managers can read backlog" on public.deferred_work_items;
+create policy "Deferred work managers can read backlog" on public.deferred_work_items for select to authenticated using (public.can_manage_deferred_work());
+drop policy if exists "Deferred work managers can create backlog" on public.deferred_work_items;
+create policy "Deferred work managers can create backlog" on public.deferred_work_items for insert to authenticated with check (public.can_manage_deferred_work());
+drop policy if exists "Deferred work managers can update backlog" on public.deferred_work_items;
+create policy "Deferred work managers can update backlog" on public.deferred_work_items for update to authenticated using (public.can_manage_deferred_work()) with check (public.can_manage_deferred_work());
+drop policy if exists "Deferred work managers can archive backlog" on public.deferred_work_items;
+create policy "Deferred work managers can archive backlog" on public.deferred_work_items for delete to authenticated using (public.can_manage_deferred_work());
 
 drop policy if exists "Users can read own special role" on public.user_roles;
 create policy "Users can read own special role" on public.user_roles for select to authenticated using (user_id = auth.uid());
@@ -1406,12 +1443,13 @@ alter table public.site_settings add column if not exists storefront_effect text
 alter table public.site_settings add column if not exists storefront_effect_color text not null default '#d8f3ff';
 alter table public.site_settings add column if not exists storefront_effect_density integer not null default 24 check (storefront_effect_density between 0 and 120);
 
-revoke all on table public.user_roles, public.role_definitions, public.affiliate_profiles, public.affiliate_referrals, public.affiliate_commissions, public.refund_requests from anon, authenticated;
+revoke all on table public.user_roles, public.role_definitions, public.affiliate_profiles, public.affiliate_referrals, public.affiliate_commissions, public.refund_requests, public.deferred_work_items from anon, authenticated;
 grant select on table public.user_roles, public.role_definitions, public.affiliate_profiles, public.affiliate_referrals, public.affiliate_commissions, public.refund_requests to authenticated;
+grant select, insert, update, delete on table public.deferred_work_items to authenticated;
 grant select on table public.product_reviews, public.product_comments, public.articles, public.affiliate_program_settings to anon, authenticated;
-revoke all on function public.has_role(text), public.has_any_role(text[]), public.has_role_capability(text), public.can_manage_roles(), public.can_manage_role_definitions(), public.can_moderate_content(), public.can_manage_orders(), public.can_write_articles(), public.can_access_command_deck(), public.assign_user_role(uuid,text,text), public.admin_save_role_definition(text,text,text,jsonb,boolean), public.admin_delete_role_definition(text), public.submit_product_review(uuid,integer,text), public.submit_product_comment(uuid,text), public.moderate_content(text,uuid,text,text), public.save_my_article(uuid,text,text,text,text,text,boolean), public.request_affiliate_access(), public.review_affiliate(uuid,text,text), public.claim_affiliate_referral(text), public.create_affiliate_commission(), public.attach_affiliate_to_order(), public.request_order_refund(uuid,numeric,text), public.review_refund_request(uuid,text,text,text) from public, anon;
+revoke all on function public.has_role(text), public.has_any_role(text[]), public.has_role_capability(text), public.can_manage_roles(), public.can_manage_role_definitions(), public.can_moderate_content(), public.can_manage_orders(), public.can_write_articles(), public.can_access_command_deck(), public.can_manage_deferred_work(), public.assign_user_role(uuid,text,text), public.admin_save_role_definition(text,text,text,jsonb,boolean), public.admin_delete_role_definition(text), public.submit_product_review(uuid,integer,text), public.submit_product_comment(uuid,text), public.moderate_content(text,uuid,text,text), public.save_my_article(uuid,text,text,text,text,text,boolean), public.request_affiliate_access(), public.review_affiliate(uuid,text,text), public.claim_affiliate_referral(text), public.create_affiliate_commission(), public.attach_affiliate_to_order(), public.request_order_refund(uuid,numeric,text), public.review_refund_request(uuid,text,text,text) from public, anon;
 revoke execute on function public.create_affiliate_commission(), public.attach_affiliate_to_order() from authenticated;
-grant execute on function public.has_role(text), public.has_any_role(text[]), public.has_role_capability(text), public.can_manage_roles(), public.can_manage_role_definitions(), public.can_moderate_content(), public.can_manage_orders(), public.can_write_articles(), public.can_access_command_deck(), public.assign_user_role(uuid,text,text), public.admin_save_role_definition(text,text,text,jsonb,boolean), public.admin_delete_role_definition(text), public.submit_product_review(uuid,integer,text), public.submit_product_comment(uuid,text), public.moderate_content(text,uuid,text,text), public.save_my_article(uuid,text,text,text,text,text,boolean), public.request_affiliate_access(), public.review_affiliate(uuid,text,text), public.claim_affiliate_referral(text), public.request_order_refund(uuid,numeric,text), public.review_refund_request(uuid,text,text,text) to authenticated;
+grant execute on function public.has_role(text), public.has_any_role(text[]), public.has_role_capability(text), public.can_manage_roles(), public.can_manage_role_definitions(), public.can_moderate_content(), public.can_manage_orders(), public.can_write_articles(), public.can_access_command_deck(), public.can_manage_deferred_work(), public.assign_user_role(uuid,text,text), public.admin_save_role_definition(text,text,text,jsonb,boolean), public.admin_delete_role_definition(text), public.submit_product_review(uuid,integer,text), public.submit_product_comment(uuid,text), public.moderate_content(text,uuid,text,text), public.save_my_article(uuid,text,text,text,text,text,boolean), public.request_affiliate_access(), public.review_affiliate(uuid,text,text), public.claim_affiliate_referral(text), public.request_order_refund(uuid,numeric,text), public.review_refund_request(uuid,text,text,text) to authenticated;
 
 insert into public.affiliate_program_settings (singleton) values (true) on conflict (singleton) do nothing;
 
@@ -1489,6 +1527,8 @@ create index if not exists shipment_events_order_occurred_idx on public.order_sh
 
 update public.role_definitions set capabilities = capabilities || '{"logistics":false}'::jsonb where role_key in ('customer','affiliate','marketing','order_manager') and not capabilities ? 'logistics';
 update public.role_definitions set capabilities = capabilities || '{"logistics":true}'::jsonb where role_key in ('moderator','admin');
+update public.role_definitions set capabilities = capabilities || '{"deferredWork":true}'::jsonb where role_key in ('marketing','moderator','admin');
+
 insert into public.role_definitions (role_key, display_name, description, capabilities, is_system, assignable_by_moderator)
 values ('inventory_staff', 'Nhân viên kiểm hàng', 'Cập nhật nhà vận chuyển, vị trí và tiến trình giao nhận; không tự xác nhận thanh toán.', '{"commandDeck":true,"articles":false,"moderation":false,"orders":false,"roles":false,"siteSettings":false,"logistics":true}'::jsonb, true, true)
 on conflict (role_key) do update set display_name = excluded.display_name, description = excluded.description, capabilities = public.role_definitions.capabilities || '{"logistics":true,"commandDeck":true}'::jsonb, updated_at = now();

@@ -28,8 +28,8 @@ const REVENUE_STATUSES = new Set(["paid", "processing", "completed"]);
 const isRevenueOrder = order => REVENUE_STATUSES.has(order?.status) && Number(order?.total_amount || 0) > 0;
 
 const state = {
-  user: null, role: "customer", isAdmin: false, roleDefinitions: [], capabilities: {}, products: [], productImages: [], editingProductGallery: [], orders: [], archivedOrders: [], saleUsageOrders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [],
-  fulfillmentFilter: "all", paymentFilter: "all", orderQuery: "", carrierFilter: "all", archivedOrderQuery: "", saleUsageCampaignId: "", pendingOrderAction: null, activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null, editingSaleCampaignId: null,
+  user: null, role: "customer", isAdmin: false, roleDefinitions: [], capabilities: {}, products: [], productImages: [], editingProductGallery: [], orders: [], archivedOrders: [], saleUsageOrders: [], settings: null, pages: [], faqs: [], shops: [], saleCampaigns: [], deferredWorkItems: [],
+  fulfillmentFilter: "all", paymentFilter: "all", orderQuery: "", carrierFilter: "all", archivedOrderQuery: "", saleUsageCampaignId: "", deferredWorkQuery: "", deferredWorkStatus: "all", deferredWorkPriority: "all", pendingOrderAction: null, activeOrderId: null, editingProductId: null, editingFaqId: null, editingShopId: null, editingSaleCampaignId: null, editingDeferredWorkId: null,
 };
 let clearingExpiredAdminSession = false;
 
@@ -39,7 +39,7 @@ const els = {
   metricRevenue: $("#metricRevenue"), metricOrders: $("#metricOrders"), metricProducts: $("#metricProducts"), metricPending: $("#metricPending"), metricSale: $("#metricSale"), recentOrders: $("#recentOrdersBody"),
   productCount: $("#adminProductCount"), productSearch: $("#adminProductSearch"), productsBody: $("#productsTableBody"), newProduct: $("#newProductButton"),
   refreshOrders: $("#refreshOrdersButton"), ordersBody: $("#ordersTableBody"), fulfillmentFilters: $("#orderFulfillmentFilters"), paymentFilter: $("#orderPaymentFilter"),
-  settingsForm: $("#settingsForm"), pageForm: $("#pageForm"), pageSelect: $("#pageSelect"), faqBody: $("#faqTableBody"), faqCount: $("#faqCount"), newFaq: $("#newFaqButton"), shopsBody: $("#shopsTableBody"), newShop: $("#newShopButton"), toastRegion: $("#adminToastRegion"),
+  settingsForm: $("#settingsForm"), pageForm: $("#pageForm"), pageSelect: $("#pageSelect"), faqBody: $("#faqTableBody"), faqCount: $("#faqCount"), newFaq: $("#newFaqButton"), shopsBody: $("#shopsTableBody"), newShop: $("#newShopButton"), deferredWorkBody: $("#deferredWorkBody"), deferredWorkNavCount: $("#deferredWorkNavCount"), deferredWorkBacklogCount: $("#deferredWorkBacklogCount"), deferredWorkInProgressCount: $("#deferredWorkInProgressCount"), deferredWorkCompletedCount: $("#deferredWorkCompletedCount"), toastRegion: $("#adminToastRegion"),
 };
 
 document.addEventListener("DOMContentLoaded", init);
@@ -108,6 +108,15 @@ function bindEvents() {
   els.newShop.addEventListener("click", () => openShopModal());
   els.shopsBody.addEventListener("click", (event) => { const button = event.target.closest("[data-edit-shop]"); if (button) openShopModal(state.shops.find((item) => item.id === button.dataset.editShop)); });
   $("#shopForm").addEventListener("submit", saveShop);
+  $("#newDeferredWorkButton")?.addEventListener("click", () => openDeferredWorkModal());
+  $("#deferredWorkSearch")?.addEventListener("input", (event) => { state.deferredWorkQuery = event.target.value; renderDeferredWork(); });
+  $("#deferredWorkStatusFilter")?.addEventListener("change", (event) => { state.deferredWorkStatus = event.target.value; renderDeferredWork(); });
+  $("#deferredWorkPriorityFilter")?.addEventListener("change", (event) => { state.deferredWorkPriority = event.target.value; renderDeferredWork(); });
+  $("#refreshDeferredWorkButton")?.addEventListener("click", loadDeferredWork);
+  $("#deferredWorkBody")?.addEventListener("click", (event) => { const button = event.target.closest("[data-edit-deferred-work]"); if (button) openDeferredWorkModal(state.deferredWorkItems.find((item) => item.id === button.dataset.editDeferredWork)); });
+  $("#deferredWorkForm")?.addEventListener("submit", saveDeferredWork);
+  $("#archiveDeferredWorkButton")?.addEventListener("click", archiveDeferredWork);
+
   $("#deleteShopButton").addEventListener("click", deleteShop);
   $$('[data-close-modal]').forEach((button) => button.addEventListener("click", () => closeModal(button.dataset.closeModal)));
   $$(".admin-modal").forEach((modal) => modal.addEventListener("click", (event) => { if (event.target === modal) closeModal(modal.id.replace("Modal", "")); }));
@@ -160,7 +169,7 @@ async function verifyAdmin(user) {
   state.isAdmin = Boolean(isAdmin);
   state.role = resolvedRole;
   state.roleDefinitions = roleDefinitionsResult.data || [];
-  state.capabilities = Boolean(isAdmin) ? { commandDeck: true, articles: true, moderation: true, orders: true, roles: true, siteSettings: true } : resolveRoleCapabilities(resolvedRole, state.roleDefinitions);
+  state.capabilities = Boolean(isAdmin) ? { commandDeck: true, articles: true, moderation: true, orders: true, roles: true, siteSettings: true, deferredWork: true } : resolveRoleCapabilities(resolvedRole, state.roleDefinitions);
   const displayRole = state.roleDefinitions.find((item) => item.role_key === resolvedRole)?.display_name || resolvedRole;
   els.operatorName.textContent = `${user.email || "Operator"} · ${displayRole}`;
   els.operatorInitial.textContent = (user.email || "A")[0].toUpperCase();
@@ -176,8 +185,9 @@ function applyRoleVisibility() {
   const canModerate = isAdmin || Boolean(state.capabilities.moderation) || Boolean(state.capabilities.roles);
   const canMarketing = isAdmin || Boolean(state.capabilities.articles);
   const canSettings = isAdmin || Boolean(state.capabilities.siteSettings);
+  const canDeferredWork = isAdmin || Boolean(state.capabilities.deferredWork);
   const hide = (view, hidden) => { const nav = $(`.admin-nav [data-view="${view}"]`); const section = $(`[data-admin-view="${view}"]`); if (nav) nav.hidden = hidden; if (section) section.hidden = hidden; };
-  hide("products", !isAdmin); hide("brand", !canSettings); hide("shops", !isAdmin); hide("sale-campaigns", !isAdmin); hide("orders", !canOrders); hide("content", !canMarketing);
+  hide("products", !isAdmin); hide("brand", !canSettings); hide("shops", !isAdmin); hide("sale-campaigns", !isAdmin); hide("orders", !canOrders); hide("content", !canMarketing); hide("deferred-work", !canDeferredWork);
   $("#archivedOrderHistory")?.toggleAttribute("hidden", !state.isAdmin);
   if (!isAdmin && !canOrders && !canModerate && !canMarketing && !canSettings) hide("overview", true);
 }
@@ -195,7 +205,8 @@ function subscribeOrdersRealtime() {
 
 async function loadData() {
   setTableLoading();
-  const [productsResult, productImagesResult, ordersResult, archivedOrdersResult, saleUsageOrdersResult, settingsResult, pagesResult, faqsResult, shopsResult, campaignsResult] = await Promise.all([
+  const canDeferredWork = state.isAdmin || Boolean(state.capabilities.deferredWork);
+  const [productsResult, productImagesResult, ordersResult, archivedOrdersResult, saleUsageOrdersResult, settingsResult, pagesResult, faqsResult, shopsResult, campaignsResult, deferredWorkResult] = await Promise.all([
     db.from("products").select("*").order("created_at", { ascending: false }),
     db.from("product_images").select("product_id,image_url,sort_order").order("sort_order"),
     db.from("orders").select("id,order_number,user_id,subtotal_amount,discount_amount,sale_campaign_id,sale_code,total_amount,status,payment_method,auto_transfer_provider,payment_note,payment_confirmed_at,payment_confirmation_note,zalo_confirmation_requested_at,customer_name,customer_phone,shipping_address,shipping_note,fulfillment_status,carrier,tracking_code,admin_note,fulfillment_updated_at,delivered_at,created_at,updated_at,order_items(product_name,unit_price,quantity,subtotal),order_service_requests(id,service_type,status)").is("archived_at", null).order("created_at", { ascending: false }),
@@ -206,12 +217,14 @@ async function loadData() {
     db.from("faqs").select("*").order("sort_order"),
     db.from("shops").select("*").order("created_at", { ascending: false }),
     db.from("sale_campaigns").select("*").order("created_at", { ascending: false }),
+    canDeferredWork ? db.from("deferred_work_items").select("*").order("updated_at", { ascending: false }) : Promise.resolve({ data: [], error: null }),
   ]);
   if (productsResult.error || ordersResult.error || productImagesResult.error || archivedOrdersResult.error || saleUsageOrdersResult.error) return toast(productsResult.error?.message || productImagesResult.error?.message || ordersResult.error?.message || archivedOrdersResult.error?.message || saleUsageOrdersResult.error?.message || "Không tải được dữ liệu quản trị.", "error");
   state.productImages = productImagesResult.data || []; state.products = (productsResult.data || []).map((product) => ({ ...product, product_images: state.productImages.filter((image) => image.product_id === product.id) })); state.orders = ordersResult.data || []; state.archivedOrders = archivedOrdersResult.data || []; state.saleUsageOrders = saleUsageOrdersResult.data || []; refreshCarrierFilterOptions();
   if (settingsResult.error || pagesResult.error || faqsResult.error || shopsResult.error || campaignsResult.error) toast("CMS/sale chưa sẵn sàng. Hãy chạy các migration Supabase mới nhất.", "error");
-  state.settings = settingsResult.data || null; state.pages = pagesResult.data || []; state.faqs = faqsResult.data || []; state.shops = shopsResult.data || []; state.saleCampaigns = campaignsResult.data || []; populateProductShopOptions($("#productShopId")?.value || "");
-  renderMetrics(); renderOperationsMetrics(); renderRevenueChart(); renderProducts(); renderOrders(); renderArchivedOrderHistory(); renderRecentOrders(); renderSettings(); renderFaqs(); renderShops(); renderSaleCampaigns(); renderSaleUsageHistory(); fillPageForm();
+  if (canDeferredWork && deferredWorkResult.error) toast(`Không tải được mục Ghi sau: ${deferredWorkResult.error.message}`, "error");
+  state.settings = settingsResult.data || null; state.pages = pagesResult.data || []; state.faqs = faqsResult.data || []; state.shops = shopsResult.data || []; state.saleCampaigns = campaignsResult.data || []; state.deferredWorkItems = deferredWorkResult.data || []; populateProductShopOptions($("#productShopId")?.value || "");
+  renderMetrics(); renderOperationsMetrics(); renderRevenueChart(); renderProducts(); renderOrders(); renderArchivedOrderHistory(); renderRecentOrders(); renderSettings(); renderFaqs(); renderShops(); renderSaleCampaigns(); renderSaleUsageHistory(); renderDeferredWork(); fillPageForm();
 }
 
 function renderMetrics() {
@@ -465,7 +478,24 @@ async function submitOrderActionConfirmation(event) {
   state.pendingOrderAction = null; closeModal("orderActionConfirm"); closeModal("order"); toast(isArchive ? "Đã chuyển đơn khỏi danh sách vận hành và lưu trữ lịch sử." : "Đã hủy đơn và lưu lịch sử vận hành.", "success"); await loadData();
 }
 
-function activateView(view) { $$(".admin-nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === view)); $$("[data-admin-view]").forEach((section) => section.classList.toggle("active", section.dataset.adminView === view)); els.viewTitle.textContent = ({ overview: "Tổng quan vận hành", products: "Quản lý sản phẩm", orders: "Quản lý đơn hàng", brand: "Thương hiệu & banner", content: "Nội dung & FAQ", shops: "Gian hàng & đối tác", "sale-campaigns": "Săn sale & ưu đãi" })[view] || "Command Deck"; }
+const DEFERRED_LABELS = { category: { general: "Chung", feature: "Tính năng", bug: "Lỗi", content: "Nội dung", operations: "Vận hành", payment: "Thanh toán", documentation: "Tài liệu" }, priority: { urgent: "Khẩn cấp", high: "Cao", normal: "Bình thường", low: "Thấp" }, status: { backlog: "Backlog", in_progress: "Đang làm", blocked: "Bị chặn", completed: "Đã xong", archived: "Đã lưu trữ" } };
+function renderDeferredWork() {
+  const body = els.deferredWorkBody; if (!body) return;
+  const query = normalize(state.deferredWorkQuery);
+  const rows = state.deferredWorkItems.filter((item) => (!query || normalize(`${item.title} ${item.details} ${item.source || ""}`).includes(query)) && (state.deferredWorkStatus === "all" || item.status === state.deferredWorkStatus) && (state.deferredWorkPriority === "all" || item.priority === state.deferredWorkPriority));
+  const count = (status) => state.deferredWorkItems.filter((item) => item.status === status).length;
+  if (els.deferredWorkBacklogCount) els.deferredWorkBacklogCount.textContent = String(count("backlog") + count("blocked"));
+  if (els.deferredWorkInProgressCount) els.deferredWorkInProgressCount.textContent = String(count("in_progress"));
+  if (els.deferredWorkCompletedCount) els.deferredWorkCompletedCount.textContent = String(count("completed"));
+  if (els.deferredWorkNavCount) { const pending = count("backlog") + count("in_progress") + count("blocked"); els.deferredWorkNavCount.textContent = String(pending); els.deferredWorkNavCount.hidden = pending === 0; }
+  body.innerHTML = rows.map((item) => `<tr><td><strong>${escapeHtml(item.title)}</strong>${item.details ? `<br /><small>${escapeHtml(item.details.slice(0, 180))}${item.details.length > 180 ? "…" : ""}</small>` : ""}</td><td><span class="status-pill">${escapeHtml(DEFERRED_LABELS.category[item.category] || item.category)}</span></td><td><span class="status-pill deferred-priority-${escapeHtml(item.priority)}">${escapeHtml(DEFERRED_LABELS.priority[item.priority] || item.priority)}</span></td><td><span class="status-pill deferred-status-${escapeHtml(item.status)}">${escapeHtml(DEFERRED_LABELS.status[item.status] || item.status)}</span></td><td><small>${formatDate(item.updated_at || item.created_at)}</small></td><td><button class="row-action" type="button" data-edit-deferred-work="${escapeHtml(item.id)}" aria-label="Chỉnh sửa mục ghi sau"><i class="fa-solid fa-pen"></i></button></td></tr>`).join("") || emptyRow("Chưa có mục ghi sau phù hợp.", 6);
+}
+async function loadDeferredWork() { if (!state.user || !(state.isAdmin || state.capabilities.deferredWork)) return; const { data, error } = await db.from("deferred_work_items").select("*").order("updated_at", { ascending: false }); if (error) return toast(`Không tải được mục Ghi sau: ${error.message}`, "error"); state.deferredWorkItems = data || []; renderDeferredWork(); }
+function openDeferredWorkModal(item = null) { state.editingDeferredWorkId = item?.id || null; $("#deferredWorkModalTitle").textContent = item ? "Chỉnh sửa mục ghi sau" : "Thêm mục ghi sau"; $("#deferredWorkId").value = item?.id || ""; $("#deferredWorkTitle").value = item?.title || ""; $("#deferredWorkDetails").value = item?.details || ""; $("#deferredWorkCategory").value = item?.category || "general"; $("#deferredWorkPriority").value = item?.priority || "normal"; $("#deferredWorkStatus").value = item?.status || "backlog"; $("#deferredWorkDueAt").value = item?.due_at ? toDateTimeInput(item.due_at) : ""; $("#deferredWorkSource").value = item?.source || "chat"; $("#deferredWorkSourceMessage").value = item?.source_message || ""; $("#archiveDeferredWorkButton").classList.toggle("hidden", !item || item.status === "archived"); openModal("deferredWork"); }
+async function saveDeferredWork(event) { event.preventDefault(); if (!db || !state.user) return; const id = $("#deferredWorkId").value.trim(); const status = $("#deferredWorkStatus").value; const payload = { title: $("#deferredWorkTitle").value.trim(), details: $("#deferredWorkDetails").value.trim(), category: $("#deferredWorkCategory").value, priority: $("#deferredWorkPriority").value, status, source: $("#deferredWorkSource").value.trim() || "chat", source_message: $("#deferredWorkSourceMessage").value.trim() || null, due_at: $("#deferredWorkDueAt").value ? new Date($("#deferredWorkDueAt").value).toISOString() : null, updated_at: new Date().toISOString(), completed_at: status === "completed" ? new Date().toISOString() : null, completed_by: status === "completed" ? state.user.id : null }; const button = $("#saveDeferredWorkButton"); setLoading(button, true, "Đang lưu"); const result = id ? await db.from("deferred_work_items").update(payload).eq("id", id) : await db.from("deferred_work_items").insert({ ...payload, created_by: state.user.id }); setLoading(button, false); if (result.error) return toast(result.error.message, "error"); closeModal("deferredWork"); toast("Đã lưu mục Ghi sau.", "success"); await loadDeferredWork(); }
+async function archiveDeferredWork() { const id = $("#deferredWorkId").value.trim(); if (!id || !confirm("Lưu trữ mục ghi sau này?")) return; const { error } = await db.from("deferred_work_items").update({ status: "archived", completed_at: null, completed_by: null, updated_at: new Date().toISOString() }).eq("id", id); if (error) return toast(error.message, "error"); closeModal("deferredWork"); toast("Đã lưu trữ mục Ghi sau.", "success"); await loadDeferredWork(); }
+
+function activateView(view) { $$(".admin-nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === view)); $$("[data-admin-view]").forEach((section) => section.classList.toggle("active", section.dataset.adminView === view)); els.viewTitle.textContent = ({ overview: "Tổng quan vận hành", products: "Quản lý sản phẩm", orders: "Quản lý đơn hàng", brand: "Thương hiệu & banner", content: "Nội dung & FAQ", shops: "Gian hàng & đối tác", "sale-campaigns": "Săn sale & ưu đãi", "deferred-work": "Ghi sau / Backlog" })[view] || "Command Deck"; }
 function getProduct(id) { return state.products.find((product) => product.id === id); }
 function getOrder(id) { return state.orders.find((order) => order.id === id); }
 function salesStateBadge(product) { if (product.is_active === false) return '<span class="sale-pill no">PAUSED</span>'; if (Number(product.stock) <= 0) return '<span class="sale-pill no">OUT OF STOCK</span>'; return '<span class="sale-pill yes">SELLING</span>'; }
