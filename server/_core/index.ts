@@ -34,6 +34,9 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  app.get("/healthz", (_req, res) => {
+    res.status(200).json({ ok: true, service: "nexora", environment: process.env.NODE_ENV || "development" });
+  });
   // Các webhook phải đọc raw body trước khi JSON middleware biến đổi payload ký số.
   registerPaymentWebhookRoutes(app);
   registerPayOSRoutes(app);
@@ -58,7 +61,7 @@ async function startServer() {
     serveStatic(app);
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
+  const preferredPort = parseInt(process.env.PORT || "3000", 10);
   const port = await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {

@@ -10,6 +10,7 @@ Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hà
 | SMTP/API email song ngữ | [SMTP Setup Bilingual](SMTP_SETUP_BILINGUAL.md) | Cài đặt SMTP hoặc Resend API, domain/DNS, biến môi trường, Admin templates, reset password, local, aaPanel, cPanel, bảo mật và xử lý lỗi bằng tiếng Việt và tiếng Anh. |
 | PayOS.vn song ngữ | [PayOS Setup Bilingual](PAYOS_SETUP_BILINGUAL.md) | Cấu hình PayOS server-side, secret environment, checkout URL, webhook xác minh chữ ký, sandbox và xử lý sự cố bằng tiếng Việt và tiếng Anh. |
 | Upload ảnh Admin | [Supabase Storage Setup](SUPABASE_STORAGE_SETUP.md) | Tạo bucket `nexora-brand-assets`, áp dụng policy theo capability, kiểm thử public URL và cấu hình Render. |
+| Environment Render | [Render Environment Setup](RENDER_ENV_SETUP_BILINGUAL.md) | Blueprint Web Service, Build/Start command, `/healthz`, biến `VITE_*`, Supabase, PayOS và troubleshooting song ngữ. |
 | Hệ thống “Ghi sau” | [Deferred Work Bilingual](DEFERRED_WORK_BILINGUAL.md) | Quy ước ghi nhận yêu cầu trì hoãn, trạng thái backlog, capability `deferredWork`, RLS và quy trình chuyển sang triển khai. |
 | Kết nối/cài đặt cơ sở dữ liệu | [Hướng dẫn Supabase](SUPABASE.md) | Schema canonical 25 bảng, RLS, quy trình áp dụng một lần và xác minh. |
 | Vận hành tài khoản và số dư | [Account & Wallet](ACCOUNT_WALLET.md) | Sổ cái, nạp tiền Zalo, quản trị khách, RLS và quy trình đối soát. |

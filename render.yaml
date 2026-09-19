@@ -1,0 +1,61 @@
+services:
+  - type: web
+    name: nexora-tech-store
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PUBLIC_SITE_URL
+        sync: false
+      - key: PAYOS_CLIENT_ID
+        sync: false
+      - key: PAYOS_API_KEY
+        sync: false
+      - key: PAYOS_CHECKSUM_KEY
+        sync: false
+      - key: SEPAY_WEBHOOK_SECRET
+        sync: false
+      - key: CASSO_WEBHOOK_SECURE_TOKEN
+        sync: false
+      - key: VIETQR_PARTNER_USERNAME
+        sync: false
+      - key: VIETQR_PARTNER_PASSWORD
+        sync: false
+      - key: VITE_APP_ID
+        sync: false
+      - key: VITE_OAUTH_PORTAL_URL
+        sync: false
+      - key: OAUTH_SERVER_URL
+        sync: false
+      - key: OWNER_OPEN_ID
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: BUILT_IN_FORGE_API_URL
+        sync: false
+      - key: BUILT_IN_FORGE_API_KEY
+        sync: false
+      - key: VITE_FRONTEND_FORGE_API_URL
+        sync: false
+      - key: VITE_FRONTEND_FORGE_API_KEY
+        sync: false
+      - key: PUBLIC_APP_URL
+        sync: false
