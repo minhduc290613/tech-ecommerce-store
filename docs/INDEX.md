@@ -9,6 +9,7 @@ Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hà
 | English deployment and usage | [English Deployment Guide](DEPLOYMENT_GUIDE_EN.md) | English equivalent covering local setup, Supabase, GitHub Pages, static hosting, aaPanel, cPanel, roles, payments, email, notifications and troubleshooting. |
 | SMTP/API email song ngữ | [SMTP Setup Bilingual](SMTP_SETUP_BILINGUAL.md) | Cài đặt SMTP hoặc Resend API, domain/DNS, biến môi trường, Admin templates, reset password, local, aaPanel, cPanel, bảo mật và xử lý lỗi bằng tiếng Việt và tiếng Anh. |
 | PayOS.vn song ngữ | [PayOS Setup Bilingual](PAYOS_SETUP_BILINGUAL.md) | Cấu hình PayOS server-side, secret environment, checkout URL, webhook xác minh chữ ký, sandbox và xử lý sự cố bằng tiếng Việt và tiếng Anh. |
+| Upload ảnh Admin | [Supabase Storage Setup](SUPABASE_STORAGE_SETUP.md) | Tạo bucket `nexora-brand-assets`, áp dụng policy theo capability, kiểm thử public URL và cấu hình Render. |
 | Hệ thống “Ghi sau” | [Deferred Work Bilingual](DEFERRED_WORK_BILINGUAL.md) | Quy ước ghi nhận yêu cầu trì hoãn, trạng thái backlog, capability `deferredWork`, RLS và quy trình chuyển sang triển khai. |
 | Kết nối/cài đặt cơ sở dữ liệu | [Hướng dẫn Supabase](SUPABASE.md) | Schema canonical 25 bảng, RLS, quy trình áp dụng một lần và xác minh. |
 | Vận hành tài khoản và số dư | [Account & Wallet](ACCOUNT_WALLET.md) | Sổ cái, nạp tiền Zalo, quản trị khách, RLS và quy trình đối soát. |
@@ -28,8 +29,8 @@ Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hà
 | Thành phần | Nguồn chuẩn |
 | --- | --- |
 | Schema Supabase | [`supabase-unified.sql`](../supabase-unified.sql) |
-| Media gốc | Nhánh GitHub [`assets/media`](https://github.com/minhduc290613/tech-ecommerce-store/tree/assets/media) |
+| Media gốc | `client/public/media/` trên branch `main`; nhánh GitHub [`assets/media`](https://github.com/minhduc290613/tech-ecommerce-store/tree/assets/media) là bản backup |
 | Mã ứng dụng và tài liệu | Nhánh GitHub `main` |
-| Bản deploy | Media được tham chiếu qua storage URL; không sao chép binary vào `client/public` hoặc `client/src/assets`. |
+| Bản deploy | Ảnh tĩnh dùng `/media/...`; ảnh upload mới dùng Supabase Storage URL. |
 
 Các trang điều khoản, bảo mật, giao hàng/đổi trả trong CMS là nội dung khởi tạo cho vận hành. Chủ sở hữu cần có **rà soát pháp lý độc lập** trước khi công bố cho khách hàng thực.
