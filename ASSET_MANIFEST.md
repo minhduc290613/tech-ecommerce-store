@@ -1,6 +1,6 @@
 # NEXORA Asset Manifest
 
-Tài liệu này ghi nhận các tài nguyên media được storefront sử dụng. Để tránh làm nặng bản deploy, binary asset không được đặt trong source branch `main`; chúng đã được xuất bản ở nhánh GitHub **[`assets`](https://github.com/minhduc290613/tech-ecommerce-store/tree/assets/media)**, đường dẫn `media/`.
+Tài liệu này ghi nhận các tài nguyên media được storefront sử dụng. Các binary asset hiện đã được commit trực tiếp vào `client/public/media/` trên branch triển khai chính để Render phục vụ bằng URL `/media/...`; nhánh GitHub **[`assets`](https://github.com/minhduc290613/tech-ecommerce-store/tree/assets/media)** vẫn được giữ làm bản backup/source.
 
 | Tài nguyên | Tên trên nhánh `assets` | Định dạng thực tế | SHA-256 |
 | --- | --- | --- | --- |
@@ -12,7 +12,7 @@ Tài liệu này ghi nhận các tài nguyên media được storefront sử d�
 
 ## Ảnh catalog mẫu
 
-Sáu ảnh sản phẩm dưới đây được lưu tại `media/products/` trên nhánh `assets` để backup tất cả ảnh đang được tham chiếu bởi catalog mẫu/fallback. Chúng có nguồn tham chiếu từ Unsplash; cần tuân thủ điều khoản nguồn ảnh tương ứng khi vận hành thương mại.
+Sáu ảnh sản phẩm dưới đây được lưu tại `client/public/media/products/` trên branch triển khai chính và tại `media/products/` trên nhánh `assets`. Chúng có nguồn tham chiếu từ Unsplash; cần tuân thủ điều khoản nguồn ảnh tương ứng khi vận hành thương mại.
 
 | Sản phẩm | Tên trên nhánh `assets` | SHA-256 |
 | --- | --- | --- |
@@ -25,4 +25,4 @@ Sáu ảnh sản phẩm dưới đây được lưu tại `media/products/` trê
 
 Hiện không có video được storefront tham chiếu. Khi thêm video mới, đưa bản gốc vào nhánh `assets` và cập nhật bảng này với tên, định dạng, kích thước và checksum.
 
-> Website vẫn dùng URL storage để tránh phụ thuộc vào raw GitHub khi tải trang. Nhánh `assets` là kho source/backup có thể truy xuất từ GitHub. Xem thêm [chỉ mục tài liệu](docs/INDEX.md).
+> Ảnh tĩnh của storefront dùng URL tương đối `/media/...`, nên hoạt động trên Render, GitHub-backed hosting và các web server thông thường mà không cần Manus Storage. Ảnh upload mới từ Admin vẫn cần một storage runtime tương thích (ví dụ Supabase Storage) nếu muốn dùng ngoài Manus. Xem thêm [chỉ mục tài liệu](docs/INDEX.md).
