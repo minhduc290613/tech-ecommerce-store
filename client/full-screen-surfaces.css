@@ -1,0 +1,76 @@
+/* Full-screen surfaces: auth, cart and payment checkout */
+.auth-modal-fullscreen,
+.qr-modal-fullscreen {
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+}
+.auth-modal-fullscreen .modal-card,
+.qr-modal-fullscreen .modal-card {
+  width: 100%;
+  max-width: none;
+  min-height: 100dvh;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  overflow: auto;
+}
+.auth-modal-fullscreen .auth-card {
+  display: grid;
+  grid-template-columns: minmax(280px, .7fr) minmax(340px, 1fr);
+  align-content: center;
+  gap: 1rem 5vw;
+  padding: clamp(2rem, 7vw, 7rem) clamp(1.25rem, 9vw, 10rem);
+  background: radial-gradient(circle at 15% 20%, rgba(56,189,248,.13), transparent 34%), #07111f;
+}
+.auth-modal-fullscreen .auth-card > :not(form):not(.close-button) { grid-column: 1; }
+.auth-modal-fullscreen .auth-card form { grid-column: 2; grid-row: 1 / span 8; align-self: center; max-width: 520px; width: 100%; }
+.auth-modal-fullscreen .auth-card .close-button,
+.qr-modal-fullscreen .qr-card .close-button { position: fixed; top: 1.25rem; right: 1.5rem; z-index: 3; }
+.auth-modal-fullscreen .auth-card .modal-logo { width: 3.6rem; height: 3.6rem; }
+.auth-modal-fullscreen .auth-helper { grid-column: 1; }
+.cart-drawer.fullscreen-cart { width: 100vw; max-width: none; border-left: 0; }
+.cart-drawer.fullscreen-cart .drawer-header,
+.cart-drawer.fullscreen-cart .drawer-footer { padding-left: clamp(1rem, 7vw, 8rem); padding-right: clamp(1rem, 7vw, 8rem); }
+.cart-drawer.fullscreen-cart .cart-items,
+.cart-drawer.fullscreen-cart .cart-delivery { padding-left: clamp(1rem, 7vw, 8rem); padding-right: clamp(1rem, 7vw, 8rem); }
+.cart-drawer.fullscreen-cart .cart-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-content: start; gap: 0 clamp(1rem, 4vw, 4rem); }
+.cart-drawer.fullscreen-cart .cart-item { min-width: 0; }
+.qr-modal-fullscreen .qr-card {
+  display: grid;
+  grid-template-columns: minmax(280px, .8fr) minmax(340px, 1.2fr);
+  align-content: center;
+  gap: 1rem 5vw;
+  padding: clamp(2rem, 7vw, 6rem) clamp(1rem, 9vw, 10rem);
+  background: radial-gradient(circle at 80% 20%, rgba(139,92,246,.16), transparent 35%), #07111f;
+}
+.qr-modal-fullscreen .qr-card > :not(.close-button):not(.qr-image-wrap):not(.payment-tabs):not(.e-wallet-panel):not(.payment-info):not(.payment-instruction):not(.auto-transfer-notice):not(.zalopay-scan-guide):not(.zalo-confirmation):not(.close-qr-action) { grid-column: 1; }
+.qr-modal-fullscreen .qr-card .payment-tabs,
+.qr-modal-fullscreen .qr-card .qr-image-wrap,
+.qr-modal-fullscreen .qr-card .e-wallet-panel,
+.qr-modal-fullscreen .qr-card .payment-info,
+.qr-modal-fullscreen .qr-card .payment-instruction,
+.qr-modal-fullscreen .qr-card .auto-transfer-notice,
+.qr-modal-fullscreen .qr-card .zalopay-scan-guide,
+.qr-modal-fullscreen .qr-card .zalo-confirmation,
+.qr-modal-fullscreen .qr-card .close-qr-action { grid-column: 2; }
+.e-wallet-panel { margin: .8rem 0; padding: .8rem; border: 1px solid rgba(56,189,248,.22); background: rgba(7,19,34,.7); }
+.e-wallet-panel small { display: block; margin-top: .55rem; color: #8da6bd; font-size: .68rem; line-height: 1.5; }
+.e-wallet-provider-buttons { display: flex; gap: .5rem; margin-top: .5rem; }
+.e-wallet-provider-buttons button { flex: 1; min-height: 36px; border: 1px solid var(--line); color: #adc5d9; background: #0c1b2e; cursor: pointer; font: 700 .68rem var(--font-mono); }
+.e-wallet-provider-buttons button.active { color: #07111f; background: var(--cyan); border-color: var(--cyan); }
+@media (max-width: 760px) {
+  .auth-modal-fullscreen .auth-card,
+  .qr-modal-fullscreen .qr-card { display: block; padding: 4.5rem 1.1rem 2rem; }
+  .auth-modal-fullscreen .auth-card form { max-width: none; margin-top: 1.5rem; }
+  .qr-modal-fullscreen .qr-card > * { margin-left: auto; margin-right: auto; }
+  .qr-modal-fullscreen .qr-card .payment-tabs,
+  .qr-modal-fullscreen .qr-card .e-wallet-panel,
+  .qr-modal-fullscreen .qr-card .payment-info,
+  .qr-modal-fullscreen .qr-card .payment-instruction,
+  .qr-modal-fullscreen .qr-card .auto-transfer-notice,
+  .qr-modal-fullscreen .qr-card .zalopay-scan-guide,
+  .qr-modal-fullscreen .qr-card .zalo-confirmation,
+  .qr-modal-fullscreen .qr-card .close-qr-action { width: 100%; }
+  .cart-drawer.fullscreen-cart .cart-items { grid-template-columns: 1fr; }
+}

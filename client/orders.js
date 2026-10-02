@@ -50,8 +50,8 @@ function renderOrder(order) {
   const events = [...(order.order_shipment_events || [])].sort((a, b) => new Date(b.occurred_at) - new Date(a.occurred_at));
   const carrierMark = carrier?.logo_url ? `<img src="${escapeHtml(carrier.logo_url)}" alt="${escapeHtml(carrier.name)}" />` : `<i class="fa-solid fa-truck-fast"></i>`;
   const trackingUrl = carrier?.tracking_url_template && order.tracking_code ? carrier.tracking_url_template.replace("{tracking_code}", encodeURIComponent(order.tracking_code)) : "";
-  const autoTransfer = order.payment_method === "auto_transfer";
-  const providerLabel = { sepay: "SePay", casso: "Casso", vietqr: "VietQR Host2Host" }[order.auto_transfer_provider] || "nhà cung cấp đã chọn";
+  const autoTransfer = order.payment_method === "auto_transfer" || order.payment_method === "payos";
+  const providerLabel = { payos: "PayOS", sepay: "SePay", casso: "Casso", vietqr: "VietQR Host2Host" }[order.auto_transfer_provider] || "nhà cung cấp đã chọn";
   const paymentAction = order.status === "pending_payment" && autoTransfer ? `<span class="payment-complete"><i class="fa-solid fa-bolt"></i> Đang tự đối soát qua ${escapeHtml(providerLabel)} — không cần nhắn shop</span>` : order.status === "pending_payment" ? `<button class="payment-confirm-button" data-payment-confirm="${escapeHtml(order.id)}" data-order-number="${escapeHtml(order.order_number)}" data-total="${Number(order.total_amount)}"><i class="fa-brands fa-zalo"></i> Đã thanh toán — liên hệ Zalo</button>` : `<span class="payment-complete"><i class="fa-solid fa-circle-check"></i> ${escapeHtml(paymentCopy[order.status] || order.status)}</span>`;
   const cancelAction = canCancelPendingOrder(order) ? `<button class="order-cancel-button" data-order-cancel="${escapeHtml(order.id)}" data-order-number="${escapeHtml(order.order_number)}" type="button"><i class="fa-solid fa-ban"></i> Hủy đơn</button>` : "";
   const serviceAction = getServiceAction(order);

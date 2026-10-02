@@ -16,4 +16,10 @@ describe("cấu hình CK tự động", () => {
   it("hiển thị rõ nhà cung cấp trong nhãn phương thức", () => {
     expect(paymentMethodLabel("auto_transfer", "casso")).toBe("CK tự động · Casso");
   });
+
+  it("coi PayOS là provider CK tự động", () => {
+    const presentation = getAutoTransferPresentation({ payment_auto_transfer_enabled: true, payment_auto_transfer_provider: "payos", payment_bank_id: "MB", payment_account_number: "0123", payment_account_name: "NEXORA" });
+    expect(presentation.usesPayOS).toBe(true);
+    expect(paymentMethodLabel("auto_transfer", "payos")).toBe("CK tự động · PayOS");
+  });
 });

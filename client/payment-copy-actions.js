@@ -1,5 +1,5 @@
 export function getZaloPayCopyActions({ paymentMethod, hasReadyQr, orderNumber, accountNumber }) {
-  const visible = paymentMethod === "zalopay" && Boolean(hasReadyQr);
+  const visible = (paymentMethod === "e_wallet" || paymentMethod === "zalopay") && Boolean(hasReadyQr);
   const transferContent = String(orderNumber || "").trim();
   const normalizedAccountNumber = String(accountNumber || "").replace(/\s+/g, "").trim();
 

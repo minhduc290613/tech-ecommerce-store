@@ -1,4 +1,5 @@
 export const AUTO_TRANSFER_PROVIDERS = Object.freeze({
+  payos: { label: "PayOS", webhookPath: "/api/payments/payos/webhook", detail: "PayOS verified webhook" },
   sepay: { label: "SePay", webhookPath: "/api/payments/webhooks/sepay", detail: "Webhook HMAC-SHA256" },
   casso: { label: "Casso", webhookPath: "/api/payments/webhooks/casso", detail: "Webhook secure-token" },
   vietqr: { label: "VietQR Host2Host", webhookPath: "/bank/api/transaction-sync", tokenPath: "/api/token_generate", detail: "Callback Bearer Token" },
@@ -24,10 +25,12 @@ export function getAutoTransferPresentation(settings = {}) {
     ready: normalized.enabled && normalized.hasReceivingAccount,
     webhookPath: AUTO_TRANSFER_PROVIDERS[normalized.provider].webhookPath,
     tokenPath: AUTO_TRANSFER_PROVIDERS[normalized.provider].tokenPath || null,
+    usesPayOS: normalized.provider === "payos",
   };
 }
 
 export function paymentMethodLabel(method, provider = "") {
   if (method === "auto_transfer") return `CK tự động${provider && AUTO_TRANSFER_PROVIDERS[provider] ? ` · ${AUTO_TRANSFER_PROVIDERS[provider].label}` : ""}`;
+  if (method === "e_wallet" || method === "momo" || method === "zalopay") return "Ví điện tử";
   return method;
 }

@@ -11,13 +11,15 @@ export type IncomingTransfer = {
 };
 
 export function getProviderSecretStatus(provider: string) {
-  const selected = provider === "casso" || provider === "vietqr" ? provider : "sepay";
+  const selected = provider === "payos" || provider === "casso" || provider === "vietqr" ? provider : "sepay";
   const baseReady = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const providerReady = selected === "sepay"
-    ? Boolean(process.env.SEPAY_WEBHOOK_SECRET)
-    : selected === "casso"
-      ? Boolean(process.env.CASSO_WEBHOOK_SECURE_TOKEN)
-      : Boolean(process.env.VIETQR_PARTNER_USERNAME && process.env.VIETQR_PARTNER_PASSWORD && process.env.JWT_SECRET);
+  const providerReady = selected === "payos"
+    ? Boolean(process.env.PAYOS_CLIENT_ID && process.env.PAYOS_API_KEY && process.env.PAYOS_CHECKSUM_KEY)
+    : selected === "sepay"
+      ? Boolean(process.env.SEPAY_WEBHOOK_SECRET)
+      : selected === "casso"
+        ? Boolean(process.env.CASSO_WEBHOOK_SECURE_TOKEN)
+        : Boolean(process.env.VIETQR_PARTNER_USERNAME && process.env.VIETQR_PARTNER_PASSWORD && process.env.JWT_SECRET);
   return { provider: selected, serverReady: baseReady && providerReady, providerSecretConfigured: providerReady };
 }
 

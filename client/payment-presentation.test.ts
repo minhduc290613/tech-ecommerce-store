@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { getPaymentPresentation } from "./payment-presentation.js";
+import { getPaymentMethodGroup, getPaymentPresentation } from "./payment-presentation.js";
 
 describe("payment presentation", () => {
-  it("chỉ làm nổi bật và hiện hướng dẫn khi QR ZaloPay hợp lệ sẵn sàng", () => {
-    expect(getPaymentPresentation("zalopay", true)).toEqual({ isZaloPay: true, showZaloPayGuide: true });
-    expect(getPaymentPresentation("zalopay", false)).toEqual({ isZaloPay: false, showZaloPayGuide: false });
-    expect(getPaymentPresentation("vietqr", true)).toEqual({ isZaloPay: false, showZaloPayGuide: false });
+  it("gộp MoMo và ZaloPay dưới nhóm Ví điện tử", () => {
+    expect(getPaymentPresentation("e_wallet", false, "momo")).toEqual({ isEWallet: true, eWalletProvider: "momo", isZaloPay: false, showZaloPayGuide: false });
+    expect(getPaymentPresentation("e_wallet", true, "zalopay")).toEqual({ isEWallet: true, eWalletProvider: "zalopay", isZaloPay: true, showZaloPayGuide: true });
+    expect(getPaymentMethodGroup("momo")).toBe("e_wallet");
+    expect(getPaymentMethodGroup("zalopay")).toBe("e_wallet");
+  });
+
+  it("gộp PayOS vào nhóm CK tự động", () => {
+    expect(getPaymentMethodGroup("payos")).toBe("auto_transfer");
+    expect(getPaymentMethodGroup("auto_transfer")).toBe("auto_transfer");
   });
 });

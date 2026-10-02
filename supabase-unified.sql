@@ -1608,13 +1608,15 @@ grant execute on function public.can_manage_shipments(), public.request_order_pa
 
 -- 28. CK tự động đa nhà cung cấp. Credential luôn ở server environment, không nằm trong site_settings.
 alter table public.orders drop constraint if exists orders_payment_method_check;
-alter table public.orders add constraint orders_payment_method_check check (payment_method in ('vietqr', 'momo', 'zalopay', 'wallet', 'auto_transfer', 'payos'));
-alter table public.orders add column if not exists auto_transfer_provider text check (auto_transfer_provider in ('sepay', 'casso', 'vietqr'));
-alter table public.orders add column if not exists auto_transfer_reference text;
+alter table public.orders add constraint orders_payment_method_check check (payment_method in ('vietqr', 'momo', 'zalopay', 'e_wallet', 'wallet', 'auto_transfer', 'payos'));
+alter table public.orders add column if not exists auto_transfer_provider text;
 alter table public.orders drop constraint if exists orders_auto_transfer_provider_check;
-alter table public.orders add constraint orders_auto_transfer_provider_check check (payment_method <> 'auto_transfer' or auto_transfer_provider is not null);
+alter table public.orders add constraint orders_auto_transfer_provider_check check ((payment_method <> 'auto_transfer' or auto_transfer_provider is not null) and (auto_transfer_provider is null or auto_transfer_provider in ('payos', 'sepay', 'casso', 'vietqr')));
+alter table public.orders add column if not exists auto_transfer_reference text;
 alter table public.site_settings add column if not exists payment_auto_transfer_enabled boolean not null default false;
-alter table public.site_settings add column if not exists payment_auto_transfer_provider text not null default 'sepay' check (payment_auto_transfer_provider in ('sepay', 'casso', 'vietqr'));
+alter table public.site_settings add column if not exists payment_auto_transfer_provider text not null default 'sepay';
+alter table public.site_settings drop constraint if exists site_settings_payment_auto_transfer_provider_check;
+alter table public.site_settings add constraint site_settings_payment_auto_transfer_provider_check check (payment_auto_transfer_provider in ('payos', 'sepay', 'casso', 'vietqr'));
 
 create table if not exists public.payment_webhook_events (
   id uuid primary key default gen_random_uuid(),
