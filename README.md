@@ -88,6 +88,10 @@ package.json                            # commands
 
 Xem hướng dẫn đầy đủ trong [docs/HUONG_DAN_A_Z.md](docs/HUONG_DAN_A_Z.md) hoặc [docs/DEPLOYMENT_GUIDE_EN.md](docs/DEPLOYMENT_GUIDE_EN.md).
 
+## Donate me
+
+[![Donate Me](https://img.shields.io/badge/Donate-Me-ff69b4?style=for-the-badge&logo=githubsponsors&logoColor=white)](https://donate.protechvn.io.vn)
+
 ## License
 
 This project is licensed under the [MIT](LICENSE) license.
