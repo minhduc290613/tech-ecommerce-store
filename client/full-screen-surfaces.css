@@ -74,3 +74,124 @@
   .qr-modal-fullscreen .qr-card .close-qr-action { width: 100%; }
   .cart-drawer.fullscreen-cart .cart-items { grid-template-columns: 1fr; }
 }
+
+
+/* ==========================================================================
+   NEXORA Liquid Commerce UI
+   Shared presentation layer for auth, cart and checkout surfaces.
+   ========================================================================== */
+:root {
+  --liquid-bg: rgba(11, 22, 39, .76);
+  --liquid-bg-strong: rgba(8, 17, 31, .94);
+  --liquid-border: rgba(148, 196, 230, .18);
+  --liquid-border-focus: rgba(56, 189, 248, .78);
+  --liquid-shadow: 0 28px 90px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .08);
+  --liquid-radius: 24px;
+}
+
+.liquid,
+.liquid-surface {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(135deg, rgba(21, 42, 67, .78), rgba(6, 15, 28, .96) 62%);
+  border: 1px solid var(--liquid-border);
+  box-shadow: var(--liquid-shadow);
+  backdrop-filter: blur(24px) saturate(125%);
+  -webkit-backdrop-filter: blur(24px) saturate(125%);
+}
+
+.liquid::before,
+.liquid-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(circle at 8% 0%, rgba(56, 189, 248, .16), transparent 27%), radial-gradient(circle at 100% 100%, rgba(139, 92, 246, .16), transparent 32%);
+}
+
+.liquid-panel {
+  border: 1px solid rgba(148, 196, 230, .14);
+  border-radius: 18px;
+  background: rgba(5, 15, 28, .56);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+
+.liquid-field,
+.auth-card input.liquid-field,
+.auth-card textarea.liquid-field {
+  border: 1px solid rgba(148, 196, 230, .2);
+  border-radius: 12px;
+  background: rgba(4, 13, 25, .7);
+  color: #f4f8ff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.liquid-field:focus,
+.auth-card input.liquid-field:focus,
+.auth-card textarea.liquid-field:focus {
+  outline: none;
+  border-color: var(--liquid-border-focus);
+  background: rgba(8, 22, 40, .92);
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, .1), 0 10px 28px rgba(0, 0, 0, .16);
+}
+
+.liquid-button {
+  border: 1px solid rgba(56, 189, 248, .5);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #38bdf8, #5b7cfa);
+  color: #03111e;
+  box-shadow: 0 10px 24px rgba(56, 189, 248, .18), inset 0 1px 0 rgba(255, 255, 255, .38);
+  transition: transform .16s cubic-bezier(.23, 1, .32, 1), box-shadow .16s ease, filter .16s ease;
+}
+
+.liquid-button:hover { filter: brightness(1.08); box-shadow: 0 14px 32px rgba(56, 189, 248, .26), inset 0 1px 0 rgba(255, 255, 255, .38); }
+.liquid-button:active { transform: scale(.97); }
+
+.auth-modal-fullscreen .auth-card.liquid,
+.qr-modal-fullscreen .qr-card.liquid { overflow: auto; border: 0; border-radius: 0; }
+.auth-modal-fullscreen .auth-card.liquid form { padding: clamp(1rem, 2vw, 1.5rem); border-radius: var(--liquid-radius); background: rgba(7, 18, 32, .52); border: 1px solid rgba(148, 196, 230, .14); box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.auth-card.liquid .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; padding: .35rem; margin: .75rem 0 1.25rem; border: 1px solid rgba(148,196,230,.14); border-radius: 14px; background: rgba(4,13,25,.5); }
+.auth-card.liquid .auth-tabs button { min-height: 42px; border-radius: 10px; color: #90a8bf; background: transparent; transition: color .18s ease, background .18s ease, transform .16s ease; }
+.auth-card.liquid .auth-tabs button.active { color: #eaf8ff; background: rgba(56,189,248,.15); box-shadow: inset 0 0 0 1px rgba(56,189,248,.28); }
+.auth-card.liquid .auth-tabs button:active { transform: scale(.97); }
+.auth-card.liquid form > label,
+.auth-card.liquid form > div > label { gap: .48rem; color: #b6c8d9; font-size: .72rem; letter-spacing: .02em; }
+.auth-card.liquid form input,
+.auth-card.liquid form textarea { width: 100%; margin-top: .38rem; }
+.auth-card.liquid .auth-submit { width: 100%; min-height: 50px; margin-top: .9rem; }
+.auth-card.liquid .auth-helper { color: #89a1b8; line-height: 1.65; }
+.auth-card.liquid .auth-helper button { color: #67d4ff; text-decoration: underline; text-underline-offset: 3px; }
+.auth-card.liquid .auth-delivery-note { display: block; color: #718ca6; font-size: .68rem; line-height: 1.5; }
+
+.cart-drawer.fullscreen-cart.liquid { background: linear-gradient(135deg, rgba(12, 28, 48, .98), rgba(5, 13, 25, .98)); }
+.cart-drawer.fullscreen-cart.liquid .drawer-header { border-bottom-color: rgba(148,196,230,.14); }
+.cart-drawer.fullscreen-cart.liquid .cart-items { padding-top: clamp(1rem, 3vw, 2.5rem); padding-bottom: 1rem; }
+.cart-drawer.fullscreen-cart.liquid .cart-item { border: 1px solid rgba(148,196,230,.14); border-radius: 18px; background: rgba(8, 20, 35, .62); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); transition: border-color .18s ease, transform .18s ease, background .18s ease; }
+.cart-drawer.fullscreen-cart.liquid .cart-item:hover { border-color: rgba(56,189,248,.36); background: rgba(10,28,48,.8); transform: translateY(-2px); }
+.cart-drawer.fullscreen-cart.liquid .cart-delivery { border: 1px solid rgba(148,196,230,.14); border-radius: 20px; background: rgba(5,15,28,.46); }
+.cart-drawer.fullscreen-cart.liquid .drawer-footer { border-top: 1px solid rgba(148,196,230,.14); background: rgba(4,13,25,.7); }
+.cart-drawer.fullscreen-cart.liquid .cart-sale-box { border-radius: 16px; background: linear-gradient(135deg, rgba(139,92,246,.13), rgba(8,20,35,.7)); }
+.cart-drawer.fullscreen-cart.liquid .checkout-button { min-height: 52px; border-radius: 13px; background: linear-gradient(135deg, #38bdf8, #5b7cfa); box-shadow: 0 12px 28px rgba(56,189,248,.2); }
+
+.qr-modal-fullscreen .qr-card.liquid .payment-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .45rem; padding: .45rem; border: 1px solid rgba(148,196,230,.14); border-radius: 16px; background: rgba(4,13,25,.58); }
+.qr-modal-fullscreen .qr-card.liquid .payment-tabs button { min-height: 45px; padding: .5rem .65rem; border: 1px solid transparent; border-radius: 11px; color: #91a9bf; background: transparent; font: 600 .67rem var(--font-mono); transition: color .18s ease, background .18s ease, border-color .18s ease, transform .16s ease; }
+.qr-modal-fullscreen .qr-card.liquid .payment-tabs button.active { color: #eaf8ff; border-color: rgba(56,189,248,.35); background: rgba(56,189,248,.14); }
+.qr-modal-fullscreen .qr-card.liquid .payment-tabs button:active { transform: scale(.97); }
+.qr-modal-fullscreen .qr-card.liquid .qr-image-wrap { border-radius: 22px; border-color: rgba(56,189,248,.28); background: rgba(3,11,22,.76); box-shadow: 0 18px 50px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.04); }
+.qr-modal-fullscreen .qr-card.liquid .payment-info { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+.qr-modal-fullscreen .qr-card.liquid .payment-info > div { padding: .8rem; border: 1px solid rgba(148,196,230,.14); border-radius: 14px; background: rgba(4,13,25,.52); }
+.qr-modal-fullscreen .qr-card.liquid .payment-info strong { color: #eaf8ff; }
+.qr-modal-fullscreen .qr-card.liquid .auto-transfer-notice { border-radius: 16px; border-color: rgba(52,211,153,.3); background: rgba(16,92,72,.14); }
+
+@media (max-width: 760px) {
+  .auth-modal-fullscreen .auth-card.liquid form { padding: 1rem; }
+  .qr-modal-fullscreen .qr-card.liquid .payment-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qr-modal-fullscreen .qr-card.liquid .payment-info { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-button, .auth-card.liquid button, .cart-drawer.fullscreen-cart.liquid .cart-item, .qr-modal-fullscreen .qr-card.liquid button { transition: none; }
+}

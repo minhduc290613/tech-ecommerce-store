@@ -261,13 +261,13 @@
 
     <div class="overlay" id="overlay" hidden></div>
 
-    <aside class="cart-drawer fullscreen-cart" id="cartDrawer" aria-labelledby="cartTitle" aria-hidden="true">
+    <aside class="cart-drawer fullscreen-cart liquid liquid-surface" id="cartDrawer" aria-labelledby="cartTitle" aria-hidden="true">
       <div class="drawer-header"><div><span class="panel-label">YOUR SIGNAL CART</span><h2 id="cartTitle"><span data-i18n="cartTitle">Giỏ hàng</span> <span id="cartItemLabel">(0)</span></h2></div><button class="close-button" data-close="cart" type="button" aria-label="Đóng giỏ hàng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
       <div class="cart-items" id="cartItems"></div>
       <div class="cart-delivery" id="checkoutDelivery" aria-labelledby="checkoutDeliveryTitle">
         <div class="cart-delivery-head"><i class="fa-solid fa-location-dot" aria-hidden="true"></i><div><span class="panel-label">DELIVERY DETAILS</span><h3 id="checkoutDeliveryTitle">Địa chỉ nhận hàng</h3></div></div>
-        <div class="cart-delivery-grid"><label>Người nhận <input id="checkoutCustomerName" type="text" maxlength="140" autocomplete="name" placeholder="Họ và tên" /></label><label>Số điện thoại <input id="checkoutCustomerPhone" type="tel" maxlength="20" inputmode="tel" autocomplete="tel" placeholder="Số điện thoại" required /></label></div>
-        <label>Địa chỉ nhận hàng <textarea id="checkoutShippingAddress" maxlength="500" autocomplete="street-address" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" required></textarea></label>
+        <div class="cart-delivery-grid"><label>Người nhận <input class="liquid-field" id="checkoutCustomerName" type="text" maxlength="140" autocomplete="name" placeholder="Họ và tên" /></label><label>Số điện thoại <input class="liquid-field" id="checkoutCustomerPhone" type="tel" maxlength="20" inputmode="tel" autocomplete="tel" placeholder="Số điện thoại" required /></label></div>
+        <label>Địa chỉ nhận hàng <textarea class="liquid-field" id="checkoutShippingAddress" maxlength="500" autocomplete="street-address" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" required></textarea></label>
         <small>Địa chỉ được lưu cùng đơn hàng để shop sắp xếp giao nhận.</small>
       </div>
       <div class="drawer-footer">
@@ -278,7 +278,7 @@
     </aside>
 
     <section class="modal auth-modal-fullscreen" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden>
-      <div class="modal-card auth-card">
+      <div class="modal-card auth-card liquid liquid-surface">
         <button class="close-button" data-close="auth" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         <img class="modal-logo" src="/media/nexora-logo_3c03446b.png" alt="" />
         <span class="eyebrow"><span></span> MEMBER ACCESS</span>
@@ -286,16 +286,16 @@
         <p class="modal-intro" id="authIntro" data-i18n="authIntro">Tạo tài khoản hoặc đăng nhập bằng email để tiếp tục với thanh toán và quản lý đơn hàng.</p>
         <div class="auth-tabs" role="tablist"><button class="active" data-auth-mode="login" type="button" role="tab" aria-selected="true" data-i18n="login">Đăng nhập</button><button data-auth-mode="signup" type="button" role="tab" aria-selected="false" data-i18n="signup">Đăng ký</button></div>
         <form id="authForm" novalidate>
-          <label id="authEmailField">Email<input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
-          <label id="authPasswordField"><span data-i18n="passwordLabel">Mật khẩu</span><input id="authPassword" type="password" placeholder="Tối thiểu 6 ký tự" data-i18n-placeholder="passwordPlaceholder" autocomplete="current-password" minlength="6" required /></label>
-          <label id="authPasswordConfirmField" hidden>Nhập lại mật khẩu mới<input id="authPasswordConfirm" type="password" autocomplete="new-password" minlength="8" /></label>
-          <label id="authUsernameField" hidden><span data-i18n="usernameLabel">Username</span><input id="authUsername" maxlength="40" pattern="[A-Za-z0-9_.-]{3,40}" data-i18n-placeholder="usernamePlaceholder" autocomplete="username" placeholder="username-cua-ban" /></label>
+          <label id="authEmailField">Email<input class="liquid-field" id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
+          <label id="authPasswordField"><span data-i18n="passwordLabel">Mật khẩu</span><input class="liquid-field" id="authPassword" type="password" placeholder="Tối thiểu 6 ký tự" data-i18n-placeholder="passwordPlaceholder" autocomplete="current-password" minlength="6" required /></label>
+          <label id="authPasswordConfirmField" hidden>Nhập lại mật khẩu mới<input class="liquid-field" id="authPasswordConfirm" type="password" autocomplete="new-password" minlength="8" /></label>
+          <label id="authUsernameField" hidden><span data-i18n="usernameLabel">Username</span><input class="liquid-field" id="authUsername" maxlength="40" pattern="[A-Za-z0-9_.-]{3,40}" data-i18n-placeholder="usernamePlaceholder" autocomplete="username" placeholder="username-cua-ban" /></label>
           <div id="authDeliveryFields" hidden>
-            <label>Số điện thoại nhận hàng<input id="authDeliveryPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="Ví dụ: 0901 234 567" /></label>
-            <label>Địa chỉ nhận hàng<textarea id="authDeliveryAddress" autocomplete="street-address" maxlength="500" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"></textarea></label>
+            <label>Số điện thoại nhận hàng<input class="liquid-field" id="authDeliveryPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="Ví dụ: 0901 234 567" /></label>
+            <label>Địa chỉ nhận hàng<textarea class="liquid-field" id="authDeliveryAddress" autocomplete="street-address" maxlength="500" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"></textarea></label>
             <small class="auth-delivery-note">Thông tin này bắt buộc để tạo đơn và có thể cập nhật trong Tài khoản.</small>
           </div>
-          <button class="button button-primary auth-submit" id="authSubmit" type="submit"><span data-i18n="login">Đăng nhập</span> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+          <button class="button button-primary auth-submit liquid-button" id="authSubmit" type="submit"><span data-i18n="login">Đăng nhập</span> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
         </form>
         <p class="auth-helper" id="authHelper"> Quên Mật Khẩu <button data-auth-mode="forgot" type="button"> Nhấp vào đây</button> Chưa có tài khoản? Chuyển sang tab <button data-auth-mode="signup" type="button">Đăng ký</button>.</p>
       </div>
@@ -310,7 +310,7 @@
     </section>
 
     <section class="modal qr-modal-fullscreen" id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrTitle" hidden>
-      <div class="modal-card qr-card">
+      <div class="modal-card qr-card liquid liquid-surface">
         <button class="close-button" data-close="qr" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         <div class="payment-confirm"><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="orderCreated">ĐƠN HÀNG ĐÃ ĐƯỢC TẠO</span></div>
         <h2 id="qrTitle" data-i18n-html="qrHeading">Quét mã để<br /><em>hoàn tất thanh toán.</em></h2>
