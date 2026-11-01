@@ -15,6 +15,7 @@ import { normalizeDeliveryProfile } from "./account-delivery.js";
 import { normalizeSignupUsername } from "./signup-username.js";
 import { productGalleryUrls } from "./product-gallery.js";
 import { buildProductShareText, buildProductShareUrl } from "./product-sharing.js";
+import { findCampaignByCode, isCampaignActive as isSaleCampaignActive, normalizeSaleCode, resolveSalePricing, saleCodeMessage } from "./sale-code.js";
 import "./product-gallery.css";
 
 const UI_TRANSLATIONS = {
@@ -79,7 +80,7 @@ const state = {
   authMode: "login",
   activeProduct: null,
   lastOrder: null,
-  activePaymentMethod: "vietqr", eWalletProvider: "momo", paymentAutoProvider: "", settings: DEFAULT_SETTINGS, faqs: DEFAULT_FAQS, shops: DEFAULT_SHOPS, saleCampaigns: DEFAULT_SALE_CAMPAIGNS, carriers: [], appliedSaleCode: "", affiliateShareCode: "", sharedProductOpened: false, locale: "vi", catalogLoadError: null, searchTimer: null,
+  activePaymentMethod: "vietqr", eWalletProvider: "momo", paymentAutoProvider: "", settings: DEFAULT_SETTINGS, faqs: DEFAULT_FAQS, shops: DEFAULT_SHOPS, saleCampaigns: db ? [] : DEFAULT_SALE_CAMPAIGNS, carriers: [], appliedSaleCode: "", affiliateShareCode: "", sharedProductOpened: false, locale: "vi", catalogLoadError: null, searchTimer: null,
   filters: { category: "all", maxPrice: 35000000, saleOnly: false, search: "", technical: {} },
 };
 
@@ -264,7 +265,7 @@ async function loadProducts() {
 async function loadMarketplaceCMS() {
   if (db) {
     const [settingsResult, faqsResult, shopsResult, saleResult, carriersResult] = await Promise.all([db.from("site_settings").select("*").eq("singleton", true).maybeSingle(), db.from("faqs").select("*").eq("is_published", true).order("sort_order"), db.from("shops").select("*").eq("is_active", true).order("created_at"), db.from("sale_campaigns").select("*").order("created_at", { ascending: false }), db.from("shipping_carriers").select("name,logo_url,note,tracking_url_template").eq("is_active", true).order("name")]);
-    if (settingsResult.data) state.settings = { ...DEFAULT_SETTINGS, ...settingsResult.data }; if (faqsResult.data?.length) state.faqs = faqsResult.data; if (shopsResult.data?.length) state.shops = shopsResult.data; if (saleResult.data?.length) state.saleCampaigns = saleResult.data; state.carriers = carriersResult.data || [];
+    if (settingsResult.data) state.settings = { ...DEFAULT_SETTINGS, ...settingsResult.data }; if (faqsResult.data?.length) state.faqs = faqsResult.data; if (shopsResult.data?.length) state.shops = shopsResult.data; if (!saleResult.error) state.saleCampaigns = saleResult.data || []; state.carriers = carriersResult.data || [];
   }
   applySettings(); renderFAQs(); renderShops(); renderCarriers(); renderSaleHunt(); updateCartUI();
 }
@@ -516,12 +517,26 @@ function updateCartUI() {
 
 function cartSubtotal() { return state.cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0); }
 function cartTotal() { return cartPricing().total; }
-function getCampaignByCode(code) { return state.saleCampaigns.find((campaign) => campaign.code === String(code || "").trim().toUpperCase()); }
-function isCampaignActive(campaign) { const now = Date.now(); return campaign?.is_active !== false && new Date(campaign.starts_at).getTime() <= now && new Date(campaign.ends_at).getTime() >= now && (!campaign.usage_limit || Number(campaign.usage_count || 0) < Number(campaign.usage_limit)); }
-function cartPricing() { const subtotal = cartSubtotal(); const campaign = getCampaignByCode(state.appliedSaleCode); if (!campaign || !isCampaignActive(campaign) || subtotal < Number(campaign.minimum_order_amount || 0)) return { subtotal, discount: 0, total: subtotal, campaign: null }; let discount = campaign.discount_type === "percent" ? Math.floor(subtotal * Number(campaign.discount_value) / 100) : Number(campaign.discount_value); if (campaign.maximum_discount_amount) discount = Math.min(discount, Number(campaign.maximum_discount_amount)); discount = Math.min(discount, subtotal); return { subtotal, discount, total: subtotal - discount, campaign }; }
-function mountSaleCart() { const footer = $(".drawer-footer"); if (!footer || $("#saleCodeInput")) return; const module = document.createElement("div"); module.className = "cart-sale-box"; module.innerHTML = `<span class="panel-label">SALE HUNT CODE</span><div class="sale-code-row"><input id="saleCodeInput" maxlength="32" placeholder="${state.locale === "en" ? "ENTER SALE CODE" : "NHẬP MÃ SĂN SALE"}" /><button id="applySaleCode" type="button">${state.locale === "en" ? "Apply" : "Áp dụng"}</button></div><small id="cartSaleFeedback" class="cart-sale-feedback">${state.locale === "en" ? "Enter an active deal code to check savings." : "Nhập mã ưu đãi đang mở để kiểm tra mức giảm."}</small>`; footer.prepend(module); const summary = $(".cart-total", footer); summary.querySelector("span").textContent = state.locale === "en" ? "Total" : "Tổng cộng"; summary.insertAdjacentHTML("beforebegin", `<div class="cart-total"><span>${t("subtotal")}</span><strong id="cartSubtotal">0đ</strong></div><div class="cart-total cart-discount-row" id="cartDiscountRow"><span>${state.locale === "en" ? "Discount" : "Ưu đãi"}</span><strong id="cartDiscount">-0đ</strong></div>`); $("#applySaleCode").addEventListener("click", () => applySaleCode($("#saleCodeInput").value)); $("#saleCodeInput").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); applySaleCode(event.currentTarget.value); } }); }
-function applySaleCode(code, openDrawer = false) { const normalized = String(code || "").trim().toUpperCase(); const campaign = getCampaignByCode(normalized); if (!campaign) { state.appliedSaleCode = ""; updateCartUI(); showToast("Mã săn sale không tồn tại hoặc chưa được mở.", "error"); return; } state.appliedSaleCode = normalized; const pricing = cartPricing(); if (!pricing.campaign) { state.appliedSaleCode = ""; updateCartUI(); showToast(`Đơn cần tối thiểu ${formatCurrency(campaign.minimum_order_amount)} để dùng mã này.`, "error"); return; } updateCartUI(); if (openDrawer) $("#saleCodeInput").value = normalized; showToast(`Đã áp dụng ${campaign.code}: giảm ${formatCurrency(pricing.discount)}.`, "success"); }
-function updateSaleCartUI(pricing) { const input = $("#saleCodeInput"); const feedback = $("#cartSaleFeedback"); const subtotal = $("#cartSubtotal"); const discountRow = $("#cartDiscountRow"); const discount = $("#cartDiscount"); if (!input || !feedback || !subtotal || !discountRow || !discount) return; input.value = state.appliedSaleCode; subtotal.textContent = formatCurrency(pricing.subtotal); discount.textContent = `-${formatCurrency(pricing.discount)}`; discountRow.classList.toggle("active", Boolean(pricing.campaign)); feedback.className = `cart-sale-feedback ${pricing.campaign ? "success" : ""}`; feedback.textContent = pricing.campaign ? `${pricing.campaign.badge_text || pricing.campaign.title}: ${state.locale === "en" ? "saved" : "đã giảm"} ${formatCurrency(pricing.discount)}.` : state.locale === "en" ? "Enter an active deal code to check savings." : "Nhập mã ưu đãi đang mở để kiểm tra mức giảm."; }
+const SALE_CODE_DROPPABLE = new Set(["unknown_code", "inactive", "sold_out"]);
+function getCampaignByCode(code) { return findCampaignByCode(state.saleCampaigns, code); }
+function isCampaignActive(campaign) { return isSaleCampaignActive(campaign); }
+function cartPricing() { const pricing = resolveSalePricing({ campaigns: state.saleCampaigns, code: state.appliedSaleCode, subtotal: cartSubtotal() }); state.saleCodeStatus = pricing.status; state.saleCodeMinimum = pricing.minimumOrderAmount; if (state.appliedSaleCode && SALE_CODE_DROPPABLE.has(pricing.status)) state.appliedSaleCode = ""; return pricing; }
+function mountSaleCart() {
+  const footer = $(".drawer-footer"); if (!footer || $("#saleCodeInput")) return;
+  const module = document.createElement("div"); module.className = "cart-sale-box";
+  module.innerHTML = `<span class="panel-label">SALE HUNT CODE</span><div class="sale-code-row"><input id="saleCodeInput" maxlength="32" autocomplete="off" placeholder="${state.locale === "en" ? "ENTER SALE CODE" : "NHẬP MÃ SĂN SALE"}" /><button id="applySaleCode" type="button">${state.locale === "en" ? "Apply" : "Áp dụng"}</button></div><small id="cartSaleFeedback" class="cart-sale-feedback" role="status" aria-live="polite">${state.locale === "en" ? "Enter an active deal code to check savings." : "Nhập mã ưu đãi đang mở để kiểm tra mức giảm."}</small>`;
+  footer.prepend(module); const summary = $(".cart-total", footer); summary.insertAdjacentHTML("beforebegin", `<div class="cart-total"><span>${t("subtotal")}</span><strong id="cartSubtotal">0đ</strong></div><div class="cart-total cart-discount-row" id="cartDiscountRow"><span>${state.locale === "en" ? "Discount" : "Ưu đãi"}</span><strong id="cartDiscount">-0đ</strong></div>`);
+  $("#applySaleCode").addEventListener("click", () => applySaleCode($("#saleCodeInput").value)); $("#saleCodeInput").addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); applySaleCode(event.currentTarget.value); } });
+}
+function applySaleCode(code, openDrawer = false) {
+  const normalized = normalizeSaleCode(code); if (!normalized) { state.appliedSaleCode = ""; updateCartUI(); showToast("Hãy nhập mã săn sale trước khi áp dụng.", "error"); return; }
+  if (!state.cart.length) { showToast("Giỏ hàng đang trống. Hãy thêm sản phẩm trước khi áp dụng mã.", "error"); return; }
+  state.appliedSaleCode = normalized; const pricing = cartPricing();
+  if (pricing.status !== "applied" && pricing.status !== "below_minimum") { state.appliedSaleCode = ""; updateCartUI(); showToast(saleCodeMessage(pricing.status, pricing.minimumOrderAmount, formatCurrency), "error"); return; }
+  updateCartUI(); if (openDrawer) $("#saleCodeInput").value = normalized; if (pricing.status === "applied") showToast(`Đã áp dụng ${pricing.campaign.code}: giảm ${formatCurrency(pricing.discount)}.`, "success"); else showToast(saleCodeMessage(pricing.status, pricing.minimumOrderAmount, formatCurrency), "error");
+}
+function updateSaleCartUI(pricing) { const input = $("#saleCodeInput"); const feedback = $("#cartSaleFeedback"); const subtotal = $("#cartSubtotal"); const discountRow = $("#cartDiscountRow"); const discount = $("#cartDiscount"); if (!input || !feedback || !subtotal || !discountRow || !discount) return; if (document.activeElement !== input) input.value = state.appliedSaleCode; subtotal.textContent = formatCurrency(pricing.subtotal); discount.textContent = `-${formatCurrency(pricing.discount)}`; discountRow.classList.toggle("active", pricing.status === "applied"); feedback.className = `cart-sale-feedback ${pricing.status === "applied" ? "success" : pricing.status === "below_minimum" ? "pending" : ""}`; feedback.textContent = pricing.status === "applied" ? `${pricing.campaign.badge_text || pricing.campaign.title}: ${state.locale === "en" ? "saved" : "đã giảm"} ${formatCurrency(pricing.discount)}.` : pricing.status === "below_minimum" ? `${state.locale === "en" ? "Order minimum" : "Đơn tối thiểu"} ${formatCurrency(pricing.minimumOrderAmount)}.` : state.locale === "en" ? "Enter an active deal code to check savings." : "Nhập mã ưu đãi đang mở để kiểm tra mức giảm."; }
+
 function canPurchaseProduct(product) { return Boolean(product) && product.is_active !== false && Number(product.stock) > 0; }
 function openCart() { els.overlay.hidden = false; els.cartDrawer.classList.add("open"); els.cartDrawer.setAttribute("aria-hidden", "false"); document.body.classList.add("no-scroll"); }
 function closeCart() { els.overlay.hidden = true; els.cartDrawer.classList.remove("open"); els.cartDrawer.setAttribute("aria-hidden", "true"); if (![els.authModal, els.quickViewModal, els.qrModal].some((modal) => !modal.hidden)) document.body.classList.remove("no-scroll"); }
@@ -636,7 +651,7 @@ async function checkout() {
     p_order_number: orderNumber,
     p_payment_method: "vietqr",
     p_payment_note: "Đơn được tạo từ NEXORA Tech Store",
-    p_sale_code: state.appliedSaleCode || null,
+    p_sale_code: cartPricing().status === "applied" ? cartPricing().campaign.code : null,
     p_items: items,
     p_customer_name: delivery.name || null,
     p_customer_phone: delivery.phone || null,
