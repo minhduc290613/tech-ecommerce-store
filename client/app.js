@@ -169,6 +169,7 @@ function bindEvents() {
   els.cartButton.addEventListener("click", openCart);
   els.cartItems.addEventListener("click", handleCartActions);
   els.checkoutButton.addEventListener("click", checkout);
+  [els.checkoutCustomerPhone, els.checkoutShippingAddress].forEach((field) => field?.addEventListener("input", updateCheckoutProgress));
   els.overlay.addEventListener("click", closeCart);
   $$("[data-close]").forEach((button) => button.addEventListener("click", () => closeSurface(button.dataset.close)));
 
@@ -504,6 +505,7 @@ function updateCartUI() {
   const pricing = cartPricing(); const total = pricing.total;
   els.cartBadge.textContent = quantity > 99 ? "99+" : quantity; els.cartItemLabel.textContent = `(${quantity})`; els.cartTotal.textContent = formatCurrency(total);
   updateSaleCartUI(pricing);
+  updateCheckoutProgress();
   els.checkoutButton.disabled = !state.cart.length;
   els.checkoutDelivery.hidden = !state.cart.length;
   els.cartItems.innerHTML = state.cart.length ? state.cart.map((item) => `
@@ -513,6 +515,25 @@ function updateCartUI() {
       <div class="quantity-controls"><button data-cart-action="decrease" data-product-id="${escapeHtml(item.id)}" type="button" aria-label="Giảm số lượng">−</button><span>${item.quantity}</span><button data-cart-action="increase" data-product-id="${escapeHtml(item.id)}" type="button" aria-label="Tăng số lượng">+</button></div></div>
       <button class="remove-item" data-cart-action="remove" data-product-id="${escapeHtml(item.id)}" type="button" aria-label="Xóa ${escapeHtml(item.name)}"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
     </article>`).join("") : `<div class="cart-empty"><i class="fa-solid fa-bag-shopping" aria-hidden="true"></i><p>${t("emptyCart")}</p></div>`;
+}
+
+function updateCheckoutProgress() {
+  const deliveryReady = Boolean(els.checkoutCustomerPhone?.value.trim() && els.checkoutShippingAddress?.value.trim());
+  const step = !state.cart.length ? 1 : deliveryReady ? 2 : 1;
+  setCheckoutProgress(step);
+}
+
+function setCheckoutProgress(step) {
+  $$(".checkout-progress").forEach((progress) => $$('[data-checkout-step]', progress).forEach((item) => {
+    const itemStep = Number(item.dataset.checkoutStep);
+    item.classList.toggle("is-active", itemStep === step);
+    item.classList.toggle("is-complete", itemStep < step);
+  }));
+}
+
+function showCartSkeleton() {
+  if (!els.cartItems || !state.cart.length) return;
+  els.cartItems.innerHTML = Array.from({ length: Math.min(state.cart.length, 3) }, () => `<article class="cart-item cart-item-skeleton" aria-hidden="true"><span class="skeleton-block skeleton-thumb"></span><span class="skeleton-copy"><i></i><i></i><i></i></span><span class="skeleton-block skeleton-action"></span></article>`).join("");
 }
 
 function cartSubtotal() { return state.cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0); }
@@ -538,7 +559,7 @@ function applySaleCode(code, openDrawer = false) {
 function updateSaleCartUI(pricing) { const input = $("#saleCodeInput"); const feedback = $("#cartSaleFeedback"); const subtotal = $("#cartSubtotal"); const discountRow = $("#cartDiscountRow"); const discount = $("#cartDiscount"); if (!input || !feedback || !subtotal || !discountRow || !discount) return; if (document.activeElement !== input) input.value = state.appliedSaleCode; subtotal.textContent = formatCurrency(pricing.subtotal); discount.textContent = `-${formatCurrency(pricing.discount)}`; discountRow.classList.toggle("active", pricing.status === "applied"); feedback.className = `cart-sale-feedback ${pricing.status === "applied" ? "success" : pricing.status === "below_minimum" ? "pending" : ""}`; feedback.textContent = pricing.status === "applied" ? `${pricing.campaign.badge_text || pricing.campaign.title}: ${state.locale === "en" ? "saved" : "đã giảm"} ${formatCurrency(pricing.discount)}.` : pricing.status === "below_minimum" ? `${state.locale === "en" ? "Order minimum" : "Đơn tối thiểu"} ${formatCurrency(pricing.minimumOrderAmount)}.` : state.locale === "en" ? "Enter an active deal code to check savings." : "Nhập mã ưu đãi đang mở để kiểm tra mức giảm."; }
 
 function canPurchaseProduct(product) { return Boolean(product) && product.is_active !== false && Number(product.stock) > 0; }
-function openCart() { els.overlay.hidden = false; els.cartDrawer.classList.add("open"); els.cartDrawer.setAttribute("aria-hidden", "false"); document.body.classList.add("no-scroll"); }
+function openCart() { els.overlay.hidden = false; els.cartDrawer.classList.add("open"); els.cartDrawer.setAttribute("aria-hidden", "false"); document.body.classList.add("no-scroll"); showCartSkeleton(); requestAnimationFrame(() => updateCartUI()); }
 function closeCart() { els.overlay.hidden = true; els.cartDrawer.classList.remove("open"); els.cartDrawer.setAttribute("aria-hidden", "true"); if (![els.authModal, els.quickViewModal, els.qrModal].some((modal) => !modal.hidden)) document.body.classList.remove("no-scroll"); }
 
 async function restoreSession() {
@@ -580,6 +601,12 @@ async function hydrateCheckoutDelivery(user) {
 
 function setAuthMode(mode) {
   state.authMode = mode;
+  const authCard = els.authModal.querySelector(".auth-card");
+  if (authCard) {
+    authCard.dataset.authMode = mode;
+    authCard.classList.remove("is-switching");
+    requestAnimationFrame(() => authCard.classList.add("is-switching"));
+  }
   const signup = mode === "signup";
   const forgotten = mode === "forgot";
   const recovery = mode === "recovery";
@@ -663,7 +690,7 @@ async function checkout() {
   state.cart = []; state.appliedSaleCode = ""; els.checkoutCustomerName.value = ""; persistCart(); updateCartUI(); closeCart(); openPaymentModal(); showToast("Đã tạo đơn hàng. Vui lòng quét QR để thanh toán.", "success");
 }
 
-function openPaymentModal() { state.activePaymentMethod = "auto_transfer"; updatePaymentQR(); openModal("qr"); }
+function openPaymentModal() { state.activePaymentMethod = "auto_transfer"; setCheckoutProgress(3); updatePaymentQR(); openModal("qr"); }
 async function startPayOSCheckout() {
   if (!db || !state.user || !state.lastOrder) return;
   const previousMethod = state.activePaymentMethod;

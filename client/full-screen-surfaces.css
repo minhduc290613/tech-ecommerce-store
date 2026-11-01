@@ -1,197 +1,64 @@
-/* Full-screen surfaces: auth, cart and payment checkout */
-.auth-modal-fullscreen,
-.qr-modal-fullscreen {
-  align-items: stretch;
-  justify-content: stretch;
-  padding: 0;
-}
-.auth-modal-fullscreen .modal-card,
-.qr-modal-fullscreen .modal-card {
-  width: 100%;
-  max-width: none;
-  min-height: 100dvh;
-  max-height: none;
-  border: 0;
-  border-radius: 0;
-  overflow: auto;
-}
-.auth-modal-fullscreen .auth-card {
+
+
+/* Checkout workspace: product rail on the left, action rail on the right. */
+.cart-drawer.fullscreen-cart.liquid {
   display: grid;
-  grid-template-columns: minmax(280px, .7fr) minmax(340px, 1fr);
-  align-content: center;
-  gap: 1rem 5vw;
-  padding: clamp(2rem, 7vw, 7rem) clamp(1.25rem, 9vw, 10rem);
-  background: radial-gradient(circle at 15% 20%, rgba(56,189,248,.13), transparent 34%), #07111f;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 410px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-content: stretch;
 }
-.auth-modal-fullscreen .auth-card > :not(form):not(.close-button) { grid-column: 1; }
-.auth-modal-fullscreen .auth-card form { grid-column: 2; grid-row: 1 / span 8; align-self: center; max-width: 520px; width: 100%; }
-.auth-modal-fullscreen .auth-card .close-button,
-.qr-modal-fullscreen .qr-card .close-button { position: fixed; top: 1.25rem; right: 1.5rem; z-index: 3; }
-.auth-modal-fullscreen .auth-card .modal-logo { width: 3.6rem; height: 3.6rem; }
-.auth-modal-fullscreen .auth-helper { grid-column: 1; }
-.cart-drawer.fullscreen-cart { width: 100vw; max-width: none; border-left: 0; }
-.cart-drawer.fullscreen-cart .drawer-header,
-.cart-drawer.fullscreen-cart .drawer-footer { padding-left: clamp(1rem, 7vw, 8rem); padding-right: clamp(1rem, 7vw, 8rem); }
-.cart-drawer.fullscreen-cart .cart-items,
-.cart-drawer.fullscreen-cart .cart-delivery { padding-left: clamp(1rem, 7vw, 8rem); padding-right: clamp(1rem, 7vw, 8rem); }
-.cart-drawer.fullscreen-cart .cart-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-content: start; gap: 0 clamp(1rem, 4vw, 4rem); }
-.cart-drawer.fullscreen-cart .cart-item { min-width: 0; }
-.qr-modal-fullscreen .qr-card {
-  display: grid;
-  grid-template-columns: minmax(280px, .8fr) minmax(340px, 1.2fr);
-  align-content: center;
-  gap: 1rem 5vw;
-  padding: clamp(2rem, 7vw, 6rem) clamp(1rem, 9vw, 10rem);
-  background: radial-gradient(circle at 80% 20%, rgba(139,92,246,.16), transparent 35%), #07111f;
+.cart-drawer.fullscreen-cart.liquid .drawer-header { grid-column: 1 / -1; grid-row: 1; display: flex; align-items: center; gap: 1.5rem; }
+.cart-drawer.fullscreen-cart.liquid .cart-items { grid-column: 1; grid-row: 2 / span 2; min-height: 0; overflow: auto; align-content: start; }
+.cart-drawer.fullscreen-cart.liquid .cart-delivery { grid-column: 2; grid-row: 2; align-self: start; margin: 1.5rem clamp(1rem, 3vw, 3.5rem) 1rem 0; padding: 1.1rem; }
+.cart-drawer.fullscreen-cart.liquid .drawer-footer { grid-column: 2; grid-row: 3; align-self: end; padding-top: 1rem; padding-bottom: 1.5rem; }
+.cart-drawer.fullscreen-cart.liquid .cart-items:empty::after { content: "Giỏ hàng đang sẵn sàng"; display: grid; place-items: center; min-height: 180px; color: #7991a8; font-size: .8rem; }
+
+.checkout-progress { display: flex; align-items: center; gap: .6rem; margin: 0 auto; padding: 0; list-style: none; }
+.checkout-progress li { display: flex; align-items: center; gap: .42rem; color: #7189a2; font: 600 .62rem var(--font-mono); white-space: nowrap; }
+.checkout-progress li + li::before { content: ""; width: 1.25rem; height: 1px; background: rgba(148,196,230,.2); }
+.checkout-progress li span { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border: 1px solid rgba(148,196,230,.2); border-radius: 50%; color: #7891a8; background: rgba(4,13,25,.5); font-size: .56rem; }
+.checkout-progress li.is-active { color: #dff7ff; }
+.checkout-progress li.is-active span { border-color: #38bdf8; color: #04121e; background: #38bdf8; box-shadow: 0 0 0 4px rgba(56,189,248,.12); }
+.checkout-progress li.is-complete { color: #71e2b6; }
+.checkout-progress li.is-complete span { border-color: #34d399; color: #061a16; background: #34d399; }
+
+.cart-item-skeleton { min-height: 112px; pointer-events: none; }
+.skeleton-block, .skeleton-copy i { display: block; border-radius: 8px; background: linear-gradient(100deg, rgba(125,153,177,.1) 20%, rgba(175,214,237,.25) 38%, rgba(125,153,177,.1) 56%); background-size: 220% 100%; animation: liquidSkeleton 1.2s ease-in-out infinite; }
+.skeleton-thumb { width: 92px; height: 76px; }
+.skeleton-action { width: 28px; height: 28px; margin-left: auto; }
+.skeleton-copy { display: grid; gap: .55rem; flex: 1; }
+.skeleton-copy i { width: min(72%, 260px); height: 10px; }
+.skeleton-copy i:nth-child(2) { width: 42%; }
+.skeleton-copy i:nth-child(3) { width: 28%; }
+@keyframes liquidSkeleton { 0% { background-position: 180% 0; } 100% { background-position: -40% 0; } }
+
+/* Independent entrance motion when switching Login / Register / Recovery. */
+.auth-card.liquid.is-switching form { animation: authFormIn .28s cubic-bezier(.23, 1, .32, 1) both; }
+.auth-card.liquid.is-switching > .modal-logo,
+.auth-card.liquid.is-switching > .eyebrow,
+.auth-card.liquid.is-switching > h2,
+.auth-card.liquid.is-switching > .modal-intro,
+.auth-card.liquid.is-switching > .auth-tabs,
+.auth-card.liquid.is-switching > .auth-helper { animation: authCopyIn .24s cubic-bezier(.23, 1, .32, 1) both; }
+.auth-card.liquid[data-auth-mode="signup"].is-switching form { animation-name: authFormSignupIn; }
+@keyframes authFormIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes authFormSignupIn { from { opacity: 0; transform: translateX(-18px) scale(.985); } to { opacity: 1; transform: translateX(0) scale(1); } }
+@keyframes authCopyIn { from { opacity: .2; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 900px) {
+  .cart-drawer.fullscreen-cart.liquid { grid-template-columns: minmax(0, 1fr) minmax(290px, 360px); }
+  .checkout-progress { gap: .35rem; }
+  .checkout-progress li strong { display: none; }
+  .checkout-progress li + li::before { width: .7rem; }
 }
-.qr-modal-fullscreen .qr-card > :not(.close-button):not(.qr-image-wrap):not(.payment-tabs):not(.e-wallet-panel):not(.payment-info):not(.payment-instruction):not(.auto-transfer-notice):not(.zalopay-scan-guide):not(.zalo-confirmation):not(.close-qr-action) { grid-column: 1; }
-.qr-modal-fullscreen .qr-card .payment-tabs,
-.qr-modal-fullscreen .qr-card .qr-image-wrap,
-.qr-modal-fullscreen .qr-card .e-wallet-panel,
-.qr-modal-fullscreen .qr-card .payment-info,
-.qr-modal-fullscreen .qr-card .payment-instruction,
-.qr-modal-fullscreen .qr-card .auto-transfer-notice,
-.qr-modal-fullscreen .qr-card .zalopay-scan-guide,
-.qr-modal-fullscreen .qr-card .zalo-confirmation,
-.qr-modal-fullscreen .qr-card .close-qr-action { grid-column: 2; }
-.e-wallet-panel { margin: .8rem 0; padding: .8rem; border: 1px solid rgba(56,189,248,.22); background: rgba(7,19,34,.7); }
-.e-wallet-panel small { display: block; margin-top: .55rem; color: #8da6bd; font-size: .68rem; line-height: 1.5; }
-.e-wallet-provider-buttons { display: flex; gap: .5rem; margin-top: .5rem; }
-.e-wallet-provider-buttons button { flex: 1; min-height: 36px; border: 1px solid var(--line); color: #adc5d9; background: #0c1b2e; cursor: pointer; font: 700 .68rem var(--font-mono); }
-.e-wallet-provider-buttons button.active { color: #07111f; background: var(--cyan); border-color: var(--cyan); }
 @media (max-width: 760px) {
-  .auth-modal-fullscreen .auth-card,
-  .qr-modal-fullscreen .qr-card { display: block; padding: 4.5rem 1.1rem 2rem; }
-  .auth-modal-fullscreen .auth-card form { max-width: none; margin-top: 1.5rem; }
-  .qr-modal-fullscreen .qr-card > * { margin-left: auto; margin-right: auto; }
-  .qr-modal-fullscreen .qr-card .payment-tabs,
-  .qr-modal-fullscreen .qr-card .e-wallet-panel,
-  .qr-modal-fullscreen .qr-card .payment-info,
-  .qr-modal-fullscreen .qr-card .payment-instruction,
-  .qr-modal-fullscreen .qr-card .auto-transfer-notice,
-  .qr-modal-fullscreen .qr-card .zalopay-scan-guide,
-  .qr-modal-fullscreen .qr-card .zalo-confirmation,
-  .qr-modal-fullscreen .qr-card .close-qr-action { width: 100%; }
-  .cart-drawer.fullscreen-cart .cart-items { grid-template-columns: 1fr; }
+  .cart-drawer.fullscreen-cart.liquid { display: block; overflow: auto; }
+  .cart-drawer.fullscreen-cart.liquid .drawer-header { position: sticky; top: 0; z-index: 2; }
+  .cart-drawer.fullscreen-cart.liquid .cart-items { overflow: visible; }
+  .cart-drawer.fullscreen-cart.liquid .cart-delivery { margin: 1rem; }
+  .cart-drawer.fullscreen-cart.liquid .drawer-footer { position: sticky; bottom: 0; z-index: 2; }
+  .checkout-progress { margin-left: auto; }
 }
-
-
-/* ==========================================================================
-   NEXORA Liquid Commerce UI
-   Shared presentation layer for auth, cart and checkout surfaces.
-   ========================================================================== */
-:root {
-  --liquid-bg: rgba(11, 22, 39, .76);
-  --liquid-bg-strong: rgba(8, 17, 31, .94);
-  --liquid-border: rgba(148, 196, 230, .18);
-  --liquid-border-focus: rgba(56, 189, 248, .78);
-  --liquid-shadow: 0 28px 90px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .08);
-  --liquid-radius: 24px;
-}
-
-.liquid,
-.liquid-surface {
-  position: relative;
-  isolation: isolate;
-  background: linear-gradient(135deg, rgba(21, 42, 67, .78), rgba(6, 15, 28, .96) 62%);
-  border: 1px solid var(--liquid-border);
-  box-shadow: var(--liquid-shadow);
-  backdrop-filter: blur(24px) saturate(125%);
-  -webkit-backdrop-filter: blur(24px) saturate(125%);
-}
-
-.liquid::before,
-.liquid-surface::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  border-radius: inherit;
-  background: radial-gradient(circle at 8% 0%, rgba(56, 189, 248, .16), transparent 27%), radial-gradient(circle at 100% 100%, rgba(139, 92, 246, .16), transparent 32%);
-}
-
-.liquid-panel {
-  border: 1px solid rgba(148, 196, 230, .14);
-  border-radius: 18px;
-  background: rgba(5, 15, 28, .56);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
-}
-
-.liquid-field,
-.auth-card input.liquid-field,
-.auth-card textarea.liquid-field {
-  border: 1px solid rgba(148, 196, 230, .2);
-  border-radius: 12px;
-  background: rgba(4, 13, 25, .7);
-  color: #f4f8ff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
-  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
-}
-
-.liquid-field:focus,
-.auth-card input.liquid-field:focus,
-.auth-card textarea.liquid-field:focus {
-  outline: none;
-  border-color: var(--liquid-border-focus);
-  background: rgba(8, 22, 40, .92);
-  box-shadow: 0 0 0 4px rgba(56, 189, 248, .1), 0 10px 28px rgba(0, 0, 0, .16);
-}
-
-.liquid-button {
-  border: 1px solid rgba(56, 189, 248, .5);
-  border-radius: 12px;
-  background: linear-gradient(135deg, #38bdf8, #5b7cfa);
-  color: #03111e;
-  box-shadow: 0 10px 24px rgba(56, 189, 248, .18), inset 0 1px 0 rgba(255, 255, 255, .38);
-  transition: transform .16s cubic-bezier(.23, 1, .32, 1), box-shadow .16s ease, filter .16s ease;
-}
-
-.liquid-button:hover { filter: brightness(1.08); box-shadow: 0 14px 32px rgba(56, 189, 248, .26), inset 0 1px 0 rgba(255, 255, 255, .38); }
-.liquid-button:active { transform: scale(.97); }
-
-.auth-modal-fullscreen .auth-card.liquid,
-.qr-modal-fullscreen .qr-card.liquid { overflow: auto; border: 0; border-radius: 0; }
-.auth-modal-fullscreen .auth-card.liquid form { padding: clamp(1rem, 2vw, 1.5rem); border-radius: var(--liquid-radius); background: rgba(7, 18, 32, .52); border: 1px solid rgba(148, 196, 230, .14); box-shadow: 0 20px 60px rgba(0,0,0,.2); }
-.auth-card.liquid .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; padding: .35rem; margin: .75rem 0 1.25rem; border: 1px solid rgba(148,196,230,.14); border-radius: 14px; background: rgba(4,13,25,.5); }
-.auth-card.liquid .auth-tabs button { min-height: 42px; border-radius: 10px; color: #90a8bf; background: transparent; transition: color .18s ease, background .18s ease, transform .16s ease; }
-.auth-card.liquid .auth-tabs button.active { color: #eaf8ff; background: rgba(56,189,248,.15); box-shadow: inset 0 0 0 1px rgba(56,189,248,.28); }
-.auth-card.liquid .auth-tabs button:active { transform: scale(.97); }
-.auth-card.liquid form > label,
-.auth-card.liquid form > div > label { gap: .48rem; color: #b6c8d9; font-size: .72rem; letter-spacing: .02em; }
-.auth-card.liquid form input,
-.auth-card.liquid form textarea { width: 100%; margin-top: .38rem; }
-.auth-card.liquid .auth-submit { width: 100%; min-height: 50px; margin-top: .9rem; }
-.auth-card.liquid .auth-helper { color: #89a1b8; line-height: 1.65; }
-.auth-card.liquid .auth-helper button { color: #67d4ff; text-decoration: underline; text-underline-offset: 3px; }
-.auth-card.liquid .auth-delivery-note { display: block; color: #718ca6; font-size: .68rem; line-height: 1.5; }
-
-.cart-drawer.fullscreen-cart.liquid { background: linear-gradient(135deg, rgba(12, 28, 48, .98), rgba(5, 13, 25, .98)); }
-.cart-drawer.fullscreen-cart.liquid .drawer-header { border-bottom-color: rgba(148,196,230,.14); }
-.cart-drawer.fullscreen-cart.liquid .cart-items { padding-top: clamp(1rem, 3vw, 2.5rem); padding-bottom: 1rem; }
-.cart-drawer.fullscreen-cart.liquid .cart-item { border: 1px solid rgba(148,196,230,.14); border-radius: 18px; background: rgba(8, 20, 35, .62); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); transition: border-color .18s ease, transform .18s ease, background .18s ease; }
-.cart-drawer.fullscreen-cart.liquid .cart-item:hover { border-color: rgba(56,189,248,.36); background: rgba(10,28,48,.8); transform: translateY(-2px); }
-.cart-drawer.fullscreen-cart.liquid .cart-delivery { border: 1px solid rgba(148,196,230,.14); border-radius: 20px; background: rgba(5,15,28,.46); }
-.cart-drawer.fullscreen-cart.liquid .drawer-footer { border-top: 1px solid rgba(148,196,230,.14); background: rgba(4,13,25,.7); }
-.cart-drawer.fullscreen-cart.liquid .cart-sale-box { border-radius: 16px; background: linear-gradient(135deg, rgba(139,92,246,.13), rgba(8,20,35,.7)); }
-.cart-drawer.fullscreen-cart.liquid .checkout-button { min-height: 52px; border-radius: 13px; background: linear-gradient(135deg, #38bdf8, #5b7cfa); box-shadow: 0 12px 28px rgba(56,189,248,.2); }
-
-.qr-modal-fullscreen .qr-card.liquid .payment-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .45rem; padding: .45rem; border: 1px solid rgba(148,196,230,.14); border-radius: 16px; background: rgba(4,13,25,.58); }
-.qr-modal-fullscreen .qr-card.liquid .payment-tabs button { min-height: 45px; padding: .5rem .65rem; border: 1px solid transparent; border-radius: 11px; color: #91a9bf; background: transparent; font: 600 .67rem var(--font-mono); transition: color .18s ease, background .18s ease, border-color .18s ease, transform .16s ease; }
-.qr-modal-fullscreen .qr-card.liquid .payment-tabs button.active { color: #eaf8ff; border-color: rgba(56,189,248,.35); background: rgba(56,189,248,.14); }
-.qr-modal-fullscreen .qr-card.liquid .payment-tabs button:active { transform: scale(.97); }
-.qr-modal-fullscreen .qr-card.liquid .qr-image-wrap { border-radius: 22px; border-color: rgba(56,189,248,.28); background: rgba(3,11,22,.76); box-shadow: 0 18px 50px rgba(0,0,0,.3), inset 0 0 0 1px rgba(255,255,255,.04); }
-.qr-modal-fullscreen .qr-card.liquid .payment-info { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
-.qr-modal-fullscreen .qr-card.liquid .payment-info > div { padding: .8rem; border: 1px solid rgba(148,196,230,.14); border-radius: 14px; background: rgba(4,13,25,.52); }
-.qr-modal-fullscreen .qr-card.liquid .payment-info strong { color: #eaf8ff; }
-.qr-modal-fullscreen .qr-card.liquid .auto-transfer-notice { border-radius: 16px; border-color: rgba(52,211,153,.3); background: rgba(16,92,72,.14); }
-
-@media (max-width: 760px) {
-  .auth-modal-fullscreen .auth-card.liquid form { padding: 1rem; }
-  .qr-modal-fullscreen .qr-card.liquid .payment-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .qr-modal-fullscreen .qr-card.liquid .payment-info { grid-template-columns: 1fr; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .liquid-button, .auth-card.liquid button, .cart-drawer.fullscreen-cart.liquid .cart-item, .qr-modal-fullscreen .qr-card.liquid button { transition: none; }
+  .skeleton-block, .skeleton-copy i, .auth-card.liquid.is-switching form, .auth-card.liquid.is-switching > * { animation: none; }
 }

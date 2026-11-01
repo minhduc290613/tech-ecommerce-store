@@ -262,7 +262,7 @@
     <div class="overlay" id="overlay" hidden></div>
 
     <aside class="cart-drawer fullscreen-cart liquid liquid-surface" id="cartDrawer" aria-labelledby="cartTitle" aria-hidden="true">
-      <div class="drawer-header"><div><span class="panel-label">YOUR SIGNAL CART</span><h2 id="cartTitle"><span data-i18n="cartTitle">Giỏ hàng</span> <span id="cartItemLabel">(0)</span></h2></div><button class="close-button" data-close="cart" type="button" aria-label="Đóng giỏ hàng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
+      <div class="drawer-header"><div><span class="panel-label">YOUR SIGNAL CART</span><h2 id="cartTitle"><span data-i18n="cartTitle">Giỏ hàng</span> <span id="cartItemLabel">(0)</span></h2></div><ol class="checkout-progress" id="checkoutProgress" aria-label="Tiến trình thanh toán"><li class="is-active" data-checkout-step="1"><span>01</span><strong>Giỏ hàng</strong></li><li data-checkout-step="2"><span>02</span><strong>Giao nhận</strong></li><li data-checkout-step="3"><span>03</span><strong>Thanh toán</strong></li></ol><button class="close-button" data-close="cart" type="button" aria-label="Đóng giỏ hàng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
       <div class="cart-items" id="cartItems"></div>
       <div class="cart-delivery" id="checkoutDelivery" aria-labelledby="checkoutDeliveryTitle">
         <div class="cart-delivery-head"><i class="fa-solid fa-location-dot" aria-hidden="true"></i><div><span class="panel-label">DELIVERY DETAILS</span><h3 id="checkoutDeliveryTitle">Địa chỉ nhận hàng</h3></div></div>
@@ -312,6 +312,7 @@
     <section class="modal qr-modal-fullscreen" id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrTitle" hidden>
       <div class="modal-card qr-card liquid liquid-surface">
         <button class="close-button" data-close="qr" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        <ol class="checkout-progress payment-progress" id="paymentProgress" aria-label="Tiến trình thanh toán"><li class="is-complete" data-checkout-step="1"><span>01</span><strong>Giỏ hàng</strong></li><li class="is-complete" data-checkout-step="2"><span>02</span><strong>Giao nhận</strong></li><li class="is-active" data-checkout-step="3"><span>03</span><strong>Thanh toán</strong></li></ol>
         <div class="payment-confirm"><i class="fa-solid fa-check" aria-hidden="true"></i><span data-i18n="orderCreated">ĐƠN HÀNG ĐÃ ĐƯỢC TẠO</span></div>
         <h2 id="qrTitle" data-i18n-html="qrHeading">Quét mã để<br /><em>hoàn tất thanh toán.</em></h2>
         <p>Đơn <strong id="qrOrderNumber">NXR-000000</strong> đang chờ xác nhận thanh toán.</p>
