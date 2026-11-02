@@ -9,8 +9,9 @@ describe("mã sale không ghim trên storefront", () => {
     expect(app).not.toContain('db.from("sale_campaigns").select("*").eq("is_hunt_featured", true)');
   });
 
-  it("chỉ hiển thị thẻ săn sale khi mã đã được ghim, nhưng vẫn giữ mã còn lại trong bộ kiểm tra", () => {
-    expect(app).toContain("campaign.is_hunt_featured && isCampaignActive(campaign)");
-    expect(app).toContain("function getCampaignByCode(code)");
-  });
+	it("hiển thị mọi mã đang hoạt động và ưu tiên mã được ghim lên trước", () => {
+		expect(app).toContain("state.saleCampaigns.filter((campaign) => isCampaignActive(campaign))");
+		expect(app).toContain("Number(Boolean(b.is_hunt_featured)) - Number(Boolean(a.is_hunt_featured))");
+		expect(app).toContain("function getCampaignByCode(code)");
+	});
 });
