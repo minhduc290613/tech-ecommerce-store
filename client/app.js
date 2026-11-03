@@ -46,7 +46,7 @@ const LOCAL_DEMO_PRODUCTS = [
   { id: "demo-5", name: "Apex Station 16", category: "Laptop", description: "Laptop hiệu năng sáng tạo với màn hình 16 inch, RAM 32GB, SSD 1TB và card đồ họa rời.", image_url: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=85", price: 32990000, original_price: 32990000, stock: 8, is_sale: false, featured: false },
   { id: "demo-6", name: "NEXORA Flux 65 Mechanical", category: "Phụ kiện", description: "Bàn phím cơ 65% kết nối ba chế độ, switch tuyến tính và đèn nền RGB tùy biến.", image_url: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=900&q=85", price: 1690000, original_price: 2490000, stock: 32, is_sale: true, featured: false },
 ];
-const DEFAULT_SETTINGS = { site_name: "NEXORA", site_tagline: "Thiết bị đúng chuẩn.\nMức giá đúng thời điểm.", announcement_text: "Freeship toàn quốc cho đơn từ 1.500.000đ", support_email: "support@nexora.vn", support_hours: "Thứ 2 — Thứ 7 / 09:00–18:00", address_text: "Việt Nam", zalo_phone: "", zalo_confirmation_message: "Tôi đã chuyển khoản đơn {order_number} với số tiền {total}. Nhờ shop xác nhận giúp tôi.", logo_url: "/media/nexora-logo_3c03446b.png", favicon_url: "/media/nexora-logo_3c03446b.png", hero_kicker: "CURATED TECH / 2026", hero_title: "Thiết bị đúng chuẩn.", hero_emphasis: "Mức giá đúng thời điểm.", hero_description: "Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.", hero_image_url: "/media/nexora-hero-tech_47c6b78f.jpg", seo_title: "NEXORA Tech Store | Thiết bị đúng chuẩn", seo_description: "Khám phá điện thoại, laptop và phụ kiện với mức giá đúng thời điểm.", seo_og_image_url: "/media/nexora-hero-tech_47c6b78f.jpg" };
+const DEFAULT_SETTINGS = { site_name: "NEXORA", site_tagline: "Thiết bị đúng chuẩn.\nMức giá đúng thời điểm.", announcement_text: "Freeship toàn quốc cho đơn từ 1.500.000đ", support_email: "support@nexora.vn", support_hours: "Thứ 2 — Thứ 7 / 09:00–18:00", address_text: "Việt Nam", zalo_phone: "", zalo_confirmation_message: "Tôi đã chuyển khoản đơn {order_number} với số tiền {total}. Nhờ shop xác nhận giúp tôi.", logo_url: "/media/nexora-logo_3c03446b.png", favicon_url: "/media/nexora-logo_3c03446b.png", hero_kicker: "CURATED TECH / 2026", hero_title: "Thiết bị đúng chuẩn.", hero_emphasis: "Mức giá đúng thời điểm.", hero_description: "Chọn nhanh những thiết bị công nghệ đáng đầu tư — được phân loại rõ ràng, ưu đãi minh bạch và sẵn sàng giao đến bạn.", hero_image_url: "/media/nexora-hero-tech_47c6b78f.jpg", seo_title: "NEXORA Tech Store | Thiết bị đúng chuẩn", seo_description: "Khám phá điện thoại, laptop và phụ kiện với mức giá đúng thời điểm.", seo_og_image_url: "/media/nexora-hero-tech_47c6b78f.jpg", flash_sale_enabled: true, time_sync_enabled: true, time_sync_server: "time.cloudflare.com", login_source: "nexora-login", node_auth_url: "" };
 const ENGLISH_SETTING_FALLBACKS = { announcement_text: "Nationwide free shipping on orders from ₫1,500,000", site_tagline: "Curated technology.\nPricing at the right moment.", hero_kicker: "CURATED TECH / 2026", hero_title: "Technology,\ncarefully chosen.", hero_emphasis: "Priced for now.", hero_description: "Choose technology worth investing in, clearly categorized with transparent offers and ready for delivery.", seo_title: "NEXORA Tech Store | Curated technology", seo_description: "Explore phones, laptops and accessories with timely pricing." };
 
 function applyFooterSettings(settings = DEFAULT_SETTINGS) {
@@ -80,7 +80,7 @@ const state = {
   authMode: "login",
   activeProduct: null,
   lastOrder: null,
-  activePaymentMethod: "vietqr", eWalletProvider: "momo", paymentAutoProvider: "", settings: DEFAULT_SETTINGS, faqs: DEFAULT_FAQS, shops: DEFAULT_SHOPS, saleCampaigns: db ? [] : DEFAULT_SALE_CAMPAIGNS, carriers: [], appliedSaleCode: "", affiliateShareCode: "", sharedProductOpened: false, locale: "vi", catalogLoadError: null, searchTimer: null,
+  activePaymentMethod: "vietqr", eWalletProvider: "momo", paymentAutoProvider: "", settings: DEFAULT_SETTINGS, faqs: DEFAULT_FAQS, shops: DEFAULT_SHOPS, saleCampaigns: db ? [] : DEFAULT_SALE_CAMPAIGNS, carriers: [], appliedSaleCode: "", affiliateShareCode: "", sharedProductOpened: false, locale: "vi", catalogLoadError: null, searchTimer: null, clockOffset: 0, countdownTimer: null,
   filters: { category: "all", maxPrice: 35000000, saleOnly: false, search: "", technical: {} },
 };
 
@@ -107,6 +107,8 @@ async function initializeApp() {
   startCountdown();
   try {
     await Promise.all([loadProducts(), loadMarketplaceCMS()]);
+    await syncNetworkClock();
+    renderFlashSale();
     trackAffiliateLanding();
     await restoreSession();
   } finally {
@@ -268,7 +270,7 @@ async function loadMarketplaceCMS() {
     const [settingsResult, faqsResult, shopsResult, saleResult, carriersResult] = await Promise.all([db.from("site_settings").select("*").eq("singleton", true).maybeSingle(), db.from("faqs").select("*").eq("is_published", true).order("sort_order"), db.from("shops").select("*").eq("is_active", true).order("created_at"), db.from("sale_campaigns").select("*").order("created_at", { ascending: false }), db.from("shipping_carriers").select("name,logo_url,note,tracking_url_template").eq("is_active", true).order("name")]);
     if (settingsResult.data) state.settings = { ...DEFAULT_SETTINGS, ...settingsResult.data }; if (faqsResult.data?.length) state.faqs = faqsResult.data; if (shopsResult.data?.length) state.shops = shopsResult.data; if (!saleResult.error) state.saleCampaigns = saleResult.data || []; state.carriers = carriersResult.data || [];
   }
-  applySettings(); renderFAQs(); renderShops(); renderCarriers(); renderSaleHunt(); updateCartUI();
+  applySettings(); renderFAQs(); renderShops(); renderCarriers(); renderSaleHunt(); renderFlashSale(); updateCartUI();
 }
 function localizedSettings(source) { if (state.locale !== "en") return source; return { ...source, announcement_text: source.announcement_text_en || ENGLISH_SETTING_FALLBACKS.announcement_text, site_tagline: source.site_tagline_en || ENGLISH_SETTING_FALLBACKS.site_tagline, hero_kicker: source.hero_kicker_en || ENGLISH_SETTING_FALLBACKS.hero_kicker, hero_title: source.hero_title_en || ENGLISH_SETTING_FALLBACKS.hero_title, hero_emphasis: source.hero_emphasis_en || ENGLISH_SETTING_FALLBACKS.hero_emphasis, hero_description: source.hero_description_en || ENGLISH_SETTING_FALLBACKS.hero_description, seo_title: source.seo_title_en || ENGLISH_SETTING_FALLBACKS.seo_title, seo_description: source.seo_description_en || ENGLISH_SETTING_FALLBACKS.seo_description }; }
 function applySettings() { const s = localizedSettings(state.settings); const title = s.seo_title || `${s.site_name} Tech Store | ${s.hero_title}`; const description = s.seo_description || s.hero_description; const ogImage = s.seo_og_image_url || s.hero_image_url || s.logo_url; document.title = title; document.querySelector("meta[name='description']")?.setAttribute("content", description); document.querySelector("meta[property='og:title']")?.setAttribute("content", title); document.querySelector("meta[property='og:description']")?.setAttribute("content", description); if (ogImage) document.querySelector("meta[property='og:image']")?.setAttribute("content", ogImage); $("#announcementText").textContent = s.announcement_text; $("#heroKicker").textContent = s.hero_kicker; $("#heroTitlePlain").textContent = s.hero_title; $("#heroTitleEmphasis").textContent = s.hero_emphasis; $("#heroDescription").textContent = s.hero_description; $("#footerTagline").innerHTML = escapeHtml(s.site_tagline).replace(/\n/g, "<br />"); $("#footerSupportEmail").textContent = s.support_email; $("#footerSupportEmail").href = `mailto:${s.support_email}`; $("#footerSupportHours").textContent = s.support_hours; $("#footerAddress").textContent = s.address_text; if (s.hero_image_url) $("#heroImage").src = s.hero_image_url; if (s.favicon_url) { const favicon = document.querySelector("link[rel='icon']"); if (favicon) favicon.href = s.favicon_url; } PAYMENT_CONFIG = { bankId: s.payment_bank_id || PAYMENT_CONFIG.bankId, accountNumber: s.payment_account_number || PAYMENT_CONFIG.accountNumber, accountName: s.payment_account_name || PAYMENT_CONFIG.accountName, momoPhone: s.payment_momo_phone || PAYMENT_CONFIG.momoPhone }; $$("[data-site-logo]").forEach((img) => { if (s.logo_url) img.src = s.logo_url; }); $$("[data-site-name]").forEach((item) => item.textContent = s.site_name); renderFooterContacts(s); renderFooterSellerContact(s); renderZaloConfirmation(); window.dispatchEvent(new CustomEvent("nexora:settings", { detail: s })); }
@@ -540,8 +542,9 @@ function cartSubtotal() { return state.cart.reduce((sum, item) => sum + Number(i
 function cartTotal() { return cartPricing().total; }
 const SALE_CODE_DROPPABLE = new Set(["unknown_code", "inactive", "sold_out"]);
 function getCampaignByCode(code) { return findCampaignByCode(state.saleCampaigns, code); }
-function isCampaignActive(campaign) { return isSaleCampaignActive(campaign); }
-function cartPricing() { const pricing = resolveSalePricing({ campaigns: state.saleCampaigns, code: state.appliedSaleCode, subtotal: cartSubtotal() }); state.saleCodeStatus = pricing.status; state.saleCodeMinimum = pricing.minimumOrderAmount; if (state.appliedSaleCode && SALE_CODE_DROPPABLE.has(pricing.status)) state.appliedSaleCode = ""; return pricing; }
+function syncedNow() { return Date.now() + Number(state.clockOffset || 0); }
+function isCampaignActive(campaign) { return isSaleCampaignActive(campaign, syncedNow()); }
+function cartPricing() { const subtotal = cartSubtotal(); const campaign = findCampaignByCode(state.saleCampaigns, state.appliedSaleCode); const targetIds = Array.isArray(campaign?.flash_target_product_ids) ? campaign.flash_target_product_ids : []; const discountSubtotal = targetIds.length ? state.cart.reduce((sum, item) => targetIds.includes(item.id) ? sum + Number(item.price || 0) * Number(item.quantity || 0) : sum, 0) : subtotal; const base = resolveSalePricing({ campaigns: state.saleCampaigns, code: state.appliedSaleCode, subtotal: discountSubtotal, now: syncedNow() }); const pricing = { ...base, subtotal, total: subtotal - Number(base.discount || 0) }; state.saleCodeStatus = pricing.status; state.saleCodeMinimum = pricing.minimumOrderAmount; if (state.appliedSaleCode && SALE_CODE_DROPPABLE.has(pricing.status)) state.appliedSaleCode = ""; return pricing; }
 function mountSaleCart() {
   const footer = $(".drawer-footer"); if (!footer || $("#saleCodeInput")) return;
   const module = document.createElement("div"); module.className = "cart-sale-box";
@@ -644,6 +647,10 @@ async function handleAuthSubmit(event) {
   const deliveryProfile = state.authMode === "signup" ? normalizeDeliveryProfile({ phone: els.authDeliveryPhone.value, address: els.authDeliveryAddress.value }) : null;
   if (deliveryProfile && !deliveryProfile.valid) { showToast(deliveryProfile.message, "error"); (deliveryProfile.field === "address" ? els.authDeliveryAddress : els.authDeliveryPhone).focus(); return; }
   const redirectTo = getAuthRedirectUrl(state.settings?.public_site_url, "/?recovery=1");
+  if (state.settings.login_source === "node-auth" && state.settings.node_auth_url && !recovery) {
+    const target = new URL(state.settings.node_auth_url); target.searchParams.set("next", window.location.href); target.searchParams.set("source", "nexora");
+    window.location.assign(target.toString()); return;
+  }
   setButtonLoading(els.authSubmit, true, recovery ? "Đang cập nhật" : state.authMode === "forgot" ? "Đang gửi liên kết" : state.authMode === "signup" ? "Đang tạo tài khoản" : "Đang đăng nhập");
   const result = recovery ? await db.auth.updateUser({ password }) : state.authMode === "forgot" ? await db.auth.resetPasswordForEmail(email, { redirectTo }) : state.authMode === "signup" ? await db.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo, data: { username: signupUsername.username, delivery_phone: deliveryProfile.phone, default_shipping_address: deliveryProfile.address } } }) : await db.auth.signInWithPassword({ email, password });
   setButtonLoading(els.authSubmit, false);
@@ -876,10 +883,32 @@ function closeModal(name) { const modal = getModal(name); if (!modal) return; mo
 function closeSurface(name) { if (name === "cart") closeCart(); else closeModal(name); }
 function getModal(name) { return { auth: els.authModal, "quick-view": els.quickViewModal, qr: els.qrModal }[name]; }
 
+function getFlashCampaign(now = syncedNow()) {
+  if (state.settings.flash_sale_enabled === false) return null;
+  return state.saleCampaigns.filter((campaign) => campaign.flash_enabled && campaign.is_active !== false && Number.isFinite(new Date(campaign.ends_at).getTime()) && new Date(campaign.ends_at).getTime() >= now).sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())[0] || null;
+}
+function renderFlashSale(now = syncedNow()) {
+  const section = $("#flash-sale"); const campaign = getFlashCampaign(now);
+  if (!section) return;
+  section.hidden = !campaign || state.settings.flash_sale_enabled === false;
+  if (!campaign) return;
+  const starts = new Date(campaign.starts_at).getTime(); const ends = new Date(campaign.ends_at).getTime();
+  const live = starts <= now; const target = live ? ends : starts; const remaining = Math.max(0, target - now);
+  $("#flashTitle").innerHTML = escapeHtml(campaign.flash_title || campaign.title);
+  $("#flashDescription").textContent = campaign.description || (live ? "Ưu đãi đang mở trong thời gian giới hạn." : "Chiến dịch sắp bắt đầu.");
+  $("#flashCampaignMeta").textContent = `${live ? "ĐANG DIỄN RA" : "SẮP BẮT ĐẦU"} · ${campaign.discount_type === "percent" ? `GIẢM ${campaign.discount_value}%` : `GIẢM ${formatCurrency(campaign.discount_value)}`} · ${Array.isArray(campaign.flash_target_product_ids) && campaign.flash_target_product_ids.length ? `${campaign.flash_target_product_ids.length} thiết bị` : "toàn catalog"}`;
+  const h = Math.floor(remaining / 3600000), m = Math.floor((remaining % 3600000) / 60000), sec = Math.floor((remaining % 60000) / 1000);
+  $("#countdownHours").textContent = String(h).padStart(2, "0"); $("#countdownMinutes").textContent = String(m).padStart(2, "0"); $("#countdownSeconds").textContent = String(sec).padStart(2, "0");
+  $("#flashCountdownLabel").textContent = live ? "TIME REMAINING" : "STARTS IN";
+}
 function startCountdown() {
-  const target = Date.now() + (4 * 60 * 60 + 18 * 60 + 46) * 1000;
-  const tick = () => { const remaining = Math.max(0, target - Date.now()); const h = Math.floor(remaining / 3600000); const m = Math.floor((remaining % 3600000) / 60000); const s = Math.floor((remaining % 60000) / 1000); $("#countdownHours").textContent = String(h).padStart(2, "0"); $("#countdownMinutes").textContent = String(m).padStart(2, "0"); $("#countdownSeconds").textContent = String(s).padStart(2, "0"); };
-  tick(); window.setInterval(tick, 1000);
+  renderFlashSale();
+  state.countdownTimer = window.setInterval(() => renderFlashSale(), 1000);
+}
+async function syncNetworkClock() {
+  if (state.settings.time_sync_enabled === false) return;
+  const server = state.settings.time_sync_server || "time.cloudflare.com";
+  try { const response = await fetch(`/api/time/now?server=${encodeURIComponent(server)}`, { cache: "no-store" }); const data = await response.json(); state.clockOffset = Number.isFinite(Number(data.offset)) ? Number(data.offset) : 0; } catch { state.clockOffset = 0; }
 }
 
 function createOrderNumber() { return `NXR-${String(Date.now()).slice(-8)}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`; }

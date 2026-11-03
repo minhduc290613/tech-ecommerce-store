@@ -1,6 +1,12 @@
 # NEXORA Tech Store
 
+[![Tests](https://img.shields.io/badge/tests-142%20passing-22c55e?style=for-the-badge)](./package.json) [![TypeScript](https://img.shields.io/badge/TypeScript-checked-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](./tsconfig.json) [![Supabase](https://img.shields.io/badge/Supabase-RLS%20%2B%20RPC-3ecf8e?style=for-the-badge&logo=supabase&logoColor=white)](./supabase-unified.sql) [![License](https://img.shields.io/badge/license-see%20LICENSE-111827?style=for-the-badge)](./LICENSE)
+
 NEXORA is a dark-mode technology e-commerce platform with a public storefront, customer Account Center, order tracking, Affiliate Dashboard, and the protected **NEXORA Command Deck**. The frontend uses HTML5, CSS3, Vanilla JavaScript ES Modules, and Vite. Supabase provides Authentication, PostgreSQL, Row Level Security, Storage, and RPCs. The Node.js/Express server serves the production build and handles backend routes such as tRPC, payment webhooks, storage proxy, and transactional email.
+
+![NEXORA cart and checkout demo](docs/assets/nexora-cart-demo.png)
+
+> The image demonstrates the Liquid mobile cart/checkout surface. Production secrets, PayOS keys, and SMTP credentials are never committed to this repository.
 
 ## DEMO Website
 Main Page: [Main Page](https://nexora.tino.io.vn) <br/>
@@ -22,7 +28,7 @@ DEMO Admin Account: Not Allowed
 
 | Application | URL | Purpose |
 | --- | --- | --- |
-| Storefront | `/` | Catalog, search, filters, Flash Sale, Sale Hunt, product gallery, cart, checkout, and responsive mobile UI. |
+| Storefront | `/` | Catalog, search, filters, campaign-based Flash Sale, configurable NTP countdown, Sale Hunt, product gallery, cart, checkout, and responsive mobile UI. |
 | Orders | `/orders.html` | Customer order list/detail, payment and fulfillment status, carrier, tracking, shipment location, and eligible after-sales requests. |
 | Affiliate Dashboard | `/affiliate.html` | Personal referral clicks, qualifying orders, and commissions. |
 | Information | `/info.html` | About, FAQ, terms, privacy, delivery, returns, and contact pages. |
@@ -33,6 +39,8 @@ DEMO Admin Account: Not Allowed
 ## Main capabilities
 
 The platform supports product catalog management, pricing and sale campaigns, inventory and product galleries, customer accounts, multiple shipping addresses, wallet and ledger history, manual QR/ZaloPay payment confirmation, logistics tracking, cancellation and return workflows, article publishing, review/comment moderation, affiliate referrals, email templates, customer notifications, platform broadcasts, CSV reports, and role-based administration.
+
+Admins can enable or disable Flash Sale, target multiple products, set start/end dates and discount rules, change the NTP hostname, and choose between the native NEXORA Login flow and a configured node-auth redirect source.
 
 The English Command Deck is a presentation layer over the same secure application logic. The optional Mantis Admin variant is documented in [docs/MANTIS_ADMIN.md](docs/MANTIS_ADMIN.md) and provides a separate dashboard shell without replacing the full Command Deck. Admins and authorized staff use the same credentials and permissions at `/admin-en.html`; changing the language does not bypass RLS, capability checks, payment confirmation rules, or audit behavior.
 

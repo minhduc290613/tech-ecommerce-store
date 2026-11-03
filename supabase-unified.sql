@@ -111,6 +111,9 @@ create table if not exists public.sale_campaigns (
   usage_count integer not null default 0 check (usage_count >= 0),
   is_active boolean not null default true,
   is_hunt_featured boolean not null default false,
+  flash_enabled boolean not null default false,
+  flash_title text,
+  flash_target_product_ids jsonb not null default '[]'::jsonb check (jsonb_typeof(flash_target_product_ids) = 'array'),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (ends_at > starts_at),
@@ -203,6 +206,11 @@ create table if not exists public.site_settings (
   seller_zalo_phone text,
   seller_contact_label text not null default 'Liên hệ người bán',
   seller_contact_message text not null default 'Xin chào, tôi muốn tư vấn về sản phẩm {product_name}.',
+  time_sync_enabled boolean not null default true,
+  flash_sale_enabled boolean not null default true,
+  time_sync_server text not null default 'time.cloudflare.com',
+  login_source text not null default 'nexora-login' check (login_source in ('nexora-login', 'node-auth')),
+  node_auth_url text,
   updated_at timestamptz not null default now()
 );
 alter table public.site_settings add column if not exists public_site_url text not null default 'https://nexorashop-gpjdasbm.manus.space';
@@ -216,6 +224,13 @@ alter table public.site_settings add column if not exists warning_banner_text_en
 alter table public.site_settings add column if not exists warning_banner_level text not null default 'info' check (warning_banner_level in ('info', 'success', 'warning', 'danger'));
 alter table public.site_settings add column if not exists warning_banner_color text;
 alter table public.site_settings add column if not exists international_payment_settings jsonb not null default '{}'::jsonb;
+alter table public.site_settings add column if not exists time_sync_enabled boolean not null default true;
+alter table public.site_settings add column if not exists flash_sale_enabled boolean not null default true;
+alter table public.site_settings add column if not exists time_sync_server text not null default 'time.cloudflare.com';
+alter table public.site_settings add column if not exists login_source text not null default 'nexora-login';
+alter table public.site_settings add column if not exists node_auth_url text;
+alter table public.site_settings drop constraint if exists site_settings_login_source_check;
+alter table public.site_settings add constraint site_settings_login_source_check check (login_source in ('nexora-login', 'node-auth'));
 
 create table if not exists public.email_delivery_settings (
   singleton boolean primary key default true check (singleton),
@@ -540,7 +555,7 @@ returns public.orders language plpgsql security definer set search_path = public
 as $$
 declare
   v_order public.orders; v_product public.products; v_campaign public.sale_campaigns; v_item jsonb;
-  v_quantity integer; v_subtotal numeric(12,0) := 0; v_discount numeric(12,0) := 0; v_total numeric(12,0) := 0;
+  v_quantity integer; v_subtotal numeric(12,0) := 0; v_discount_base numeric(12,0) := 0; v_item_price numeric(12,0) := 0; v_discount numeric(12,0) := 0; v_total numeric(12,0) := 0;
 begin
   if auth.uid() is null then raise exception 'Bạn cần đăng nhập để tạo đơn hàng.'; end if;
   if nullif(trim(p_customer_phone), '') is null then raise exception 'Vui lòng nhập số điện thoại nhận hàng.'; end if;
@@ -561,10 +576,20 @@ begin
     select * into v_campaign from public.sale_campaigns where code = upper(trim(p_sale_code)) and is_active = true and starts_at <= now() and ends_at >= now() for update;
     if not found then raise exception 'Mã săn sale không hợp lệ hoặc đã hết hạn.'; end if;
     if v_campaign.usage_limit is not null and v_campaign.usage_count >= v_campaign.usage_limit then raise exception 'Mã săn sale đã hết lượt sử dụng.'; end if;
-    if v_subtotal < v_campaign.minimum_order_amount then raise exception 'Đơn cần tối thiểu % để áp dụng mã này.', v_campaign.minimum_order_amount; end if;
-    v_discount := case when v_campaign.discount_type = 'percent' then floor(v_subtotal * v_campaign.discount_value / 100) else v_campaign.discount_value end;
+    v_discount_base := v_subtotal;
+    if jsonb_array_length(v_campaign.flash_target_product_ids) > 0 then
+      v_discount_base := 0;
+      for v_item in select * from jsonb_array_elements(p_items) loop
+        if v_campaign.flash_target_product_ids ? (v_item ->> 'product_id') then
+          select price into v_item_price from public.products where id = (v_item ->> 'product_id')::uuid;
+          v_discount_base := v_discount_base + (v_item_price * (v_item ->> 'quantity')::integer);
+        end if;
+      end loop;
+    end if;
+    if v_discount_base < v_campaign.minimum_order_amount then raise exception 'Đơn cần tối thiểu % để áp dụng mã này.', v_campaign.minimum_order_amount; end if;
+    v_discount := case when v_campaign.discount_type = 'percent' then floor(v_discount_base * v_campaign.discount_value / 100) else v_campaign.discount_value end;
     if v_campaign.maximum_discount_amount is not null then v_discount := least(v_discount, v_campaign.maximum_discount_amount); end if;
-    v_discount := least(v_discount, v_subtotal);
+    v_discount := least(v_discount, v_discount_base);
     update public.sale_campaigns set usage_count = usage_count + 1, updated_at = now() where id = v_campaign.id;
   end if;
   v_total := v_subtotal - v_discount;
@@ -1442,6 +1467,11 @@ alter table public.site_settings add column if not exists payment_zalopay_qr_url
 alter table public.site_settings add column if not exists storefront_effect text not null default 'none' check (storefront_effect in ('none','snow','cherry_blossom'));
 alter table public.site_settings add column if not exists storefront_effect_color text not null default '#d8f3ff';
 alter table public.site_settings add column if not exists storefront_effect_density integer not null default 24 check (storefront_effect_density between 0 and 120);
+alter table public.sale_campaigns add column if not exists flash_enabled boolean not null default false;
+alter table public.sale_campaigns add column if not exists flash_title text;
+alter table public.sale_campaigns add column if not exists flash_target_product_ids jsonb not null default '[]'::jsonb;
+alter table public.sale_campaigns drop constraint if exists sale_campaigns_flash_target_product_ids_check;
+alter table public.sale_campaigns add constraint sale_campaigns_flash_target_product_ids_check check (jsonb_typeof(flash_target_product_ids) = 'array');
 
 revoke all on table public.user_roles, public.role_definitions, public.affiliate_profiles, public.affiliate_referrals, public.affiliate_commissions, public.refund_requests, public.deferred_work_items from anon, authenticated;
 grant select on table public.user_roles, public.role_definitions, public.affiliate_profiles, public.affiliate_referrals, public.affiliate_commissions, public.refund_requests to authenticated;

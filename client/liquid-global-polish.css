@@ -1,0 +1,56 @@
+/* NEXORA liquid surface polish: geometry is softened without changing layout metrics. */
+.liquid-page {
+  --liquid-radius: 24px;
+  --liquid-radius-sm: 16px;
+}
+.liquid-page .flash-sale-card,
+.liquid-page .flash-sale-backdrop,
+.liquid-page .sale-hunt-card,
+.liquid-page .catalog-toolbar,
+.liquid-page .filter-panel,
+.liquid-page .product-card,
+.liquid-page .shop-card,
+.liquid-page .carrier-storefront-card,
+.liquid-page .faq-item,
+.liquid-page .category-card,
+.liquid-page .service-strip,
+.liquid-page .info-card,
+.liquid-page .trust-card,
+.liquid-page .site-footer,
+.liquid-page .topbar,
+.liquid-page .main-header {
+  border-radius: var(--liquid-radius);
+}
+.liquid-page .flash-sale-card,
+.liquid-page .sale-hunt-card,
+.liquid-page .product-card,
+.liquid-page .shop-card,
+.liquid-page .carrier-storefront-card,
+.liquid-page .info-card,
+.liquid-page .trust-card {
+  overflow: hidden;
+}
+.liquid-page .flash-sale-card {
+  isolation: isolate;
+  box-shadow: 0 24px 80px rgba(56, 189, 248, .08), inset 0 1px rgba(255,255,255,.08);
+}
+.liquid-page .flash-campaign-meta {
+  display: inline-flex;
+  margin-top: .9rem;
+  padding: .45rem .75rem;
+  border: 1px solid rgba(56, 189, 248, .24);
+  border-radius: 999px;
+  color: #8bdcff;
+  background: rgba(56, 189, 248, .08);
+  font-size: .68rem;
+  letter-spacing: .16em;
+  font-weight: 800;
+}
+.liquid-page .flash-sale-section[hidden] { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .liquid-page .flash-sale-card::after,
+  .liquid-page .sale-hunt-card::after { animation: nexora-liquid-shimmer 7s ease-in-out infinite; }
+  .liquid-page .flash-campaign-meta { animation: nexora-liquid-pulse 2.6s ease-in-out infinite; }
+}
+@keyframes nexora-liquid-shimmer { 0%, 100% { opacity: .18; transform: translateX(-12%); } 50% { opacity: .42; transform: translateX(12%); } }
+@keyframes nexora-liquid-pulse { 0%, 100% { box-shadow: 0 0 0 rgba(56,189,248,0); } 50% { box-shadow: 0 0 24px rgba(56,189,248,.16); } }

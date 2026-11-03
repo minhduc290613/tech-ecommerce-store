@@ -1,6 +1,12 @@
 # NEXORA Tech Store
 
+[![Tests](https://img.shields.io/badge/tests-142%20passing-22c55e?style=for-the-badge)](./package.json) [![TypeScript](https://img.shields.io/badge/TypeScript-checked-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](./tsconfig.json) [![Supabase](https://img.shields.io/badge/Supabase-RLS%20%2B%20RPC-3ecf8e?style=for-the-badge&logo=supabase&logoColor=white)](./supabase-unified.sql) [![License](https://img.shields.io/badge/license-see%20LICENSE-111827?style=for-the-badge)](./LICENSE)
+
 NEXORA là nền tảng thương mại điện tử công nghệ dark mode gồm storefront khách hàng, Account Center, trang Đơn hàng, Affiliate Dashboard và **NEXORA Command Deck**. Frontend dùng HTML5, CSS3 và Vanilla JavaScript ES Modules; Vite build đa trang; Supabase cung cấp Auth, PostgreSQL, RLS, Storage và RPC; Node.js/Express phục vụ bản production cùng các route backend.
+
+![NEXORA cart and checkout demo](docs/assets/nexora-cart-demo.png)
+
+> Ảnh minh họa giao diện cart/checkout Liquid trên mobile. Secret production, PayOS và SMTP không được nhúng trong repository.
 
 ## DEMO Website
 Trang Chính: [Trang chính](https://nexora.tino.io.vn) <br/>
@@ -21,13 +27,14 @@ Account Admin DEMO: Không Cho
 
 | Khu vực | Tính năng |
 | --- | --- |
-| Storefront | Catalog, tìm kiếm, lọc danh mục/giá/SALE, Flash Sale, Sale Hunt, gallery sản phẩm, Quick View, giỏ hàng và responsive mobile. |
+| Storefront | Catalog, tìm kiếm, lọc danh mục/giá/SALE, Flash Sale theo campaign, đồng hồ NTP Cloudflare có thể đổi server, Sale Hunt, gallery sản phẩm, Quick View, giỏ hàng và responsive mobile. |
 | Tài khoản | Supabase Auth, username, recovery, số điện thoại, nhiều địa chỉ, địa chỉ mặc định, số dư, ledger, thông báo và đăng xuất. |
 | Đơn hàng | Checkout RPC, snapshot giá/tồn kho, QR VietQR/ZaloPay/MoMo, thanh toán số dư, trạng thái giao nhận, tracking, hủy/trả hàng theo điều kiện. |
 | Command Deck | Dashboard, CRUD catalog, đơn hàng, tài khoản, role/capability, CMS, FAQ, sale campaign, logistics, email, CSV và broadcast notification. |
 | Nội dung | Bài viết, bình luận/đánh giá có moderation, trang thông tin, FAQ, điều khoản, bảo mật và gian hàng. |
 | Affiliate | Referral link, click tracking, đơn đủ điều kiện, hoa hồng cấu hình được và dashboard riêng tư. |
 | Bảo mật | RLS, owner-scoped RPC, audit log, không lộ secret frontend, xác nhận thủ công chuyển khoản và CTA notification chỉ cho HTTPS/đường dẫn nội bộ. |
+| Vận hành | Admin bật/tắt Flash Sale, chọn nhiều thiết bị áp dụng, đặt thời gian bắt đầu/kết thúc, mức giảm và chọn NEXORA Login hoặc node-auth làm nguồn đăng nhập. |
 
 ## Quick start
 

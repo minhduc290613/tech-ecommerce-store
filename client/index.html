@@ -38,6 +38,7 @@
     <link rel="stylesheet" href="/mobile-nav-viewport-lock.css" />
     <link rel="stylesheet" href="/site-motion-footer.css" />
     <link rel="stylesheet" href="/full-screen-surfaces.css" />
+    <link rel="stylesheet" href="/liquid-global-polish.css" />
   </head>
   <body class="liquid-page">
     <a class="skip-link" href="#products" data-i18n="skipCatalog">Đi tới danh sách sản phẩm</a>
@@ -154,10 +155,11 @@
             <div class="flash-content">
               <div class="eyebrow eyebrow-violet"><span></span> LIVE PRICE SIGNAL</div>
               <h2 id="flashTitle" data-i18n-html="flashHeading">Flash Sale<br /><em>đang truyền tín hiệu.</em></h2>
-              <p data-i18n="flashDescription">Giá ưu đãi chỉ mở trong khung giờ này. Hãy thêm sản phẩm trước khi đồng hồ quay về 00.</p>
+              <p id="flashDescription" data-i18n="flashDescription">Giá ưu đãi chỉ mở trong khung giờ này. Hãy thêm sản phẩm trước khi đồng hồ quay về 00.</p>
+              <span class="flash-campaign-meta" id="flashCampaignMeta">CAMPAIGN ĐANG ĐỒNG BỘ</span>
             </div>
             <div class="countdown-module" aria-live="polite" aria-label="Thời gian flash sale còn lại">
-              <span class="panel-label">TIME REMAINING</span>
+              <span class="panel-label" id="flashCountdownLabel">TIME REMAINING</span>
               <div class="countdown" id="countdown"><div><strong id="countdownHours">00</strong><span>GIỜ</span></div><i>:</i><div><strong id="countdownMinutes">00</strong><span>PHÚT</span></div><i>:</i><div><strong id="countdownSeconds">00</strong><span>GIÂY</span></div></div>
               <a class="text-link" href="#products"><span data-i18n="huntNow">Săn giá ngay</span> <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
             </div>

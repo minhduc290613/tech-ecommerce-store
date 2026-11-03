@@ -11,6 +11,7 @@ import { serveStatic, setupVite } from "./vite";
 import { registerPaymentWebhookRoutes } from "../payment-webhooks";
 import { registerTransactionalEmailRoutes } from "../transactional-email";
 import { registerPayOSRoutes } from "../payos-payments";
+import { registerTimeSyncRoutes } from "../time-sync";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,6 +41,7 @@ async function startServer() {
   // Các webhook phải đọc raw body trước khi JSON middleware biến đổi payload ký số.
   registerPaymentWebhookRoutes(app);
   registerPayOSRoutes(app);
+  registerTimeSyncRoutes(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
