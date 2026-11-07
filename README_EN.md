@@ -3,8 +3,6 @@
 [![Tests](https://img.shields.io/badge/tests-142%20passing-22c55e?style=for-the-badge)](./package.json) [![TypeScript](https://img.shields.io/badge/TypeScript-checked-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](./tsconfig.json) [![Supabase](https://img.shields.io/badge/Supabase-RLS%20%2B%20RPC-3ecf8e?style=for-the-badge&logo=supabase&logoColor=white)](./supabase-unified.sql) [![License](https://img.shields.io/badge/license-see%20LICENSE-111827?style=for-the-badge)](./LICENSE)
 
 NEXORA is a dark-mode technology e-commerce platform with a public storefront, customer Account Center, order tracking, Affiliate Dashboard, and the protected **NEXORA Command Deck**. The frontend uses HTML5, CSS3, Vanilla JavaScript ES Modules, and Vite. Supabase provides Authentication, PostgreSQL, Row Level Security, Storage, and RPCs. The Node.js/Express server serves the production build and handles backend routes such as tRPC, payment webhooks, storage proxy, and transactional email.
-![NEXORA cart and checkout demo](docs/assets/nexora-cart-demo.png)
-> The image demonstrates the Liquid mobile cart/checkout surface. Production secrets, PayOS keys, and SMTP credentials are never committed to this repository.
 ![NEXORA project introduction banner](docs/assets/nexora-project-banner-en.svg)
 
 ## DEMO Website
