@@ -1,0 +1,37 @@
+---
+title: Bắt đầu với NEXORA
+slug: /vi/getting-started
+description: Cài đặt NEXORA từ đầu trên máy local.
+sidebar_position: 2
+---
+
+# Bắt đầu với NEXORA
+
+## Yêu cầu
+
+Node.js 20+, pnpm, Git và một project Supabase. Không commit `.env`, service role key, JWT secret, PayOS secret hoặc SMTP password.
+
+## Cài đặt
+
+```bash
+git clone https://github.com/minhduc290613/tech-ecommerce-store.git
+cd tech-ecommerce-store
+pnpm install
+```
+
+Điền URL project và publishable/anon key trong `client/supabase-config.js`, sau đó chạy schema `supabase-unified.sql` trên database mới/trống.
+
+```bash
+pnpm dev
+# mở http://localhost:3000
+```
+
+## Kiểm tra trước khi phát hành
+
+```bash
+pnpm test
+pnpm check
+pnpm build
+```
+
+Các entrypoint chính gồm storefront, `/admin.html`, `/admin-en.html`, `/orders.html` và `/affiliate.html`. Cấp quyền Admin theo [ADMIN_SETUP.md](../../ADMIN_SETUP.md), không dùng mật khẩu mặc định.

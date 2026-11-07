@@ -3,10 +3,10 @@
 [![Tests](https://img.shields.io/badge/tests-142%20passing-22c55e?style=for-the-badge)](./package.json) [![TypeScript](https://img.shields.io/badge/TypeScript-checked-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](./tsconfig.json) [![Supabase](https://img.shields.io/badge/Supabase-RLS%20%2B%20RPC-3ecf8e?style=for-the-badge&logo=supabase&logoColor=white)](./supabase-unified.sql) [![License](https://img.shields.io/badge/license-see%20LICENSE-111827?style=for-the-badge)](./LICENSE)
 
 NEXORA là nền tảng thương mại điện tử công nghệ dark mode gồm storefront khách hàng, Account Center, trang Đơn hàng, Affiliate Dashboard và **NEXORA Command Deck**. Frontend dùng HTML5, CSS3 và Vanilla JavaScript ES Modules; Vite build đa trang; Supabase cung cấp Auth, PostgreSQL, RLS, Storage và RPC; Node.js/Express phục vụ bản production cùng các route backend.
-
 ![NEXORA cart and checkout demo](docs/assets/nexora-cart-demo.png)
-
 > Ảnh minh họa giao diện cart/checkout Liquid trên mobile. Secret production, PayOS và SMTP không được nhúng trong repository.
+
+![Banner giới thiệu NEXORA](docs/assets/nexora-project-banner-vi.svg)
 
 ## DEMO Website
 Trang Chính: [Trang chính](https://nexora.tino.io.vn) <br/>
@@ -17,9 +17,9 @@ Account Admin DEMO: Không Cho
 
 | Ngôn ngữ | Tài liệu | Nội dung |
 | --- | --- | --- |
-| Tiếng Việt | [Hướng dẫn triển khai và sử dụng A–Z](docs/HUONG_DAN_A_Z.md) | Cài local, kết nối Supabase, GitHub, static hosting, aaPanel Ubuntu, cPanel, vận hành, thanh toán, email, thông báo và xử lý lỗi. |
-| English | [README_EN](README_EN.md) · [Deployment and User Guide](docs/DEPLOYMENT_GUIDE_EN.md) | README và tài liệu triển khai đầy đủ bằng tiếng Anh. |
-| Chỉ mục | [Tài liệu dự án](docs/INDEX.md) | Các tài liệu role, wallet, Supabase, thanh toán tự động, asset và verification. |
+| Tiếng Việt | [Docs tiếng Việt](docs/vi/index.mdx) · [Hướng dẫn A–Z legacy](docs/HUONG_DAN_A_Z.md) | Bộ MDX theo topic và hướng dẫn triển khai đầy đủ. |
+| English | [English docs](docs/en/index.mdx) · [README_EN](README_EN.md) · [Deployment Guide legacy](docs/DEPLOYMENT_GUIDE_EN.md) | Documentation ready for a future docs site. |
+| Chỉ mục | [Docs README](docs/README.mdx) · [Tài liệu legacy](docs/INDEX.md) | Cấu trúc song ngữ, frontmatter và quy ước tài sản. |
 | Admin | [Thiết lập quyền Admin](ADMIN_SETUP.md) · [Command Deck English](/admin-en.html) · [Mantis Admin](docs/MANTIS_ADMIN.md) | Cấp quyền an toàn, Admin tiếng Anh và dashboard Mantis riêng. |
 | Lỗi | [Fix lỗi](docs/Error.md) | Fix lỗi nguy hiểm nên đọc |
 

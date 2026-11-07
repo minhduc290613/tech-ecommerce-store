@@ -1,0 +1,22 @@
+---
+title: Vận hành Admin
+slug: /vi/admin
+description: Command Deck, role, CMS, Flash Sale và quyền quản trị.
+sidebar_position: 5
+---
+
+# Vận hành Admin
+
+Command Deck dùng Supabase Auth, RLS và capability. Admin cấp cao quản lý role, CMS, sản phẩm, đơn hàng, logistics, sale campaign và integrations.
+
+## Flash Sale campaign
+
+Tạo campaign với mã, kiểu giảm, giá trị, minimum order, thời gian bắt đầu/kết thúc và usage limit. Chọn **Bật campaign trên banner Flash Sale** để đưa lên storefront. Có thể chọn nhiều sản phẩm; mã chỉ giảm trên nhóm được chọn. Tắt `flash_sale_enabled` để ẩn khu vực Flash Sale toàn site.
+
+## Thời gian và login
+
+Trong Cấu hình nâng cao, bật/tắt đồng bộ NTP, đặt `time.cloudflare.com` hoặc hostname NTP hợp lệ, và chọn `NEXORA Login` hoặc `node-auth`. URL node-auth phải là HTTPS và callback phải được cấu hình riêng.
+
+## Role
+
+Dùng capability tối thiểu cần thiết. Moderator không tự nâng quyền Admin. Mọi thay đổi role cần được theo dõi trong audit log.

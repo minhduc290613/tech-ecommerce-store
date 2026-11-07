@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
+  <title id="title">NEXORA logo</title><desc id="desc">NEXORA technology commerce logo</desc>
+  <defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#38bdf8"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+  <rect width="720" height="180" rx="42" fill="#07111f"/>
+  <g transform="translate(34 28)" fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><path d="M62 0 28 20v40l34 20 34-20V20Z"/><path d="m28 20 34 20 34-20M28 60l34-20 34 20M62 80V40"/><path d="m8 51 20 11M116 51 96 62"/></g>
+  <text x="190" y="116" fill="#f8fafc" font-family="Inter,Arial,sans-serif" font-size="72" font-weight="800" letter-spacing="8">NEXORA</text>
+</svg>

@@ -1,0 +1,20 @@
+---
+title: Thanh toán
+slug: /vi/payments
+description: PayOS, chuyển khoản tự động, QR và ví điện tử.
+sidebar_position: 6
+---
+
+# Thanh toán
+
+PayOS được gom vào nhóm **CK tự động**. MoMo và ZaloPay được trình bày trong nhóm **Ví điện tử**. Secret không lưu ở frontend hoặc database.
+
+## PayOS
+
+Khai báo `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `SUPABASE_SERVICE_ROLE_KEY` và `PUBLIC_SITE_URL` ở server. Webhook phải dùng HTTPS, xác minh chữ ký, đối chiếu order code và số tiền, đồng thời xử lý idempotent.
+
+Xem hướng dẫn chi tiết tại [PAYOS_SETUP_BILINGUAL.md](../PAYOS_SETUP_BILINGUAL.md). Chưa nhập secret production thì hệ thống giữ safe no-send/no-live mode.
+
+## Đối soát
+
+Đơn chuyển khoản thủ công vẫn chờ Admin xác nhận. Không đánh dấu paid dựa trên ảnh chụp hoặc callback chưa xác minh.

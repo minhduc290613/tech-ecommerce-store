@@ -1,0 +1,31 @@
+---
+title: Deploy NEXORA
+slug: /en/deployment
+description: Choose a hosting model and deploy NEXORA safely.
+sidebar_position: 3
+---
+
+# Deployment
+
+## Choose a model
+
+- **Render/aaPanel/PM2:** required for Node/Express, PayOS webhooks, server email, or backend routes.
+- **Vercel, Netlify, Cloudflare Pages, GitHub Pages:** static output only when the backend is hosted separately.
+- **cPanel static:** upload `dist/public`; do not run `pnpm start` without Passenger support.
+
+## Render
+
+Build command: `pnpm install --frozen-lockfile && pnpm build`.
+
+Start command: `pnpm start`.
+
+Add the public URL, server-side Supabase variables, and PayOS secrets through the host Environment settings. Never commit them. Verify `/healthz` after deployment and configure the PayOS webhook on an HTTPS domain.
+
+## Production checklist
+
+1. Back up the database before migrations.
+2. Keep RLS enabled and verify Auth redirect URLs.
+3. Configure a custom domain and HTTPS.
+4. Store secrets in the host secret manager.
+5. Run tests/build and verify login, cart, checkout, and webhooks.
+6. Monitor logs and keep a rollback plan.

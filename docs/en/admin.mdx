@@ -1,0 +1,22 @@
+---
+title: Admin operations
+slug: /en/admin
+description: Command Deck, roles, CMS, Flash Sale, and administration permissions.
+sidebar_position: 5
+---
+
+# Admin operations
+
+The Command Deck uses Supabase Auth, RLS, and capabilities. The highest-level Admin manages roles, CMS, catalog, orders, logistics, sale campaigns, and integrations.
+
+## Flash Sale campaigns
+
+Create a campaign with a code, discount type/value, minimum order, start/end dates, and usage limit. Enable **Show campaign on Flash Sale banner** to publish it to the storefront. Multiple products can be targeted; the code discounts only the selected group. Disable `flash_sale_enabled` to hide the entire Flash Sale area.
+
+## Time and login source
+
+In Advanced Settings, enable/disable NTP synchronization, set `time.cloudflare.com` or another valid NTP hostname, and choose `NEXORA Login` or `node-auth`. The node-auth URL must use HTTPS and its callback must be configured separately.
+
+## Roles
+
+Grant the smallest capability set required. Moderators cannot promote themselves to Admin. Track role changes through the audit trail.

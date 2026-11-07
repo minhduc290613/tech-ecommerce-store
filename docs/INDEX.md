@@ -1,5 +1,13 @@
 # Link tài liệu NEXORA
 
+> **Cấu trúc docs mới:** nội dung chuẩn để dựng docs site nằm trong [`vi/`](vi/index.mdx) và [`en/`](en/index.mdx), viết bằng MDX có frontmatter. Các file `.md` bên dưới được giữ ở chế độ legacy để không làm gãy liên kết cũ.
+
+| Ngôn ngữ | Cổng tài liệu | Banner |
+| --- | --- | --- |
+| Tiếng Việt | [Mở docs tiếng Việt](vi/index.mdx) | [Banner VI](assets/nexora-project-banner-vi.svg) |
+| English | [Open English docs](en/index.mdx) | [English banner](assets/nexora-project-banner-en.svg) |
+| Brand assets | [Assets guide](assets/README.mdx) | [Logo SVG](assets/nexora-logo.svg) |
+
 Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hành cửa hàng và khôi phục hạ tầng. Các tài liệu được liên kết theo **mục đích sử dụng**, thay vì theo thứ tự tạo file.
 
 | Nhu cầu | Tài liệu | Mô tả |

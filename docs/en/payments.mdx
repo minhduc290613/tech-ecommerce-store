@@ -1,0 +1,20 @@
+---
+title: Payments
+slug: /en/payments
+description: PayOS, automatic bank transfer, QR payments, and e-wallets.
+sidebar_position: 6
+---
+
+# Payments
+
+PayOS is grouped under **Automatic bank transfer**. MoMo and ZaloPay are presented under **E-wallet**. Secrets never belong in frontend code or the database.
+
+## PayOS
+
+Set `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `PUBLIC_SITE_URL` on the server. The webhook must use HTTPS, verify its signature, compare order code and amount, and remain idempotent.
+
+See [PAYOS_SETUP_BILINGUAL.md](../PAYOS_SETUP_BILINGUAL.md) for the detailed bilingual guide. Until production secrets are configured, the system remains in safe no-send/no-live mode.
+
+## Reconciliation
+
+Manual bank-transfer orders remain pending until an authorized Admin confirms them. Never mark an order paid from an unverified screenshot or callback.

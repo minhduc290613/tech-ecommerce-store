@@ -1,0 +1,20 @@
+---
+title: Email and security
+slug: /en/email-security
+description: SMTP, Resend, password recovery, and production security rules.
+sidebar_position: 7
+---
+
+# Email and security
+
+Use SMTP or the Resend API for transactional email and password recovery. Configure SPF, DKIM, and DMARC for the sender domain; never put passwords in the Admin form or Git.
+
+## Secrets
+
+SMTP passwords, Resend keys, PayOS keys, service-role keys, and JWT secrets belong only in Render/aaPanel/server environment variables. The frontend receives only public Supabase configuration.
+
+## Recovery
+
+Configure local, preview, and production redirect URLs under Supabase Auth. Test reset emails on an HTTPS domain before launch.
+
+See [SMTP_SETUP_BILINGUAL.md](../SMTP_SETUP_BILINGUAL.md) and [RENDER_ENV_SETUP_BILINGUAL.md](../RENDER_ENV_SETUP_BILINGUAL.md).

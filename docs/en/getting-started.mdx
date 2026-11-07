@@ -1,0 +1,37 @@
+---
+title: Getting started
+slug: /en/getting-started
+description: Set up NEXORA locally from a clean checkout.
+sidebar_position: 2
+---
+
+# Getting started
+
+## Requirements
+
+Node.js 20+, pnpm, Git, and a Supabase project. Never commit `.env`, service-role keys, JWT secrets, PayOS secrets, or SMTP passwords.
+
+## Install
+
+```bash
+git clone https://github.com/minhduc290613/tech-ecommerce-store.git
+cd tech-ecommerce-store
+pnpm install
+```
+
+Set the project URL and publishable/anon key in `client/supabase-config.js`, then run `supabase-unified.sql` against a new or empty database.
+
+```bash
+pnpm dev
+# open http://localhost:3000
+```
+
+## Release checks
+
+```bash
+pnpm test
+pnpm check
+pnpm build
+```
+
+Main entrypoints include the storefront, `/admin.html`, `/admin-en.html`, `/orders.html`, and `/affiliate.html`. Grant Admin access using [ADMIN_SETUP.md](../../ADMIN_SETUP.md); never use a default password.

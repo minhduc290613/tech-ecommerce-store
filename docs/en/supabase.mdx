@@ -1,0 +1,22 @@
+---
+title: Supabase
+slug: /en/supabase
+description: Configure Supabase Auth, PostgreSQL, RLS, RPCs, and Storage.
+sidebar_position: 4
+---
+
+# Supabase
+
+`supabase-unified.sql` is the single canonical schema for the project. Run it once on a new project. For a production database with real orders, back up first and use a controlled migration.
+
+## Public configuration
+
+Only the publishable/anon key belongs in client code. Service-role keys, secret keys, and database credentials belong only in server/hosting environment variables.
+
+## Storage
+
+The `nexora-brand-assets` bucket stores images uploaded from Admin. Store only a URL/path in the database, never file bytes. See [Supabase Storage Setup](../SUPABASE_STORAGE_SETUP.md) for policies and URL verification.
+
+## Verification
+
+Verify Auth redirect URLs, RLS policies, owner-scoped RPCs, and webhook signatures before enabling production payments.

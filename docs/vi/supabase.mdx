@@ -1,0 +1,22 @@
+---
+title: Supabase và database
+slug: /vi/supabase
+description: Cấu hình Supabase Auth, PostgreSQL, RLS, RPC và Storage.
+sidebar_position: 4
+---
+
+# Supabase
+
+`supabase-unified.sql` là schema canonical duy nhất của project. Trên project mới, chạy một lần trong SQL Editor. Với database đang có đơn thật, backup và tạo migration có kiểm soát.
+
+## Public config
+
+Chỉ publishable/anon key được phép ở client. Service role, secret key và database credential chỉ nằm ở server/host environment.
+
+## Storage
+
+Bucket `nexora-brand-assets` lưu ảnh Admin upload. Database chỉ lưu URL/path, không lưu bytes. Xem [Supabase Storage Setup](../SUPABASE_STORAGE_SETUP.md) để áp dụng policy và kiểm thử URL.
+
+## Xác minh
+
+Kiểm tra Auth redirect URLs, RLS policies, RPC owner-scoping và webhook signature trước khi mở thanh toán production.

@@ -1,0 +1,31 @@
+---
+title: Triển khai NEXORA
+slug: /vi/deployment
+description: Chọn hosting và triển khai NEXORA an toàn.
+sidebar_position: 3
+---
+
+# Triển khai
+
+## Chọn mô hình
+
+- **Render/aaPanel/PM2:** dùng khi cần Node/Express, PayOS webhook, email server hoặc route backend.
+- **Vercel, Netlify, Cloudflare Pages, GitHub Pages:** chỉ dùng phần static khi backend đã tách riêng.
+- **cPanel static:** upload `dist/public`; không chạy `pnpm start` nếu host không có Passenger.
+
+## Render
+
+Build command: `pnpm install --frozen-lockfile && pnpm build`.
+
+Start command: `pnpm start`.
+
+Khai báo public URL, Supabase server variables và PayOS secrets trong Environment, không ghi vào Git. Kiểm tra `/healthz` sau deploy, sau đó cấu hình webhook PayOS về domain HTTPS.
+
+## Checklist production
+
+1. Backup database trước migration.
+2. Bật RLS và kiểm tra Auth redirect URLs.
+3. Cấu hình custom domain/HTTPS.
+4. Nhập secret ở nơi lưu trữ của host.
+5. Chạy test, build và kiểm tra login, cart, checkout, webhook.
+6. Theo dõi log và chuẩn bị phương án rollback.
