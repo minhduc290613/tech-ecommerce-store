@@ -3,8 +3,6 @@
 [![Tests](https://img.shields.io/badge/tests-142%20passing-22c55e?style=for-the-badge)](./package.json) [![TypeScript](https://img.shields.io/badge/TypeScript-checked-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](./tsconfig.json) [![Supabase](https://img.shields.io/badge/Supabase-RLS%20%2B%20RPC-3ecf8e?style=for-the-badge&logo=supabase&logoColor=white)](./supabase-unified.sql) [![License](https://img.shields.io/badge/license-see%20LICENSE-111827?style=for-the-badge)](./LICENSE)
 
 NEXORA là nền tảng thương mại điện tử công nghệ dark mode gồm storefront khách hàng, Account Center, trang Đơn hàng, Affiliate Dashboard và **NEXORA Command Deck**. Frontend dùng HTML5, CSS3 và Vanilla JavaScript ES Modules; Vite build đa trang; Supabase cung cấp Auth, PostgreSQL, RLS, Storage và RPC; Node.js/Express phục vụ bản production cùng các route backend.
-![NEXORA cart and checkout demo](docs/assets/nexora-cart-demo.png)
-> Ảnh minh họa giao diện cart/checkout Liquid trên mobile. Secret production, PayOS và SMTP không được nhúng trong repository.
 
 ![Banner giới thiệu NEXORA](docs/assets/nexora-project-banner-vi.svg)
 
