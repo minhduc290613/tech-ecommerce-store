@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | Tiếng Việt | [Mở docs tiếng Việt](vi/index.mdx) | [Banner VI](assets/nexora-project-banner-vi.svg) |
 | English | [Open English docs](en/index.mdx) | [English banner](assets/nexora-project-banner-en.svg) |
-| Brand assets | [Assets guide](assets/README.mdx) | [Logo SVG](assets/nexora-logo.svg) |
+| Brand assets | [Assets guide](assets/README.mdx) | [Official logo PNG](assets/nexora-logo.png) |
 
 Tài liệu này là điểm bắt đầu để tra cứu mã nguồn, vận hành cửa hàng và khôi phục hạ tầng. Các tài liệu được liên kết theo **mục đích sử dụng**, thay vì theo thứ tự tạo file.
 
